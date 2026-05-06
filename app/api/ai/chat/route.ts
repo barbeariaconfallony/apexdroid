@@ -1,22 +1,50 @@
 import { streamText } from 'ai'
 import { createGroq } from '@ai-sdk/groq'
+import { createOpenAI } from '@ai-sdk/openai'
 import { NextRequest } from 'next/server'
 
-// Inicializa o cliente Groq
-const groq = createGroq({
-  apiKey: process.env.GROQ_API_KEY,
-})
-
-// Melhores modelos Groq para programacao (em ordem de preferencia)
-// 1. llama-3.3-70b-versatile - Melhor para codigo e raciocinio complexo
-// 2. deepseek-r1-distill-llama-70b - Excelente para raciocinio e debugging
-// 3. qwen-qwq-32b - Bom para tarefas de codigo
-const GROQ_MODEL = 'llama-3.3-70b-versatile'
+// Funcao para criar o modelo baseado no provider
+function getAIModel(provider: string, apiKey: string, model: string, baseUrl?: string) {
+  switch (provider) {
+    case 'groq':
+      const groq = createGroq({
+        apiKey: apiKey || process.env.GROQ_API_KEY,
+      })
+      return groq(model || 'llama-3.3-70b-versatile')
+    
+    case 'openai':
+      const openai = createOpenAI({
+        apiKey: apiKey || process.env.OPENAI_API_KEY,
+        baseURL: baseUrl || 'https://api.openai.com/v1',
+      })
+      return openai(model || 'gpt-4-turbo')
+    
+    case 'ollama':
+      const ollama = createOpenAI({
+        apiKey: 'ollama', // Ollama nao precisa de chave
+        baseURL: baseUrl || 'http://localhost:11434/v1',
+      })
+      return ollama(model || 'llama3.2')
+    
+    default:
+      // Fallback para Groq
+      const defaultGroq = createGroq({
+        apiKey: apiKey || process.env.GROQ_API_KEY,
+      })
+      return defaultGroq(model || 'llama-3.3-70b-versatile')
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { messages, context } = body
+    const { messages, context, settings } = body
+    
+    // Extrair configuracoes do usuario ou usar defaults
+    const provider = settings?.provider || 'groq'
+    const apiKey = settings?.apiKey || ''
+    const model = settings?.model || 'llama-3.3-70b-versatile'
+    const baseUrl = settings?.baseUrl
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(
@@ -61,8 +89,11 @@ DIRETRIZES:
 - Sugira boas praticas de desenvolvimento mobile
 - Para blocos, descreva a logica passo a passo`
 
+    // Criar modelo baseado nas configuracoes
+    const aiModel = getAIModel(provider, apiKey, model, baseUrl)
+
     const result = await streamText({
-      model: groq(GROQ_MODEL),
+      model: aiModel,
       system: systemPrompt,
       messages: messages.map((msg: any) => ({
         role: msg.role,

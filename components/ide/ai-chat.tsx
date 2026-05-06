@@ -14,7 +14,7 @@ export function AIChat() {
   const [isLoading, setIsLoading] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   
-  const { chatMessages, addChatMessage, currentProject } = useIDEStore()
+  const { chatMessages, addChatMessage, currentProject, aiSettings } = useIDEStore()
   const { toast } = useToast()
 
   // Auto-scroll para o último mensagem
@@ -44,7 +44,7 @@ export function AIChat() {
         ? `Projeto: ${currentProject.Properties?.$Name || 'Untitled'}. Componentes: ${currentProject.Properties?.$Components?.map(c => c.$Type).join(', ') || 'Nenhum'}`
         : 'Nenhum projeto carregado'
 
-      // Enviar para API
+      // Enviar para API com configuracoes do usuario
       const response = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -53,7 +53,8 @@ export function AIChat() {
             role: msg.role,
             content: msg.content
           })),
-          context: projectContext
+          context: projectContext,
+          settings: aiSettings
         })
       })
 

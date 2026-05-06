@@ -1,15 +1,39 @@
 import { generateObject } from 'ai'
 import { createGroq } from '@ai-sdk/groq'
+import { createOpenAI } from '@ai-sdk/openai'
 import { z } from 'zod'
 import { NextRequest, NextResponse } from 'next/server'
 
-// Inicializa o cliente Groq
-const groq = createGroq({
-  apiKey: process.env.GROQ_API_KEY,
-})
-
-// Modelo otimizado para geracao de codigo/objetos
-const GROQ_MODEL = 'llama-3.3-70b-versatile'
+// Funcao para criar o modelo baseado no provider
+function getAIModel(provider: string, apiKey: string, model: string, baseUrl?: string) {
+  switch (provider) {
+    case 'groq':
+      const groq = createGroq({
+        apiKey: apiKey || process.env.GROQ_API_KEY,
+      })
+      return groq(model || 'llama-3.3-70b-versatile')
+    
+    case 'openai':
+      const openai = createOpenAI({
+        apiKey: apiKey || process.env.OPENAI_API_KEY,
+        baseURL: baseUrl || 'https://api.openai.com/v1',
+      })
+      return openai(model || 'gpt-4-turbo')
+    
+    case 'ollama':
+      const ollama = createOpenAI({
+        apiKey: 'ollama',
+        baseURL: baseUrl || 'http://localhost:11434/v1',
+      })
+      return ollama(model || 'llama3.2')
+    
+    default:
+      const defaultGroq = createGroq({
+        apiKey: apiKey || process.env.GROQ_API_KEY,
+      })
+      return defaultGroq(model || 'llama-3.3-70b-versatile')
+  }
+}
 
 // Schema for component generation
 const ComponentSchema = z.object({
@@ -25,7 +49,13 @@ type GeneratedComponent = z.infer<typeof ComponentSchema>
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { description, projectContext } = body
+    const { description, projectContext, settings } = body
+    
+    // Extrair configuracoes do usuario
+    const provider = settings?.provider || 'groq'
+    const apiKey = settings?.apiKey || ''
+    const model = settings?.model || 'llama-3.3-70b-versatile'
+    const baseUrl = settings?.baseUrl
 
     if (!description) {
       return NextResponse.json(
@@ -51,8 +81,10 @@ Retorne um JSON bem estruturado com:
 
 Exemplos de componentes válidos: Button, TextInput, Label, HorizontalArrangement, VerticalArrangement, ListView, Canvas, ImageSprite, Clock, TinyDB, etc`
 
+    const aiModel = getAIModel(provider, apiKey, model, baseUrl)
+    
     const { object } = await generateObject({
-      model: groq(GROQ_MODEL),
+      model: aiModel,
       schema: ComponentSchema,
       prompt,
       temperature: 0.5,

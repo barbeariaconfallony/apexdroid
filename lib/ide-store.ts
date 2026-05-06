@@ -190,10 +190,10 @@ export const useIDEStore = create<IDEState>()(
       
       // AI Settings
       aiSettings: {
-        provider: "openai",
-        model: "gpt-4-turbo",
+        provider: "groq",
+        model: "llama-3.3-70b-versatile",
         apiKey: "",
-        baseUrl: "https://api.openai.com/v1"
+        baseUrl: "https://api.groq.com/openai/v1"
       },
       setAISettings: (settings) => set({ aiSettings: settings }),
       
