@@ -4,7 +4,7 @@ import { useState } from "react"
 import { 
   Zap, GitBranch, Package, Settings, ChevronRight, 
   Smartphone, Save, MoreHorizontal, Undo2, Redo2,
-  Play, Code2, Layers, Eye
+  Play, Code2, Layers, Eye, AlertCircle
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useIDEStore } from "@/lib/ide-store"
@@ -26,9 +26,16 @@ import {
 interface IDEHeaderProps {
   onBuildClick: () => void
   onSettingsClick: () => void
+  onAIGeneratorClick?: () => void
+  onAIDebugClick?: () => void
 }
 
-export function IDEHeader({ onBuildClick, onSettingsClick }: IDEHeaderProps) {
+export function IDEHeader({ 
+  onBuildClick, 
+  onSettingsClick,
+  onAIGeneratorClick,
+  onAIDebugClick
+}: IDEHeaderProps) {
   const { 
     ghToken, 
     cloudUser, 
@@ -246,6 +253,21 @@ export function IDEHeader({ onBuildClick, onSettingsClick }: IDEHeaderProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
+              {onAIGeneratorClick && (
+                <>
+                  <DropdownMenuItem onClick={onAIGeneratorClick}>
+                    <Zap className="w-4 h-4 mr-2" />
+                    Gerar Componente IA
+                  </DropdownMenuItem>
+                  {onAIDebugClick && (
+                    <DropdownMenuItem onClick={onAIDebugClick}>
+                      <AlertCircle className="w-4 h-4 mr-2" />
+                      Debug Assistant
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                </>
+              )}
               <DropdownMenuItem onClick={onSettingsClick}>
                 <Settings className="w-4 h-4 mr-2" />
                 Configuracoes IA

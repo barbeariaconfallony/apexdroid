@@ -17,6 +17,9 @@ import { ToastContainer } from "@/components/ide/toast"
 import { ErrorBoundary } from "@/components/ide/error-boundary"
 import { LoadingScreen } from "@/components/ide/loading-skeleton"
 import { IDEDndProvider } from "@/components/ide/dnd-context"
+import { AIComponentGenerator } from "@/components/ide/ai-component-generator"
+import { AIDebugAssistant } from "@/components/ide/ai-debug-assistant"
+import { AISuggestionsPanel } from "@/components/ide/ai-suggestions-panel"
 import { useIDEStore } from "@/lib/ide-store"
 
 export default function IDEPage() {
@@ -27,6 +30,8 @@ export default function IDEPage() {
   const [templatesModalOpen, setTemplatesModalOpen] = useState(false)
   const [settingsModalOpen, setSettingsModalOpen] = useState(false)
   const [loginModalOpen, setLoginModalOpen] = useState(false)
+  const [aiComponentGeneratorOpen, setAiComponentGeneratorOpen] = useState(false)
+  const [aiDebugAssistantOpen, setAiDebugAssistantOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
 
   const { 
@@ -78,6 +83,8 @@ export default function IDEPage() {
           <IDEHeader 
             onBuildClick={() => setBuildModalOpen(true)}
             onSettingsClick={() => setSettingsModalOpen(true)}
+            onAIGeneratorClick={() => setAiComponentGeneratorOpen(true)}
+            onAIDebugClick={() => setAiDebugAssistantOpen(true)}
           />
 
           <div className="flex flex-1 overflow-hidden">
@@ -132,6 +139,19 @@ export default function IDEPage() {
           onExportClick={() => setExportModalOpen(true)}
           onTemplatesClick={() => setTemplatesModalOpen(true)}
         />
+
+        {/* AI Modals */}
+        <AIComponentGenerator 
+          isOpen={aiComponentGeneratorOpen}
+          onClose={() => setAiComponentGeneratorOpen(false)}
+        />
+        <AIDebugAssistant 
+          isOpen={aiDebugAssistantOpen}
+          onClose={() => setAiDebugAssistantOpen(false)}
+        />
+
+        {/* AI Suggestions Panel */}
+        <AISuggestionsPanel />
 
         {/* Toast Container */}
           <ToastContainer />
