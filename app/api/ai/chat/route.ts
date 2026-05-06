@@ -1,6 +1,17 @@
 import { streamText } from 'ai'
-import { openai } from '@ai-sdk/openai'
+import { createGroq } from '@ai-sdk/groq'
 import { NextRequest } from 'next/server'
+
+// Inicializa o cliente Groq
+const groq = createGroq({
+  apiKey: process.env.GROQ_API_KEY,
+})
+
+// Melhores modelos Groq para programacao (em ordem de preferencia)
+// 1. llama-3.3-70b-versatile - Melhor para codigo e raciocinio complexo
+// 2. deepseek-r1-distill-llama-70b - Excelente para raciocinio e debugging
+// 3. qwen-qwq-32b - Bom para tarefas de codigo
+const GROQ_MODEL = 'llama-3.3-70b-versatile'
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,39 +26,50 @@ export async function POST(request: NextRequest) {
     }
 
     // System prompt for APEX DROID AI
-    const systemPrompt = `Você é o APEX DROID AI, um assistente inteligente para desenvolvimento de aplicativos móveis.
-    
-Sua responsabilidade é ajudar o usuário a:
-1. Gerar componentes de interface (botões, inputs, listas, etc)
-2. Sugerir estrutura e lógica para aplicativos
-3. Fornecer código e configurações
-4. Analisar e corrigir erros
+    const systemPrompt = `Voce e o APEX DROID AI, um assistente inteligente especializado em desenvolvimento de aplicativos moveis no estilo MIT App Inventor/Kodular.
 
-${context ? `\nContexto do projeto atual:
+SUAS RESPONSABILIDADES:
+1. Gerar componentes de interface (Button, TextBox, Label, Image, ListView, etc)
+2. Criar logica de blocos visuais para comportamentos
+3. Sugerir estrutura e arquitetura para aplicativos
+4. Analisar e corrigir erros de projeto
+5. Explicar conceitos de programacao visual
+
+${context ? `CONTEXTO DO PROJETO ATUAL:
 ${context}` : ''}
 
-Quando o usuário pedir para criar um componente, responda com um JSON estruturado como:
+FORMATO DE RESPOSTA PARA COMPONENTES:
+Quando o usuario pedir para criar um componente, responda com JSON:
 \`\`\`json
 {
   "action": "create_component",
-  "componentType": "Button|TextInput|Label|etc",
+  "componentType": "Button|TextBox|Label|Image|ListView|etc",
   "properties": {
-    "property": "value"
+    "$Name": "NomeDoComponente",
+    "Text": "Texto",
+    "BackgroundColor": "#RRGGBB",
+    "Width": "Fill parent|Automatic|numero",
+    "Height": "Automatic|numero"
   }
 }
 \`\`\`
 
-Quando o usuário pedir sugestões de código, responda com a sugestão formatada claramente.
-
-Sempre seja conciso, prático e direto ao ponto.`
+DIRETRIZES:
+- Responda sempre em portugues brasileiro
+- Seja conciso, pratico e direto ao ponto
+- Use exemplos de codigo quando apropriado
+- Sugira boas praticas de desenvolvimento mobile
+- Para blocos, descreva a logica passo a passo`
 
     const result = await streamText({
-      model: openai('gpt-4-turbo'),
+      model: groq(GROQ_MODEL),
       system: systemPrompt,
       messages: messages.map((msg: any) => ({
         role: msg.role,
         content: msg.content
-      }))
+      })),
+      temperature: 0.7,
+      maxTokens: 2048,
     })
 
     return result.toAIStream()

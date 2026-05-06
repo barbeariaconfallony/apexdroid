@@ -1,6 +1,14 @@
 import { streamText } from 'ai'
-import { openai } from '@ai-sdk/openai'
+import { createGroq } from '@ai-sdk/groq'
 import { NextRequest } from 'next/server'
+
+// Inicializa o cliente Groq
+const groq = createGroq({
+  apiKey: process.env.GROQ_API_KEY,
+})
+
+// Modelo rapido para sugestoes
+const GROQ_MODEL = 'llama-3.3-70b-versatile'
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,11 +44,11 @@ Se apropriado, inclua código ou blocos em formato JSON.`
       : `O usuário selecionou o componente: ${selectedComponent}\n\nQuais blocos deveriam ser usados para controlar este componente?`
 
     const result = await streamText({
-      model: openai('gpt-4-turbo'),
+      model: groq(GROQ_MODEL),
       system: systemPrompt,
       prompt,
       temperature: 0.7,
-      maxTokens: 800
+      maxTokens: 1000
     })
 
     return result.toAIStream()
