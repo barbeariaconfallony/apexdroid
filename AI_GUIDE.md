@@ -1,18 +1,30 @@
 # Guia de Uso - Funcionalidades de IA do APEX DROID
 
+## Visão Geral
+
+O APEX DROID IDE utiliza **Groq** como provider de IA, oferecendo:
+- ⚡ **3x mais rápido** que OpenAI (latência de 50-200ms)
+- 💰 **10x mais barato** em custo por token
+- 🎯 **Modelos otimizados** para programação (Llama 3.3 70B + DeepSeek R1)
+- ♾️ **Plano gratuito** com 14,400 requisições/dia
+
 ## Configuração Inicial
 
 ### Pré-requisitos
-- Chave de API da OpenAI (`OPENAI_API_KEY`)
+- Chave de API do Groq (`GROQ_API_KEY`)
 - Conexão com internet estável
 
 ### Setup
-1. Adicione a variável de ambiente:
+1. Obtenha sua chave em https://console.groq.com/keys (grátis)
+2. Adicione a variável de ambiente:
    ```bash
-   OPENAI_API_KEY=sk-...
+   GROQ_API_KEY=gsk_seu_token_aqui
    ```
 
-2. Reinicie o servidor de desenvolvimento
+3. Reinicie o servidor de desenvolvimento
+
+### Documentação Completa
+Para mais detalhes sobre modelos, limites e troubleshooting, consulte **GROQ_SETUP.md**
 
 ---
 
@@ -182,13 +194,20 @@ Painel flutuante no canto inferior direito
 
 ## Troubleshooting
 
-### "Erro na API"
+### "Erro na API" ou "GROQ_API_KEY is not set"
 - Verifique conexão com internet
-- Confirme que OPENAI_API_KEY está configurada
+- Confirme que `GROQ_API_KEY` está configurada
+- Obtenha uma chave em https://console.groq.com/keys
 - Tente novamente em alguns segundos
+
+### "Rate limit exceeded"
+- Você atingiu o limite de 14,400 requisições/dia
+- Espere até o dia seguinte (reset automático)
+- Para uso em produção, considere plano pago do Groq
 
 ### "Sem resposta do servidor"
 - Reinicie o servidor de desenvolvimento
+- Verifique se Groq está disponível em https://status.groq.com
 - Verifique logs para mais detalhes
 - Contate suporte se persistir
 
@@ -196,11 +215,13 @@ Painel flutuante no canto inferior direito
 - Seja mais específico na descrição
 - Inclua mais contexto sobre o projeto
 - Tente reformular a solicitação
+- Diferentes modelos são usados para diferentes tarefas
 
 ### "Componente não adicionado"
 - Verifique se há um projeto carregado
 - Confirme se as propriedades são válidas
 - Tente gerar novamente
+- Verifique GROQ_API_KEY se a IA não responder
 
 ---
 
@@ -235,21 +256,28 @@ Resultado: Análise para compartilhar com o time
 
 ## Privacidade e Segurança
 
-### Dados Enviados para IA
+### Dados Enviados para IA (Groq)
 - Conteúdo do chat
 - Contexto do projeto (nomes de componentes)
-- Mensagens de erro
+- Mensagens de erro e descrições
 
 ### Dados NÃO Enviados
 - Código visual completo
 - Credenciais ou senhas
 - Dados de usuário do aplicativo
+- Informações sensíveis do projeto
+
+### Política de Privacidade Groq
+- Groq não armazena conversas por padrão
+- Para produção, revisar termos de serviço completos
+- Dados tratados conforme GDPR/CCPA
+- Consulte https://groq.com/privacy para detalhes
 
 ### Disclaimer
 - Respostas podem conter erros
-- Sempre valide sugestões
+- Sempre valide sugestões geradas
 - Use para aprendizado, não como verdade absoluta
-- OpenAI pode coletar dados conforme política deles
+- Groq é fornecedor independente com sua própria política
 
 ---
 
