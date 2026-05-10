@@ -887,33 +887,12 @@ export function PhonePreview({ onLoginClick }: PhonePreviewProps) {
           </div>
         </div>
         
-        {/* Connected Users - Bottom Right */}
-        <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm rounded-full px-2 py-1 border border-border/50 shadow-lg">
-          <div className="flex -space-x-2">
-            {connectedUsers.map((user, idx) => (
-              <div
-                key={idx}
-                className="relative group"
-                title={user.name}
-              >
-                <img
-                  src={user.avatar}
-                  alt={user.name}
-                  className="w-6 h-6 rounded-full border-2 border-card object-cover"
-                  style={{ borderColor: user.color }}
-                />
-                <span 
-                  className="absolute bottom-0 right-0 w-2 h-2 rounded-full border border-card"
-                  style={{ backgroundColor: user.color }}
-                />
-              </div>
-            ))}
-          </div>
-          <span className="text-[9px] text-muted-foreground font-medium ml-1">+2</span>
-        </div>
       </div>
     )}
   </div>
+  
+  {/* Connected Users - Fixed Bottom Right of main container */}
+  <ConnectedUsersPanel users={connectedUsers} />
 </main>
   )
 }
