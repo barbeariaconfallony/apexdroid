@@ -516,14 +516,14 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
   return (
     <aside 
       className={cn(
-        "glass border-r border-white/5 flex shrink-0 transition-all duration-300 ease-in-out relative z-40 shadow-2xl",
-        isSidebarCompact ? "w-14" : "w-[340px]"
+        "glass border-r border-white/5 flex shrink-0 transition-all duration-300 ease-in-out relative z-40 shadow-lg",
+        isSidebarCompact ? "w-12" : "w-[280px]"
       )}
     >
       {/* Tab Rail - vertical with icons and labels */}
       <div className={cn(
-        "bg-black/20 backdrop-blur-sm border-r border-white/5 flex flex-col py-3 gap-1 shrink-0 transition-all",
-        isSidebarCompact ? "w-14 items-center px-0" : "w-[72px] px-1.5"
+        "bg-black/20 backdrop-blur-sm border-r border-white/5 flex flex-col py-2 gap-0.5 shrink-0 transition-all",
+        isSidebarCompact ? "w-12 items-center px-0" : "w-[56px] px-1"
       )}>
         {tabs.map((tab) => (
           <button
@@ -531,23 +531,23 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
             onClick={() => setActiveTab(tab.id)}
             title={isSidebarCompact ? tab.label : undefined}
             className={cn(
-              "flex items-center justify-center rounded-lg transition-all relative group tab-transition",
+              "flex items-center justify-center rounded-md transition-all relative group",
               isSidebarCompact 
-                ? "w-10 h-10" 
-                : "w-full h-auto py-2 px-1.5 flex-col gap-0.5",
+                ? "w-9 h-9" 
+                : "w-full h-auto py-1.5 px-1 flex-col gap-0",
               activeTab === tab.id
-                ? "bg-primary text-primary-foreground shadow-lg"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                ? "bg-primary text-primary-foreground shadow-md"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/80"
             )}
           >
-            <tab.icon className="w-4 h-4 shrink-0" />
+            <tab.icon className="w-3.5 h-3.5 shrink-0" />
             {!isSidebarCompact && (
-              <span className="text-[9px] font-medium leading-tight text-center truncate w-full">
+              <span className="text-[8px] font-medium leading-tight text-center truncate w-full mt-0.5">
                 {tab.label}
               </span>
             )}
             {tab.id === "chat" && chatMessages.length > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-success border-2 border-card animate-pulse" />
+              <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-success border border-card animate-pulse" />
             )}
           </button>
         ))}
@@ -559,24 +559,24 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
         <button
           onClick={toggleSidebar}
           className={cn(
-            "flex items-center justify-center rounded-lg transition-all text-muted-foreground hover:text-foreground hover:bg-secondary",
-            isSidebarCompact ? "w-10 h-10 mx-auto" : "w-full py-2 flex-col gap-0.5"
+            "flex items-center justify-center rounded-md transition-all text-muted-foreground hover:text-foreground hover:bg-secondary/80",
+            isSidebarCompact ? "w-9 h-9 mx-auto" : "w-full py-1.5 flex-col gap-0"
           )}
           title={isSidebarCompact ? "Expandir" : undefined}
         >
-          {isSidebarCompact ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          {isSidebarCompact ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
           {!isSidebarCompact && (
-            <span className="text-[9px] font-medium">Recolher</span>
+            <span className="text-[8px] font-medium mt-0.5">Recolher</span>
           )}
         </button>
       </div>
 
       {/* Content panel */}
       {!isSidebarCompact && (
-        <div className="flex-1 overflow-hidden flex flex-col animate-in slide-in-from-left-2 duration-300">
+        <div className="flex-1 overflow-hidden flex flex-col animate-in slide-in-from-left-2 duration-200">
         {/* Tab title with gradient */}
-        <div className="px-3 py-2 border-b border-border shrink-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+        <div className="px-2 py-1.5 border-b border-border/50 shrink-0">
+          <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
             {activeTabMeta?.title}
           </span>
         </div>

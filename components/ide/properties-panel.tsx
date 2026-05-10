@@ -215,21 +215,21 @@ export function PropertiesPanel({ onShowBlocks }: PropertiesPanelProps) {
             <RealtimeInput
               value={stringValue}
               onChange={(val: string, skip: boolean) => handlePropertyChange(key, val, skip)}
-              className="bg-input border-border text-[11px] h-8 font-mono flex-1"
+              className="bg-input border-border text-[10px] h-6 font-mono flex-1"
             />
             <div 
-              className="w-8 h-8 rounded border border-border cursor-pointer shrink-0"
+              className="w-6 h-6 rounded border border-border cursor-pointer shrink-0"
               style={{ backgroundColor: convertKodularColor(stringValue) }}
               onClick={() => {/* Open color picker? */}}
             />
           </div>
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-0.5">
             {colorPresets.map(preset => (
               <button
                 key={preset.value}
                 onClick={() => handlePropertyChange(key, preset.value)}
                 className={cn(
-                  "w-5 h-5 rounded border border-border transition-all",
+                  "w-4 h-4 rounded-sm border border-border transition-all",
                   stringValue === preset.value ? "ring-1 ring-primary border-primary" : "hover:scale-110"
                 )}
                 style={{ backgroundColor: convertKodularColor(preset.value) }}
@@ -244,37 +244,35 @@ export function PropertiesPanel({ onShowBlocks }: PropertiesPanelProps) {
     // Size properties (Width, Height)
     if (key === "Width" || key === "Height") {
       return (
-        <div className="space-y-1.5">
-          <div className="flex gap-1">
-            <Input
-              value={stringValue === "-1" ? "Automático" : stringValue === "-2" ? "Preencher" : stringValue}
-              onChange={(e) => {
-                const val = e.target.value
-                if (val === "Automático") handlePropertyChange(key, "-1")
-                else if (val === "Preencher") handlePropertyChange(key, "-2")
-                else handlePropertyChange(key, val)
-              }}
-              className="bg-input border-border text-[11px] h-8 flex-1"
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              className={cn("h-8 px-2 border-border", stringValue === "-1" && "bg-primary/20 border-primary")}
-              onClick={() => handlePropertyChange(key, "-1")}
-              title="Automático"
-            >
-              <div className="w-3.5 h-3.5 border border-current rounded-sm opacity-60" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className={cn("h-8 px-2 border-border", stringValue === "-2" && "bg-primary/20 border-primary")}
-              onClick={() => handlePropertyChange(key, "-2")}
-              title="Preencher Principal"
-            >
-              <Zap className="w-3.5 h-3.5" />
-            </Button>
-          </div>
+        <div className="flex gap-0.5">
+          <Input
+            value={stringValue === "-1" ? "Auto" : stringValue === "-2" ? "Fill" : stringValue}
+            onChange={(e) => {
+              const val = e.target.value
+              if (val === "Auto") handlePropertyChange(key, "-1")
+              else if (val === "Fill") handlePropertyChange(key, "-2")
+              else handlePropertyChange(key, val)
+            }}
+            className="bg-input border-border text-[10px] h-6 flex-1"
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            className={cn("h-6 w-6 p-0 border-border", stringValue === "-1" && "bg-primary/20 border-primary")}
+            onClick={() => handlePropertyChange(key, "-1")}
+            title="Auto"
+          >
+            <div className="w-2.5 h-2.5 border border-current rounded-sm opacity-60" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className={cn("h-6 w-6 p-0 border-border", stringValue === "-2" && "bg-primary/20 border-primary")}
+            onClick={() => handlePropertyChange(key, "-2")}
+            title="Fill"
+          >
+            <Zap className="w-2.5 h-2.5" />
+          </Button>
         </div>
       )
     }
@@ -283,18 +281,18 @@ export function PropertiesPanel({ onShowBlocks }: PropertiesPanelProps) {
     if (key.includes("Align") || key === "TextAlignment") {
       const isHorizontal = key.includes("Horizontal") || key === "TextAlignment"
       const labels = isHorizontal 
-        ? ["Esquerda", "Centro", "Direita"] 
+        ? ["Esq", "Centro", "Dir"] 
         : ["Topo", "Centro", "Base"]
         
       return (
         <Select value={stringValue} onValueChange={(v) => handlePropertyChange(key, v)}>
-          <SelectTrigger className="bg-input border-border text-[11px] h-8">
+          <SelectTrigger className="bg-input border-border text-[10px] h-6">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {labels.map((label, idx) => (
-              <SelectItem key={idx} value={String(idx + 1)} className="text-[11px]">
-                {label} : {idx + 1}
+              <SelectItem key={idx} value={String(idx + 1)} className="text-[10px]">
+                {label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -329,14 +327,14 @@ export function PropertiesPanel({ onShowBlocks }: PropertiesPanelProps) {
     if (key === "FontTypeface") {
       return (
         <Select value={stringValue} onValueChange={(v) => handlePropertyChange(key, v)}>
-          <SelectTrigger className="bg-input border-border text-[11px] h-8">
+          <SelectTrigger className="bg-input border-border text-[10px] h-6">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="0" className="text-[11px]">Padrão</SelectItem>
-            <SelectItem value="1" className="text-[11px]">Sans Serif</SelectItem>
-            <SelectItem value="2" className="text-[11px]">Serif</SelectItem>
-            <SelectItem value="3" className="text-[11px]">Monospace</SelectItem>
+            <SelectItem value="0" className="text-[10px]">Padrao</SelectItem>
+            <SelectItem value="1" className="text-[10px]">Sans</SelectItem>
+            <SelectItem value="2" className="text-[10px]">Serif</SelectItem>
+            <SelectItem value="3" className="text-[10px]">Mono</SelectItem>
           </SelectContent>
         </Select>
       )
@@ -346,14 +344,14 @@ export function PropertiesPanel({ onShowBlocks }: PropertiesPanelProps) {
     if (key === "Shape") {
       return (
         <Select value={stringValue} onValueChange={(v) => handlePropertyChange(key, v)}>
-          <SelectTrigger className="bg-input border-border text-[11px] h-8">
+          <SelectTrigger className="bg-input border-border text-[10px] h-6">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="0" className="text-[11px]">Padrão</SelectItem>
-            <SelectItem value="1" className="text-[11px]">Arredondado</SelectItem>
-            <SelectItem value="2" className="text-[11px]">Retangular</SelectItem>
-            <SelectItem value="3" className="text-[11px]">Oval</SelectItem>
+            <SelectItem value="0" className="text-[10px]">Padrao</SelectItem>
+            <SelectItem value="1" className="text-[10px]">Arredondado</SelectItem>
+            <SelectItem value="2" className="text-[10px]">Retangular</SelectItem>
+            <SelectItem value="3" className="text-[10px]">Oval</SelectItem>
           </SelectContent>
         </Select>
       )
@@ -366,7 +364,7 @@ export function PropertiesPanel({ onShowBlocks }: PropertiesPanelProps) {
           type="number"
           value={stringValue}
           onChange={(val: string, skip: boolean) => handlePropertyChange(key, val, skip)}
-          className="bg-input border-border text-[11px] h-8 font-mono"
+          className="bg-input border-border text-[10px] h-6 font-mono"
         />
       )
     }
@@ -376,55 +374,55 @@ export function PropertiesPanel({ onShowBlocks }: PropertiesPanelProps) {
       <RealtimeInput
         value={stringValue === "undefined" ? "" : stringValue}
         onChange={(val: string, skip: boolean) => handlePropertyChange(key, val, skip)}
-        className="bg-input border-border text-[11px] h-8"
+        className="bg-input border-border text-[10px] h-6"
         placeholder={key}
       />
     )
   }
 
   return (
-    <aside className="w-[300px] bg-card border-l border-border flex flex-col shrink-0 h-full overflow-hidden">
+    <aside className="w-[240px] bg-card border-l border-border/50 flex flex-col shrink-0 h-full overflow-hidden">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-border flex justify-between items-center shrink-0">
-        <h3 className="text-sm font-bold">PROPRIEDADES</h3>
+      <div className="px-3 py-2 border-b border-border/50 flex justify-between items-center shrink-0">
+        <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Propriedades</h3>
         <X 
-          className="w-4 h-4 cursor-pointer text-muted-foreground hover:text-foreground transition-colors" 
+          className="w-3.5 h-3.5 cursor-pointer text-muted-foreground hover:text-foreground transition-colors" 
           onClick={() => setShowProperties(false)}
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto min-h-0 p-4">
+      <div className="flex-1 overflow-y-auto min-h-0 p-2.5">
         {selectedComponent ? (
           <>
             {/* Component Header */}
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <div className="text-primary font-bold text-sm">
+            <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-border/30">
+              <div className="min-w-0 flex-1">
+                <div className="text-primary font-semibold text-xs truncate">
                   {selectedComponent.$Name}
                 </div>
-                <div className="text-[10px] text-muted-foreground">
-                  {selectedComponent.$Type}
+                <div className="text-[9px] text-muted-foreground truncate">
+                  {selectedComponent.$Type.split('.').pop()}
                 </div>
               </div>
-              <div className="flex gap-1">
+              <div className="flex gap-0.5 shrink-0">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 w-7 p-0"
+                  className="h-6 w-6 p-0"
                   onClick={() => {/* Copy component */}}
                   title="Duplicar"
                 >
-                  <Copy className="w-3.5 h-3.5" />
+                  <Copy className="w-3 h-3" />
                 </Button>
                 {selectedComponent.$Name !== currentProject?.Properties.$Name && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                    className="h-6 w-6 p-0 text-destructive hover:text-destructive"
                     onClick={handleDelete}
                     title="Excluir"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-3 h-3" />
                   </Button>
                 )}
               </div>
@@ -436,27 +434,27 @@ export function PropertiesPanel({ onShowBlocks }: PropertiesPanelProps) {
               const categoryConfig = propertyCategories[category as keyof typeof propertyCategories]
               
               return (
-                <div key={category} className="mb-3">
+                <div key={category} className="mb-2">
                   <button
                     onClick={() => toggleSection(category)}
-                    className="w-full flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 hover:text-foreground transition-colors"
+                    className="w-full flex items-center gap-1.5 text-[9px] font-bold text-muted-foreground uppercase tracking-wide mb-1.5 hover:text-foreground transition-colors"
                   >
                     {expandedSections[category] ? (
-                      <ChevronDown className="w-3 h-3" />
+                      <ChevronDown className="w-2.5 h-2.5" />
                     ) : (
-                      <ChevronRight className="w-3 h-3" />
+                      <ChevronRight className="w-2.5 h-2.5" />
                     )}
                     {categoryConfig.name}
-                    <span className="text-[9px] text-muted-foreground/50 ml-auto">
+                    <span className="text-[8px] text-muted-foreground/50 ml-auto">
                       {properties.length}
                     </span>
                   </button>
                   
                   {expandedSections[category] && (
-                    <div className="space-y-2 pl-5">
+                    <div className="space-y-1.5 pl-4">
                       {properties.map(([key, value]) => (
                         <div key={key}>
-                          <Label className="text-[10px] text-muted-foreground uppercase block mb-1">
+                          <Label className="text-[9px] text-muted-foreground uppercase block mb-0.5">
                             {key}
                           </Label>
                           {renderPropertyInput(key, value)}
@@ -476,51 +474,49 @@ export function PropertiesPanel({ onShowBlocks }: PropertiesPanelProps) {
       </div>
 
       {/* Events Section */}
-      <div className="p-4 border-t border-border bg-black/5 shrink-0">
+      <div className="p-2.5 border-t border-border/50 bg-black/5 shrink-0">
         <button
           onClick={() => toggleSection("events")}
-          className="w-full flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 hover:text-foreground"
+          className="w-full flex items-center gap-1.5 text-[9px] font-bold text-muted-foreground uppercase tracking-wide mb-1.5 hover:text-foreground"
         >
-          {expandedSections.events ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-          EVENTOS DO COMPONENTE
-          <Zap className="w-3 h-3 text-amber-500" />
+          {expandedSections.events ? <ChevronDown className="w-2.5 h-2.5" /> : <ChevronRight className="w-2.5 h-2.5" />}
+          Eventos
+          <Zap className="w-2.5 h-2.5 text-amber-500" />
         </button>
 
         {expandedSections.events && (
           <>
             {componentBlocks.length > 0 ? (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {componentBlocks.map((block, i) => (
                   <div 
                     key={i}
-                    className="bg-secondary border-l-4 border-amber-500 p-2 rounded text-xs"
+                    className="bg-secondary border-l-2 border-amber-500 p-1.5 rounded text-[10px]"
                   >
-                    <div className="font-bold flex items-center gap-1.5">
-                      <Zap className="w-3 h-3" />
+                    <div className="font-semibold flex items-center gap-1">
+                      <Zap className="w-2.5 h-2.5" />
                       {block.eventName}
                     </div>
-                    <div className="text-muted-foreground text-[10px] mt-0.5">
+                    <div className="text-muted-foreground text-[9px]">
                       {block.summary}
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-[10px] text-muted-foreground">
                 Nenhum evento configurado.
               </p>
             )}
 
-            <div className="flex gap-2 mt-3">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full text-[10px]"
-                onClick={onShowBlocks}
-              >
-                VER TODOS OS BLOCOS
-              </Button>
-            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full text-[9px] h-7 mt-2"
+              onClick={onShowBlocks}
+            >
+              VER BLOCOS
+            </Button>
           </>
         )}
       </div>
