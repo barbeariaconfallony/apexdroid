@@ -534,11 +534,36 @@ const projectTemplates: ProjectTemplate[] = [
 
 // Category metadata
 const categories = [
-  { id: "all", name: "Todos", icon: Layout },
-  { id: "starter", name: "Iniciante", icon: Star },
-  { id: "utility", name: "Utilidades", icon: Calculator },
-  { id: "social", name: "Social", icon: MessageCircle },
-  { id: "business", name: "Negocios", icon: ShoppingCart },
+  { id: "all", name: "Todos", icon: Layout, type: "template" },
+  { id: "starter", name: "Iniciante", icon: Star, type: "template" },
+  { id: "utility", name: "Utilidades", icon: Calculator, type: "template" },
+  { id: "social", name: "Social", icon: MessageCircle, type: "template" },
+  { id: "business", name: "Negocios", icon: ShoppingCart, type: "template" },
+  { id: "ext_ui", name: "Ext. UI", icon: Zap, type: "extension" },
+  { id: "ext_api", name: "Ext. API", icon: Cloud, type: "extension" },
+]
+
+const extensions = [
+  {
+    id: "ext_lottie",
+    name: "Lottie Animations",
+    description: "Adicione animações JSON leves ao seu app.",
+    author: "APEX Team",
+    price: "Gratis",
+    rating: 4.8,
+    installs: "12k",
+    icon: Zap
+  },
+  {
+    id: "ext_firebase",
+    name: "Firebase Connector",
+    description: "Integração completa com Firestore e Auth.",
+    author: "Google",
+    price: "Gratis",
+    rating: 4.9,
+    installs: "45k",
+    icon: Cloud
+  }
 ]
 
 interface TemplatesModalProps {
@@ -548,6 +573,7 @@ interface TemplatesModalProps {
 
 export function TemplatesModal({ isOpen, onClose }: TemplatesModalProps) {
   const { setCurrentProject, setCurrentScreenName, saveSnapshot, setShowWelcome } = useIDEStore()
+  const [activeTab, setActiveTab] = useState<"templates" | "extensions">("templates")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedTemplate, setSelectedTemplate] = useState<ProjectTemplate | null>(null)
@@ -598,9 +624,31 @@ export function TemplatesModal({ isOpen, onClose }: TemplatesModalProps) {
       <div className="bg-card border border-border rounded-xl w-full max-w-4xl h-[80vh] shadow-2xl flex flex-col">
         {/* Header */}
         <div className="px-5 py-4 border-b border-border flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2.5">
-            <Zap className="w-5 h-5 text-primary" />
-            <h2 className="font-semibold">Galeria de Templates</h2>
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2.5">
+              <ShoppingCart className="w-5 h-5 text-primary" />
+              <h2 className="font-bold text-lg tracking-tight">Marketplace APEX</h2>
+            </div>
+            <div className="flex bg-secondary rounded-lg p-1 gap-1">
+              <button 
+                onClick={() => {setActiveTab("templates"); setSelectedCategory("all")}}
+                className={cn(
+                  "px-4 py-1.5 rounded-md text-xs font-bold transition-all",
+                  activeTab === "templates" ? "bg-card shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Templates
+              </button>
+              <button 
+                onClick={() => {setActiveTab("extensions"); setSelectedCategory("ext_ui")}}
+                className={cn(
+                  "px-4 py-1.5 rounded-md text-xs font-bold transition-all",
+                  activeTab === "extensions" ? "bg-card shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Extensões
+              </button>
+            </div>
           </div>
           <X 
             className="w-5 h-5 cursor-pointer text-muted-foreground hover:text-foreground" 
@@ -622,7 +670,7 @@ export function TemplatesModal({ isOpen, onClose }: TemplatesModalProps) {
             </div>
             
             <div className="space-y-1">
-              {categories.map((cat) => (
+              {categories.filter(c => activeTab === "templates" ? c.type === "template" : c.type === "extension").map((cat) => (
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
@@ -643,12 +691,7 @@ export function TemplatesModal({ isOpen, onClose }: TemplatesModalProps) {
           {/* Templates Grid */}
           <ScrollArea className="flex-1">
             <div className="p-4">
-              {filteredTemplates.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                  <Layout className="w-12 h-12 mb-3 opacity-30" />
-                  <p className="text-sm">Nenhum template encontrado</p>
-                </div>
-              ) : (
+              {activeTab === "templates" ? (
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredTemplates.map((template) => (
                     <div
@@ -661,7 +704,7 @@ export function TemplatesModal({ isOpen, onClose }: TemplatesModalProps) {
                           : "border-border hover:border-primary/50"
                       )}
                     >
-                      {/* Preview Area */}
+                      {/* ... (rest of template card) */}
                       <div className="aspect-[4/3] bg-secondary/50 flex items-center justify-center relative">
                         <div className="w-16 h-28 bg-background rounded-lg border border-border shadow-sm flex flex-col overflow-hidden">
                           <div className="h-1.5 bg-zinc-900" />
@@ -672,16 +715,10 @@ export function TemplatesModal({ isOpen, onClose }: TemplatesModalProps) {
                             ))}
                           </div>
                         </div>
-                        
-                        {/* Hover overlay */}
                         <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <Button size="sm" className="text-xs">
-                            Usar Template
-                          </Button>
+                          <Button size="sm" className="text-xs">Ver Detalhes</Button>
                         </div>
                       </div>
-                      
-                      {/* Info */}
                       <div className="p-3">
                         <div className="flex items-start gap-2 mb-2">
                           <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -689,25 +726,39 @@ export function TemplatesModal({ isOpen, onClose }: TemplatesModalProps) {
                           </div>
                           <div className="flex-1 min-w-0">
                             <h3 className="text-sm font-medium truncate">{template.name}</h3>
-                            <p className="text-[11px] text-muted-foreground line-clamp-2">
-                              {template.description}
-                            </p>
+                            <p className="text-[11px] text-muted-foreground line-clamp-2">{template.description}</p>
                           </div>
                         </div>
-                        
-                        <div className="flex items-center gap-2 text-[10px]">
-                          <span className={cn(
-                            "px-1.5 py-0.5 rounded",
-                            getDifficultyColor(template.difficulty)
-                          )}>
-                            {getDifficultyLabel(template.difficulty)}
-                          </span>
-                          <span className="text-muted-foreground">
-                            {template.screens} tela{template.screens !== 1 ? "s" : ""}
-                          </span>
-                          <span className="text-muted-foreground">
-                            {template.components} comp.
-                          </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {extensions.map((ext) => (
+                    <div key={ext.id} className="p-4 bg-card border border-border rounded-xl hover:border-primary transition-all group">
+                      <div className="flex gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                          <ext.icon className="w-6 h-6 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start">
+                            <h3 className="font-bold text-sm">{ext.name}</h3>
+                            <span className="text-[10px] bg-secondary px-2 py-0.5 rounded-full font-bold">{ext.price}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{ext.description}</p>
+                          <div className="flex items-center gap-3 mt-3">
+                            <div className="flex items-center gap-1 text-[10px] text-amber-500 font-bold">
+                              <Star className="w-3 h-3 fill-amber-500" />
+                              {ext.rating}
+                            </div>
+                            <div className="text-[10px] text-muted-foreground font-medium">
+                              {ext.installs} instalações
+                            </div>
+                            <Button variant="link" size="sm" className="h-auto p-0 text-[10px] ml-auto">
+                              Instalar
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </div>

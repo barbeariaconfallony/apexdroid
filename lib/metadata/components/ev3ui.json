@@ -1,0 +1,7 @@
+{
+  "name": "EV3 UI",
+  "type": "EV3UI",
+  "properties": [
+    "Bluetooth Client"
+  ]
+}

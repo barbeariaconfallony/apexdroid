@@ -1,0 +1,11 @@
+{
+  "name": "Wallpaper",
+  "type": "Wallpaper",
+  "properties": [
+    "Desired Minimum Height",
+    "Desired Minimum Width",
+    "Is Set Wallpaper Allowed",
+    "Is Wallpaper Supported",
+    "Save Wallpaper As"
+  ]
+}

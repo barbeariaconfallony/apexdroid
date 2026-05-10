@@ -1,0 +1,27 @@
+{
+  "name": "Google Maps",
+  "type": "GoogleMaps",
+  "properties": [
+    "API Key",
+    "Camera Angle",
+    "Camera Rotation",
+    "Camera Zoom Level",
+    "Compass Enabled",
+    "Height",
+    "Height Percent",
+    "Map Camera Changed Listener Enabled",
+    "Map Click Listener Enabled",
+    "Map Long Click Listener Enabled",
+    "Map Type",
+    "My Location Enabled",
+    "Rotate Enabled",
+    "Scroll Enabled",
+    "Style",
+    "Theme",
+    "Visible",
+    "Width",
+    "Width Percent",
+    "Zoom Control Enabled",
+    "Zoom Gesture Enabled"
+  ]
+}

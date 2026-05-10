@@ -1,0 +1,19 @@
+{
+  "name": "Image",
+  "type": "Image",
+  "properties": [
+    "Animated",
+    "Animation",
+    "Clickable",
+    "Height",
+    "Height Percent",
+    "Image Tint Color",
+    "Picture",
+    "Rotation Angle",
+    "Scale Picture To Fit",
+    "Scaling",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

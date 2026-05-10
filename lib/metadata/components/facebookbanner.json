@@ -1,0 +1,8 @@
+{
+  "name": "Facebook Banner",
+  "type": "FacebookBanner",
+  "properties": [
+    "Placement ID",
+    "Visible"
+  ]
+}

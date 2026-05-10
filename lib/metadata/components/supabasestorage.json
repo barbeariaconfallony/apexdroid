@@ -1,0 +1,10 @@
+{
+  "name": "Supabase Storage",
+  "type": "SupabaseStorage",
+  "properties": [
+    "Access Token",
+    "Bucket",
+    "Project URL",
+    "Publishable API Key"
+  ]
+}

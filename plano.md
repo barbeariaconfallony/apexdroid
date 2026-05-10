@@ -1,101 +1,85 @@
-## Plano de Melhoria - APEX DROID IDE
+# 🚀 MASTER PLAN: APEX DROID IDE (Ultimate Edition)
 
-### **Fase 1: Melhorias na Interface (UI/UX Profissional)**
-
-| Item | Descrição | Prioridade
-|-----|-----|-----
-| **1.1 Tema e Cores** | Refinar o sistema de cores com design tokens profissionais, adicionar temas Light/Dark mais sofisticados | Alta
-| **1.2 Header Profissional** | Redesign do header com breadcrumb do projeto atual, status de conexao, e acoes rapidas | Alta
-| **1.3 Sidebar Melhorada** | Adicionar busca global, atalhos, favoritos de componentes, e colapsar/expandir inteligente | Media
-| **1.4 Preview Responsivo** | Adicionar mais devices, zoom suave, ruler/guides para alinhamento | Media
-| **1.5 Properties Panel** | Adicionar presets de estilo, copiar/colar propriedades, historico de alteracoes | Media
-| **1.6 Toast Notifications** | Sistema de notificacoes profissional com acoes e progresso | Alta
-
+Este plano detalha a evolução da APEX DROID IDE de uma ferramenta de edição para o ecossistema de desenvolvimento mobile mais avançado e inteligente do mercado, focado em produtividade extrema e design de alta fidelidade.
 
 ---
 
-### **Fase 2: Build APK Real (Integracao com Servidor de Compilacao)**
+## 🧠 FASE 1: Evolução da Inteligência Artificial (O Cérebro)
 
-| Item | Descrição | Prioridade
-|-----|-----|-----
-| **2.1 API de Build** | Criar rota `/api/build` que envia o projeto para compilacao (integracao com servidor RUSH/Kodular Builder externo ou serverless) | Critica
-| **2.2 Build Modal Aprimorado** | Logs em tempo real via WebSocket/SSE, etapas detalhadas, estimativa de tempo | Critica
-| **2.3 Download APK** | Gerar link de download real do APK compilado | Critica
-| **2.4 QR Code** | Gerar QR code para instalacao direta no celular | Alta
-| **2.5 Build Configurations** | Opcoes de debug/release, keystore customizada, versioning automatico | Media
-| **2.6 Build History** | Historico de builds anteriores com status e downloads | Baixa
+### 1.1 Gerador de Lógica por Linguagem Natural (Text-to-Blocks)
+- **Funcionalidade:** O usuário descreve a lógica: *"Quando o sensor de proximidade detectar algo, mude a cor do fundo para vermelho e envie uma notificação"*.
+- **Entrega:** A IA gera automaticamente o XML de blocos (.bky) correspondente, eliminando a necessidade de arrastar blocos manualmente para lógicas complexas.
 
+### 1.2 Designer Autônomo (Auto-Refactor UX)
+- **Funcionalidade:** Um botão "Mágica" que analisa a tela atual e aplica automaticamente princípios de Golden Ratio, espaçamentos consistentes e paletas de cores modernas.
+- **Diferencial:** Transforma um layout amador em uma interface premium em segundos.
 
 ---
 
-### **Fase 3: Funcionalidades da IDE**
+## ✨ FASE 2: Experiência Visual e Animações (Os Olhos)
 
-| Item | Descrição | Prioridade
-|-----|-----|-----
-| **3.1 Drag & Drop Real** | Implementar drag & drop de componentes da paleta para o preview | Alta
-| **3.2 Undo/Redo Completo** | Melhorar sistema de historico com preview das alteracoes | Alta
-| **3.3 Multi-Screen Support** | Navegacao entre telas, criar/deletar telas, screen manager | Alta
-| **3.4 Blocos Visuais** | Editor de blocos visual (estilo Blockly) para logica do app | Media
-| **3.5 Code Export** | Exportar codigo Java/Kotlin gerado | Baixa
-| **3.6 Templates** | Biblioteca de templates de projetos e componentes prontos | Media
+### 2.1 Integração Nativa com Lottie & Rive
+- **Funcionalidade:** Biblioteca integrada para buscar e configurar animações vetoriais (Lottie) diretamente na IDE.
+- **Visualização:** Prévia em tempo real das animações rodando no Phone Preview.
 
+### 2.2 Editor de Temas Dinâmicos (Glassmorphism & Neumorphism)
+- **Funcionalidade:** Controles visuais avançados para criar efeitos de vidro, desfoque e sombras suaves que o Kodular padrão não oferece facilmente.
+- **Saída:** Geração automática das propriedades de decoração de componentes.
 
 ---
 
-### **Fase 4: Integracao com IA**
+## ⚡ FASE 3: Conectividade e Dados (O Coração)
 
-| Item | Descrição | Prioridade
-|-----|-----|-----
-| **4.1 AI Chat Funcional** | Integrar com AI SDK para gerar componentes via chat | Alta
-| **4.2 AI Component Generator** | "Crie um formulario de login" gera componentes automaticamente | Alta
-| **4.3 AI Code Suggestions** | Sugestoes de blocos/logica baseadas no contexto | Media
-| **4.4 AI Debug Assistant** | Analise de erros e sugestoes de correcao | Baixa
+### 3.1 Wizard Visual para Firebase/Supabase
+- **Funcionalidade:** Configuração assistida de Banco de Dados. Em vez de configurar chaves e URLs manualmente, um guia visual conecta o projeto e já gera os blocos de "Login", "Cadastro" e "CRUD".
 
+### 3.2 Cliente API REST Integrado
+- **Funcionalidade:** Testador de APIs dentro da IDE (estilo Postman). Ao validar uma rota, a IA gera automaticamente a estrutura de blocos para consumir esse JSON.
 
 ---
 
-### **Fase 5: Qualidade e Performance**
+## 📱 FASE 4: Testes e Validação em Tempo Real (A Pele)
 
-| Item | Descrição | Prioridade
-|-----|-----|-----
-| **5.1 Loading States** | Skeletons e estados de carregamento profissionais | Alta
-| **5.2 Error Boundaries** | Tratamento de erros gracioso com recuperacao | Alta
-| **5.3 Keyboard Shortcuts** | Atalhos completos (Ctrl+S, Ctrl+Z, Del, etc) | Media
-| **5.4 Persistencia Local** | Salvar projeto localmente (IndexedDB) mesmo sem GitHub | Alta
-| **5.5 Export/Import** | Exportar/importar projetos .aia/.zip | Media
+### 4.1 APEX Companion (Live Sync)
+- **Funcionalidade:** Um aplicativo Android "Companion" que sincroniza via QR Code. Cada mudança na IDE (cor, texto, componente) reflete instantaneamente no dispositivo físico, sem necessidade de build.
 
+### 4.2 Simulador de Sensores
+- **Funcionalidade:** Interface para simular entradas de acelerômetro, GPS e bateria diretamente no preview da IDE para testar comportamentos sem sair da cadeira.
 
 ---
 
-### **Arquitetura de Build APK Proposta**
+## 🛠️ FASE 5: Infraestrutura de Produção (Os Músculos)
 
-```plaintext
-[Frontend IDE] 
-     |
-     v
-[API Route /api/build]
-     |
-     v
-[Build Server (externo)]  <-- Opcoes:
-  - Kodular Companion API     1. Self-hosted RUSH compiler
-  - RUSH Compiler             2. Cloud function com Docker
-  - AppyBuilder Server        3. Servico de build terceiro
-     |
-     v
-[APK gerado + hospedado temporariamente]
-     |
-     v
-[Download URL + QR Code]
-```
+### 5.1 Pipeline de Build Automático (CI/CD)
+- **Funcionalidade:** Integração total com GitHub Actions para compilar APK/AAB assinados em nuvem.
+- **Extra:** Envio automático para o Google Play Console (Internal Testing) com um clique.
+
+### 5.2 Versionamento Visual de Telas
+- **Funcionalidade:** Timeline visual estilo "Time Machine" para ver como a tela era há 1 hora, ontem ou na semana passada, permitindo restaurar estados específicos visualmente.
 
 ---
 
-### **Cronograma Sugerido**
+## 🌍 FASE 6: Ecossistema e Marketplace (A Comunidade)
 
-| Fase | Duracao Estimada
-|-----|-----|-----
-| Fase 1 (UI/UX) | 1-2 semanas
-| Fase 2 (Build APK) | 2-3 semanas
-| Fase 3 (IDE Features) | 2-3 semanas
-| Fase 4 (IA) | 1-2 semanas
-| Fase 5 (Qualidade) | 1 semana
+### 6.1 Marketplace de Extensões e Templates
+- **Funcionalidade:** Loja interna para baixar extensões (.aix) e templates de telas completas (Login, E-commerce, Dashboard) criados pela comunidade.
+
+### 6.2 Colaboração em Tempo Real (Multiplayer via Railway)
+- **Infraestrutura Dedicada (Railway):**
+    - **Servidor de Sincronia:** Implementação de um microserviço Node.js rodando no **Railway** (`index.js` + `Socket.io`).
+    - **Hub de Eventos:** O servidor gerencia "Salas" baseadas na URL do repositório. Quando o Programador A move o mouse ou altera um componente, o servidor emite um evento `broadcast` para todos os outros conectados à mesma sala.
+    - **Latência Zero:** Uso de memória RAM no servidor Railway para processar milhares de eventos de cursor por segundo sem necessidade de escrita em banco de dados externo.
+- **Segurança e Acesso ao GitHub:**
+    - **Acesso Limitado:** Implementação de **Fine-grained Personal Access Tokens (PATs)** ou integração via **GitHub App**. Isso permite que programadores convidados tenham acesso *apenas* ao repositório específico do projeto.
+    - **Autenticação de Túnel:** O servidor Railway valida o Token do GitHub do usuário antes de permitir a entrada na sala de edição.
+- **Presença Visual e Full Mirroring (Espelhamento Total):**
+    - **Ghost Cursors & Labels:** Cursores coloridos com etiquetas que deslizam suavemente.
+    - **Navegação Sincronizada:** Quando o administrador muda de tela, a IDE de todos os colaboradores navega automaticamente para a mesma tela, garantindo que todos falem do mesmo contexto.
+    - **Feedback de Clique:** Exibição de um efeito visual (ripple/glow) com o nome de quem clicou em qualquer botão ou propriedade.
+    - **Live Typing Sync:** Sincronização letra-a-letra em campos de texto e propriedades, permitindo que todos vejam o que está sendo digitado ou apagado em tempo real.
+- **Sincronização de Estado (CRDT):** Uso de Yjs integrado ao Socket.io para garantir que, se dois programadores mudarem a mesma propriedade ao mesmo tempo, o sistema decida automaticamente a versão final sem corromper o arquivo.
+- **Live Preview Coletivo:** O Phone Preview de todos os participantes atualiza simultaneamente via eventos emitidos pelo servidor Railway.
+
+---
+
+> **Nota de Execução:** Este plano foi desenhado para ser implementado modularmente. Cada fase eleva o valor de mercado da APEX DROID IDE para o nível de ferramentas profissionais como FlutterFlow e Jetpack Compose, mas mantendo a simplicidade do sistema de blocos.

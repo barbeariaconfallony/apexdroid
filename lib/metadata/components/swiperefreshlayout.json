@@ -1,0 +1,21 @@
+{
+  "name": "Swipe Refresh Layout",
+  "type": "SwipeRefreshLayout",
+  "properties": [
+    "Align Horizontal",
+    "Align Vertical",
+    "Background Color",
+    "Enabled",
+    "Height",
+    "Height Percent",
+    "Is Refreshing",
+    "Large Size",
+    "Nested Scrolling",
+    "Progress Animation Colors",
+    "Progress Background Color",
+    "Refreshing",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

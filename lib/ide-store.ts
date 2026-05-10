@@ -2,15 +2,17 @@
 
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-import type { 
-  KodularComponent, 
-  ProjectData, 
-  GitHubFile, 
-  ChatMessage, 
+import type {
+  KodularComponent,
+  ProjectData,
+  GitHubFile,
+  ChatMessage,
   Block,
   AISettings,
   CloudUser,
   BuildLog,
+  BuildHistoryItem,
+  BuildResult,
   GitHubRepo,
   GitHubTreeItem,
   ProjectAsset,
@@ -36,14 +38,12 @@ interface IDEState {
   setRepoTree: (tree: GitHubTreeItem[]) => void
   repoTreeLoading: boolean
   setRepoTreeLoading: (loading: boolean) => void
-  
+
   // Project
   currentProject: ProjectData | null
   setCurrentProject: (project: ProjectData | null) => void
   currentFile: GitHubFile | null
   setCurrentFile: (file: GitHubFile | null) => void
-  screens: string[]
-  setScreens: (screens: string[]) => void
   screenFiles: ScreenFile[]
   setScreenFiles: (files: ScreenFile[]) => void
   currentScreenName: string | null
@@ -52,11 +52,11 @@ interface IDEState {
   setProjectAssets: (assets: ProjectAsset[]) => void
   currentBkyContent: string | null
   setCurrentBkyContent: (content: string | null) => void
-  
+
   // Selection
   selectedComponent: KodularComponent | null
   setSelectedComponent: (comp: KodularComponent | null) => void
-  
+
   // UI State
   activeTab: string
   setActiveTab: (tab: string) => void
@@ -64,26 +64,29 @@ interface IDEState {
   setShowProperties: (show: boolean) => void
   showWelcome: boolean
   setShowWelcome: (show: boolean) => void
-  appMode: "edit" | "run"
-  setAppMode: (mode: "edit" | "run") => void
-  
+  appMode: "edit" | "run" | "blocks"
+  setAppMode: (mode: "edit" | "run" | "blocks") => void
+  isSidebarCompact: boolean
+  setIsSidebarCompact: (compact: boolean) => void
+  toggleSidebar: () => void
+
   // Chat
   chatMessages: ChatMessage[]
   addChatMessage: (message: ChatMessage) => void
   clearChat: () => void
-  
+
   // Blocks
   blocks: Block[]
   setBlocks: (blocks: Block[]) => void
-  
+
   // AI Settings
   aiSettings: AISettings
   setAISettings: (settings: AISettings) => void
-  
+
   // Cloud User
   cloudUser: CloudUser | null
   setCloudUser: (user: CloudUser | null) => void
-  
+
   // Build
   buildStatus: "idle" | "active" | "completed" | "failed"
   setBuildStatus: (status: "idle" | "active" | "completed" | "failed") => void
@@ -92,22 +95,42 @@ interface IDEState {
   buildLogs: BuildLog[]
   addBuildLog: (log: BuildLog) => void
   clearBuildLogs: () => void
-  
+
   // History for undo/redo
   history: HistorySnapshot[]
   historyIndex: number
   saveSnapshot: () => void
+  buildHistory: BuildHistoryItem[]
+  currentBuild: BuildResult | null
+  setBuildHistory: (history: BuildHistoryItem[]) => void
+  setCurrentBuild: (build: BuildResult | null) => void
+  connectedUsers: Array<{ id: string; name: string; avatar: string; color: string; lastActive: number }>
+  setConnectedUsers: (users: Array<{ id: string; name: string; avatar: string; color: string; lastActive: number }>) => void
+  isOffline: boolean
+  syncStatus: "synced" | "syncing" | "error" | "offline"
+  setSyncStatus: (status: "synced" | "syncing" | "error" | "offline") => void
+  // AI Operations
+  isThinking: boolean
+  setIsThinking: (thinking: boolean) => void
+  executeAIAction: (action: { 
+    action: string, 
+    type?: string, 
+    parentName?: string, 
+    name?: string, 
+    properties?: Record<string, any>,
+    targetScreen?: string
+  }) => void
   undo: () => void
   redo: () => void
   canUndo: () => boolean
   canRedo: () => boolean
-  
+
   // Drag & Drop
   dragState: DragState
   setDragState: (state: DragState) => void
   startDrag: (componentType: string, sourceType: "palette" | "tree") => void
   endDrag: () => void
-  
+
   // Multi-screen management
   screens: Record<string, Screen>
   addScreen: (name: string) => void
@@ -116,10 +139,10 @@ interface IDEState {
   renameScreen: (oldName: string, newName: string) => void
   switchScreen: (name: string) => void
   getScreenNames: () => string[]
-  
+
   // Component operations
-  updateComponent: (name: string, props: Record<string, unknown>) => void
-  addComponent: (parentName: string, type: string) => void
+  updateComponent: (name: string, props: Record<string, unknown>, skipSnapshot?: boolean) => void
+  addComponent: (parentName: string, type: string, initialProps?: Record<string, any>) => string | undefined
   removeComponent: (name: string) => void
   findComponent: (root: KodularComponent, name: string) => KodularComponent | null
 }
@@ -127,9 +150,15 @@ interface IDEState {
 export const useIDEStore = create<IDEState>()(
   persist(
     (set, get) => ({
-      // GitHub
-      ghToken: null,
-      setGhToken: (token) => set({ ghToken: token }),
+      // Inicializar ghToken com valor do localStorage (fallback)
+      ghToken: typeof window !== 'undefined' ? localStorage.getItem('apex_gh_token_fallback') : null,
+      setGhToken: (token) => {
+        if (typeof window !== 'undefined') {
+          if (token) localStorage.setItem('apex_gh_token_fallback', token)
+          else localStorage.removeItem('apex_gh_token_fallback')
+        }
+        set({ ghToken: token })
+      },
       ghRepos: [],
       setGhRepos: (repos) => set({ ghRepos: repos }),
       ghReposLoading: false,
@@ -142,14 +171,12 @@ export const useIDEStore = create<IDEState>()(
       setRepoTree: (tree) => set({ repoTree: tree }),
       repoTreeLoading: false,
       setRepoTreeLoading: (loading) => set({ repoTreeLoading: loading }),
-      
+
       // Project
       currentProject: null,
       setCurrentProject: (project) => set({ currentProject: project }),
       currentFile: null,
       setCurrentFile: (file) => set({ currentFile: file }),
-      screens: [],
-      setScreens: (screens) => set({ screens }),
       screenFiles: [],
       setScreenFiles: (files) => set({ screenFiles: files }),
       currentScreenName: null,
@@ -158,11 +185,11 @@ export const useIDEStore = create<IDEState>()(
       setProjectAssets: (assets) => set({ projectAssets: assets }),
       currentBkyContent: null,
       setCurrentBkyContent: (content) => set({ currentBkyContent: content }),
-      
+
       // Selection
       selectedComponent: null,
       setSelectedComponent: (comp) => set({ selectedComponent: comp }),
-      
+
       // UI State
       activeTab: "componentes",
       setActiveTab: (tab) => set({ activeTab: tab }),
@@ -172,22 +199,27 @@ export const useIDEStore = create<IDEState>()(
       setShowWelcome: (show) => set({ showWelcome: show }),
       appMode: "edit",
       setAppMode: (mode) => set({ appMode: mode }),
-      
+      isSidebarCompact: false,
+      setIsSidebarCompact: (compact) => set({ isSidebarCompact: compact }),
+      toggleSidebar: () => set((state) => ({ isSidebarCompact: !state.isSidebarCompact })),
+
       // Chat
       chatMessages: [
         { id: "1", role: "assistant", content: "Olá! Eu sou o APEX DROID. Como posso ajudar com seu projeto hoje?" }
       ],
-      addChatMessage: (message) => set((state) => ({ 
-        chatMessages: [...state.chatMessages, message] 
+      addChatMessage: (message) => set((state) => ({
+        chatMessages: [...state.chatMessages, message]
       })),
-      clearChat: () => set({ chatMessages: [
-        { id: "1", role: "assistant", content: "Olá! Eu sou o APEX DROID. Como posso ajudar com seu projeto hoje?" }
-      ]}),
-      
+      clearChat: () => set({
+        chatMessages: [
+          { id: "1", role: "assistant", content: "Olá! Eu sou o APEX DROID. Como posso ajudar com seu projeto hoje?" }
+        ]
+      }),
+
       // Blocks
       blocks: [],
       setBlocks: (blocks) => set({ blocks }),
-      
+
       // AI Settings
       aiSettings: {
         provider: "groq",
@@ -196,47 +228,58 @@ export const useIDEStore = create<IDEState>()(
         baseUrl: "https://api.groq.com/openai/v1"
       },
       setAISettings: (settings) => set({ aiSettings: settings }),
-      
+
       // Cloud User
       cloudUser: null,
       setCloudUser: (user) => set({ cloudUser: user }),
-      
+
       // Build
       buildStatus: "idle",
       setBuildStatus: (status) => set({ buildStatus: status }),
       buildProgress: 0,
       setBuildProgress: (progress) => set({ buildProgress: progress }),
       buildLogs: [],
-      addBuildLog: (log) => set((state) => ({ 
-        buildLogs: [...state.buildLogs, log] 
+      addBuildLog: (log) => set((state) => ({
+        buildLogs: [...state.buildLogs, log]
       })),
       clearBuildLogs: () => set({ buildLogs: [] }),
-      
+
       // History with undo/redo
       history: [],
       historyIndex: -1,
       saveSnapshot: () => {
-        const { currentProject, currentScreenName, history, historyIndex } = get()
+        const { currentProject, currentScreenName, history, historyIndex, activeTab, selectedComponent } = get()
         if (!currentProject) return
-        
+
         // Create snapshot
         const snapshot: HistorySnapshot = {
           screens: { [currentScreenName || "Screen1"]: JSON.parse(JSON.stringify(currentProject)) },
           currentScreenName,
+          activeTab,
+          selectedComponentName: selectedComponent?.$Name,
           timestamp: Date.now()
         }
-        
+
         // Trim future history if we're not at the end
         const newHistory = history.slice(0, historyIndex + 1)
         newHistory.push(snapshot)
-        
+
         // Limit history to 50 snapshots
         if (newHistory.length > 50) {
           newHistory.shift()
         }
-        
+
         set({ history: newHistory, historyIndex: newHistory.length - 1 })
       },
+      buildHistory: [],
+      currentBuild: null,
+      setBuildHistory: (history) => set({ buildHistory: history }),
+      setCurrentBuild: (build) => set({ currentBuild: build }),
+      connectedUsers: [],
+      setConnectedUsers: (users) => set({ connectedUsers: users }),
+      isOffline: false,
+      syncStatus: "synced",
+      setSyncStatus: (status) => set({ syncStatus: status }),
       undo: () => {
         const { history, historyIndex, currentScreenName } = get()
         if (historyIndex > 0) {
@@ -245,7 +288,18 @@ export const useIDEStore = create<IDEState>()(
           const screenName = currentScreenName || "Screen1"
           const project = snapshot.screens[screenName]
           if (project) {
-            set({ historyIndex: newIndex, currentProject: JSON.parse(JSON.stringify(project)) })
+            const selectedName = snapshot.selectedComponentName
+            let selectedComp = null
+            if (selectedName) {
+              selectedComp = get().findComponent(project.Properties, selectedName)
+            }
+            
+            set({ 
+              historyIndex: newIndex, 
+              currentProject: JSON.parse(JSON.stringify(project)),
+              activeTab: snapshot.activeTab || get().activeTab,
+              selectedComponent: selectedComp
+            })
           }
         }
       },
@@ -257,7 +311,18 @@ export const useIDEStore = create<IDEState>()(
           const screenName = currentScreenName || "Screen1"
           const project = snapshot.screens[screenName]
           if (project) {
-            set({ historyIndex: newIndex, currentProject: JSON.parse(JSON.stringify(project)) })
+            const selectedName = snapshot.selectedComponentName
+            let selectedComp = null
+            if (selectedName) {
+              selectedComp = get().findComponent(project.Properties, selectedName)
+            }
+
+            set({ 
+              historyIndex: newIndex, 
+              currentProject: JSON.parse(JSON.stringify(project)),
+              activeTab: snapshot.activeTab || get().activeTab,
+              selectedComponent: selectedComp
+            })
           }
         }
       },
@@ -269,7 +334,7 @@ export const useIDEStore = create<IDEState>()(
         const { history, historyIndex } = get()
         return historyIndex < history.length - 1
       },
-      
+
       // Drag & Drop state
       dragState: {
         isDragging: false,
@@ -277,19 +342,19 @@ export const useIDEStore = create<IDEState>()(
         sourceType: null
       },
       setDragState: (state) => set({ dragState: state }),
-      startDrag: (componentType, sourceType) => set({ 
-        dragState: { isDragging: true, componentType, sourceType } 
+      startDrag: (componentType, sourceType) => set({
+        dragState: { isDragging: true, componentType, sourceType }
       }),
-      endDrag: () => set({ 
-        dragState: { isDragging: false, componentType: null, sourceType: null } 
+      endDrag: () => set({
+        dragState: { isDragging: false, componentType: null, sourceType: null }
       }),
-      
+
       // Multi-screen management
       screens: {},
       addScreen: (name) => {
         const { screens, saveSnapshot } = get()
         if (screens[name]) return // Already exists
-        
+
         const newScreen: Screen = {
           name,
           data: {
@@ -302,27 +367,27 @@ export const useIDEStore = create<IDEState>()(
           },
           bkyContent: null
         }
-        
+
         set({ screens: { ...screens, [name]: newScreen } })
         saveSnapshot()
       },
       removeScreen: (name) => {
         const { screens, currentScreenName, saveSnapshot } = get()
         if (Object.keys(screens).length <= 1) return // Can't remove last screen
-        
+
         const newScreens = { ...screens }
         delete newScreens[name]
-        
+
         // If removing current screen, switch to another
         let newCurrentScreen = currentScreenName
         if (currentScreenName === name) {
           newCurrentScreen = Object.keys(newScreens)[0]
-          set({ 
+          set({
             currentScreenName: newCurrentScreen,
             currentProject: newScreens[newCurrentScreen]?.data || null
           })
         }
-        
+
         set({ screens: newScreens })
         saveSnapshot()
       },
@@ -330,7 +395,7 @@ export const useIDEStore = create<IDEState>()(
         const { screens, saveSnapshot } = get()
         const screen = screens[name]
         if (!screen) return
-        
+
         // Generate unique name
         let counter = 1
         let newName = `${name}_copy`
@@ -338,29 +403,29 @@ export const useIDEStore = create<IDEState>()(
           newName = `${name}_copy${counter}`
           counter++
         }
-        
+
         const newScreen: Screen = {
           name: newName,
           data: screen.data ? JSON.parse(JSON.stringify(screen.data)) : null,
           bkyContent: screen.bkyContent
         }
-        
+
         if (newScreen.data) {
           newScreen.data.Properties.$Name = newName
           newScreen.data.Properties.Title = newName
         }
-        
+
         set({ screens: { ...screens, [newName]: newScreen } })
         saveSnapshot()
       },
       renameScreen: (oldName, newName) => {
         const { screens, currentScreenName, saveSnapshot } = get()
         if (!screens[oldName] || screens[newName]) return
-        
+
         const screen = screens[oldName]
         const newScreens = { ...screens }
         delete newScreens[oldName]
-        
+
         const renamedScreen: Screen = {
           ...screen,
           name: newName,
@@ -373,10 +438,10 @@ export const useIDEStore = create<IDEState>()(
             }
           } : null
         }
-        
+
         newScreens[newName] = renamedScreen
-        
-        set({ 
+
+        set({
           screens: newScreens,
           currentScreenName: currentScreenName === oldName ? newName : currentScreenName
         })
@@ -386,7 +451,7 @@ export const useIDEStore = create<IDEState>()(
         const { screens } = get()
         const screen = screens[name]
         if (screen) {
-          set({ 
+          set({
             currentScreenName: name,
             currentProject: screen.data,
             currentBkyContent: screen.bkyContent,
@@ -398,7 +463,7 @@ export const useIDEStore = create<IDEState>()(
         const { screens } = get()
         return Object.keys(screens)
       },
-      
+
       // Component operations
       findComponent: (root, name) => {
         if (root.$Name === name) return root
@@ -410,25 +475,37 @@ export const useIDEStore = create<IDEState>()(
         }
         return null
       },
-      
-      updateComponent: (name, props) => {
-        const { currentProject, findComponent, saveSnapshot } = get()
+
+      updateComponent: (name, props, skipSnapshot = false) => {
+        const { currentProject, findComponent, saveSnapshot, selectedComponent } = get()
         if (!currentProject) return
         const comp = findComponent(currentProject.Properties, name)
         if (comp) {
           Object.assign(comp, props)
-          saveSnapshot()
-          set({ currentProject: { ...currentProject } })
+          const newProject = JSON.parse(JSON.stringify(currentProject))
+          
+          const updates: Partial<IDEState> = { currentProject: newProject }
+          
+          // Fix: update selectedComponent to point to the new reference so PropertiesPanel stays stable
+          if (selectedComponent && selectedComponent.$Name === name) {
+             updates.selectedComponent = get().findComponent(newProject.Properties, name) || newProject.Properties
+          }
+          
+          set(updates)
+
+          if (!skipSnapshot) {
+            saveSnapshot()
+          }
         }
       },
-      
-      addComponent: (parentName, type) => {
+
+      addComponent: (parentName, type, initialProps) => {
         const { currentProject, findComponent, saveSnapshot } = get()
-        if (!currentProject) return
+        if (!currentProject) return undefined
         const parent = findComponent(currentProject.Properties, parentName)
         if (parent) {
           if (!parent.$Components) parent.$Components = []
-          
+
           // Generate unique name
           let counter = 1
           const isNameUnique = (name: string): boolean => {
@@ -443,26 +520,29 @@ export const useIDEStore = create<IDEState>()(
             }
             return check(currentProject.Properties)
           }
-          
+
           while (!isNameUnique(type + counter)) counter++
           const newName = type + counter
-          
+
           const newComp: KodularComponent = {
             $Type: type,
-            $Name: newName
+            $Name: newName,
+            ...initialProps
           }
-          
+
           parent.$Components.push(newComp)
           saveSnapshot()
-          set({ currentProject: { ...currentProject } })
+          set({ currentProject: JSON.parse(JSON.stringify(currentProject)) })
+          return newName
         }
+        return undefined
       },
-      
+
       removeComponent: (name) => {
         const { currentProject, saveSnapshot } = get()
         if (!currentProject) return
         if (name === currentProject.Properties.$Name) return
-        
+
         const removeFromParent = (root: KodularComponent): boolean => {
           if (root.$Components) {
             const idx = root.$Components.findIndex(c => c.$Name === name)
@@ -476,15 +556,119 @@ export const useIDEStore = create<IDEState>()(
           }
           return false
         }
-        
+
         if (removeFromParent(currentProject.Properties)) {
           saveSnapshot()
-          set({ currentProject: { ...currentProject }, selectedComponent: null })
+          set({ currentProject: JSON.parse(JSON.stringify(currentProject)), selectedComponent: null })
+        }
+      },
+
+      // AI Operations
+      isThinking: false,
+      setIsThinking: (thinking) => set({ isThinking: thinking }),
+      executeAIAction: (data) => {
+        const { addComponent, updateComponent, removeComponent, switchScreen, screens, currentScreenName } = get()
+        
+        // 1. Identificar a tela alvo
+        let targetScreen = data.targetScreen
+        
+        // Se não houver tela alvo, tentamos descobrir onde o componente está
+        if (!targetScreen && data.parentName) {
+          // Se o pai é o nome de uma tela, ela é a alvo
+          if (screens[data.parentName]) {
+            targetScreen = data.parentName
+          } else {
+            // Procurar em todas as telas em qual o pai reside
+            for (const sName of Object.keys(screens)) {
+              const screen = screens[sName]
+              if (screen.data && get().findComponent(screen.data.Properties, data.parentName)) {
+                targetScreen = sName
+                break
+              }
+            }
+          }
+        }
+
+        // Se for update/remove e não temos targetScreen, procuramos o componente em si
+        if (!targetScreen && data.name) {
+          for (const sName of Object.keys(screens)) {
+            const screen = screens[sName]
+            if (screen.data && get().findComponent(screen.data.Properties, data.name)) {
+              targetScreen = sName
+              break
+            }
+          }
+        }
+
+        // Fallback final: se não encontramos uma tela, usamos a tela atual
+        if (!targetScreen) {
+          targetScreen = currentScreenName
+        }
+
+        // 2. Trocar de tela se necessário
+        if (targetScreen && targetScreen !== currentScreenName && screens[targetScreen]) {
+          switchScreen(targetScreen)
+        }
+
+        // 3. Executar a ação na tela (agora atualizada)
+        switch (data.action) {
+          case 'clear_screen':
+            if (targetScreen && screens[targetScreen] && screens[targetScreen].data) {
+              const screenProps = screens[targetScreen].data.Properties
+              screenProps.$Components = []
+              saveSnapshot()
+              set({ 
+                currentProject: JSON.parse(JSON.stringify(get().currentProject)),
+                selectedComponent: null 
+              })
+            }
+            break
+          case 'add_component':
+            if (data.parentName && data.type) {
+              addComponent(data.parentName, data.type, data.properties)
+            }
+            break
+          case 'update_component':
+            if (data.name && data.properties) {
+              updateComponent(data.name, data.properties)
+            }
+            break
+          case 'remove_component':
+            if (data.name) {
+              removeComponent(data.name)
+            }
+            break
+          case 'select_component':
+            if (data.name) {
+              const { currentProject, findComponent } = get()
+              if (currentProject) {
+                const comp = findComponent(currentProject.Properties, data.name)
+                if (comp) {
+                  set({ selectedComponent: comp, activeTab: "propriedades", showProperties: true })
+                }
+              }
+            }
+            break
         }
       }
     }),
     {
       name: "apex-droid-ide-storage",
+      version: 1, // Incremented version to trigger migration
+      migrate: (persistedState: any, version: number) => {
+        if (version === 0) {
+          // Migrate from old OpenAI model gpt-4-turbo to gpt-4o-mini
+          if (persistedState.aiSettings?.model === "gpt-4-turbo") {
+            persistedState.aiSettings.model = "gpt-4o-mini";
+          }
+          // Fix Groq model if it's set to something like DeepSeek that might be broken
+          if (persistedState.aiSettings?.provider === "groq" && 
+              persistedState.aiSettings?.model?.includes("deepseek")) {
+            persistedState.aiSettings.model = "deepseek-r1-distill-llama-70b";
+          }
+        }
+        return persistedState;
+      },
       partialize: (state) => ({
         ghToken: state.ghToken,
         aiSettings: state.aiSettings,

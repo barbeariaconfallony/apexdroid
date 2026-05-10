@@ -1,0 +1,30 @@
+{
+  "name": "Image Picker",
+  "type": "ImagePicker",
+  "properties": [
+    "Allow Multiple Selections",
+    "Background Color",
+    "Border Shadow",
+    "Enabled",
+    "Font Bold",
+    "Font Italic",
+    "Font Size",
+    "Font Typeface",
+    "Font Typeface Import",
+    "HTML Format",
+    "Height",
+    "Height Percent",
+    "Image",
+    "Rotation Angle",
+    "Selection",
+    "Shape",
+    "Show Feedback",
+    "Text",
+    "Text Alignment",
+    "Text Color",
+    "Touch Color",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

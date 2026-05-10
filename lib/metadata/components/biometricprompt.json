@@ -1,0 +1,10 @@
+{
+  "name": "Biometric Prompt",
+  "type": "BiometricPrompt",
+  "properties": [
+    "Authenticator Type",
+    "Negative Button Text",
+    "Subtitle",
+    "Title"
+  ]
+}

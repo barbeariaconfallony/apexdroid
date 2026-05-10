@@ -1,0 +1,9 @@
+{
+  "name": "Start.io Rewarded Ad",
+  "type": "Start.ioRewardedAd",
+  "properties": [
+    "Enable Consent",
+    "Set User Consent",
+    "Test Mode"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "View Pager",
+  "type": "ViewPager",
+  "properties": [
+    "Get Current Page",
+    "Height",
+    "Height Percent",
+    "Select Page",
+    "Show Tabs",
+    "Tabs Active Text Color",
+    "Tabs Background Color",
+    "Tabs Indicator Color",
+    "Tabs Mode",
+    "Tabs Text Color",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

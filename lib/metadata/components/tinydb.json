@@ -1,0 +1,7 @@
+{
+  "name": "Tiny DB",
+  "type": "TinyDB",
+  "properties": [
+    "Namespace"
+  ]
+}

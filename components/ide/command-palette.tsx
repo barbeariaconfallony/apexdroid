@@ -16,10 +16,13 @@ interface CommandPaletteProps {
   onBlocksEditorClick?: () => void
   onExportClick?: () => void
   onTemplatesClick?: () => void
+  onAssetsClick?: () => void
+  onAIScreenClick?: () => void
 }
 
 const actions = [
-  { id: "new_comp", name: "Adicionar Componente...", icon: Plus },
+  { id: "new_comp", name: "Gerar Componente IA", icon: Sparkles },
+  { id: "new_screen", name: "Gerar Tela Completa IA", icon: Layout },
   { id: "open_screen", name: "Abrir Tela...", icon: Layout },
   { id: "templates", name: "Galeria de Templates", icon: Sparkles },
   { id: "blocks_editor", name: "Editor de Blocos", icon: Code2 },
@@ -27,6 +30,7 @@ const actions = [
   { id: "commit", name: "Commitar Mudanças", icon: GitBranch },
   { id: "build", name: "Build APK", icon: Package },
   { id: "settings", name: "Configurações IA", icon: Settings },
+  { id: "assets", name: "Gerenciador de Ativos", icon: Package },
   { id: "login", name: "Login GitHub", icon: Github },
   { id: "blocks", name: "Ver Blocos da Tela", icon: Blocks }
 ]
@@ -38,7 +42,9 @@ export function CommandPalette({
   onBlocksClick,
   onBlocksEditorClick,
   onExportClick,
-  onTemplatesClick
+  onTemplatesClick,
+  onAssetsClick,
+  onAIScreenClick
 }: CommandPaletteProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [query, setQuery] = useState("")
@@ -55,7 +61,10 @@ export function CommandPalette({
 
     switch (actionId) {
       case "new_comp":
-        setActiveTab("componentes")
+        setActiveTab("componentes") // Or trigger AI generator directly
+        break
+      case "new_screen":
+        onAIScreenClick?.()
         break
       case "open_screen":
         setActiveTab("telas")
@@ -80,6 +89,9 @@ export function CommandPalette({
         break
       case "blocks":
         onBlocksClick()
+        break
+      case "assets":
+        onAssetsClick?.()
         break
     }
   }, [setActiveTab, onBuildClick, onSettingsClick, onLoginClick, onBlocksClick, onBlocksEditorClick, onExportClick, onTemplatesClick])

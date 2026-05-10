@@ -1,0 +1,24 @@
+{
+  "name": "Dynamic Button",
+  "type": "DynamicButton",
+  "properties": [
+    "Button Click",
+    "Button Long Click",
+    "Create Button",
+    "Delete Button",
+    "Get Button By Id",
+    "Get Enabled",
+    "Get Font Size",
+    "Get Height",
+    "Get Text",
+    "Get Width",
+    "Set Background Color",
+    "Set Enabled",
+    "Set Font",
+    "Set Font Size",
+    "Set Height",
+    "Set Text",
+    "Set Text Color",
+    "Set Width"
+  ]
+}

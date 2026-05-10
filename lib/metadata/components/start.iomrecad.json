@@ -1,0 +1,10 @@
+{
+  "name": "Start.io MREC Ad",
+  "type": "Start.ioMRECAd",
+  "properties": [
+    "Enable Consent",
+    "Set User Consent",
+    "Test Mode",
+    "Visible"
+  ]
+}

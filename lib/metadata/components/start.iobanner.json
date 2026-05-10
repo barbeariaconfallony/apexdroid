@@ -1,0 +1,10 @@
+{
+  "name": "Start.io Banner",
+  "type": "Start.ioBanner",
+  "properties": [
+    "Enable Consent",
+    "Set User Consent",
+    "Test Mode",
+    "Visible"
+  ]
+}

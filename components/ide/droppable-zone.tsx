@@ -39,9 +39,9 @@ export function DroppableZone({
     <div
       ref={setNodeRef}
       className={cn(
-        "transition-all duration-200",
-        showDropIndicator && "ring-2 ring-dashed ring-primary/50",
-        isOver && showDropIndicator && "ring-primary bg-primary/10 ring-solid",
+        "transition-all duration-300 relative",
+        showDropIndicator && "ring-2 ring-dashed ring-primary/40 bg-primary/5",
+        isOver && showDropIndicator && "ring-primary bg-primary/20 ring-solid scale-[1.02] shadow-lg z-20",
         className
       )}
       style={style}

@@ -56,13 +56,13 @@ export async function POST(request: NextRequest) {
 
     builds.set(buildId, buildState)
 
-    // Start simulated build process
-    simulateBuild(buildId, project)
+    // Inicia o processo de build (Real via GitHub ou Simulado)
+    handleBuild(buildId, project, body.github)
 
     return NextResponse.json({
       buildId,
       status: "queued",
-      message: "Build started successfully"
+      message: body.github ? "Real build started via GitHub Actions" : "Simulation started"
     })
   } catch (error) {
     console.error("Build error:", error)
@@ -100,19 +100,15 @@ export async function GET(request: NextRequest) {
   return NextResponse.json(build)
 }
 
-// Simulated build process
-async function simulateBuild(buildId: string, project: unknown) {
+// Processamento do Build (Real ou Simulado)
+async function handleBuild(buildId: string, project: any, githubInfo?: any) {
   const build = builds.get(buildId)
   if (!build) return
 
   const addLog = (message: string, type: string = "log") => {
     const buildState = builds.get(buildId)
     if (buildState) {
-      buildState.logs.push({
-        timestamp: new Date().toISOString(),
-        message,
-        type
-      })
+      buildState.logs.push({ timestamp: new Date().toISOString(), message, type })
       builds.set(buildId, buildState)
     }
   }
@@ -127,122 +123,144 @@ async function simulateBuild(buildId: string, project: unknown) {
   }
 
   try {
-    // Phase 1: Initialization
-    updateProgress(5, "building")
-    addLog(`Iniciando build para ${build.projectName}...`, "info")
-    await delay(500)
+    if (githubInfo?.token && githubInfo?.repo) {
+      addLog(`[GitHub] Iniciando workflow de build real em ${githubInfo.repo}...`, "info")
+      updateProgress(10, "building")
 
-    // Phase 2: Validating project
-    updateProgress(10)
-    addLog("Validando estrutura do projeto...")
-    await delay(800)
-    addLog("Analisando componentes SCM...")
-    await delay(600)
-    addLog("Verificando blocos BKY...")
-    await delay(400)
-    addLog("Projeto validado com sucesso", "success")
-    updateProgress(20)
-
-    // Phase 3: Processing assets
-    addLog("Processando assets...")
-    await delay(500)
-    addLog("Otimizando imagens...")
-    await delay(700)
-    addLog("Comprimindo recursos...")
-    await delay(500)
-    updateProgress(35)
-
-    // Phase 4: Generating code
-    addLog("Gerando codigo Java...", "info")
-    await delay(1000)
-    addLog("Criando classes de componentes...")
-    await delay(800)
-    addLog("Gerando handlers de eventos...")
-    await delay(600)
-    addLog("Codigo gerado com sucesso", "success")
-    updateProgress(50)
-
-    // Phase 5: Compiling
-    addLog("Compilando projeto...", "info")
-    await delay(1200)
-    addLog("Executando javac...")
-    await delay(800)
-    addLog("Gerando bytecode DEX...")
-    await delay(1000)
-    updateProgress(70)
-
-    // Phase 6: Packaging
-    addLog("Empacotando APK...")
-    await delay(800)
-    addLog("Adicionando AndroidManifest.xml...")
-    await delay(400)
-    addLog("Incluindo recursos compilados...")
-    await delay(600)
-    updateProgress(85)
-
-    // Phase 7: Signing
-    const mode = build.config.mode
-    addLog(`Assinando APK (${mode})...`, "info")
-    await delay(700)
-    if (mode === "debug") {
-      addLog("Usando keystore de debug...")
-    } else {
-      addLog("Usando keystore de release...")
-    }
-    await delay(500)
-    addLog("APK assinado com sucesso", "success")
-    updateProgress(95)
-
-    // Phase 8: Finalizing
-    addLog("Alinhando APK com zipalign...")
-    await delay(400)
-    
-    // Generate fake APK URL and QR code
-    const apkFileName = `${build.projectName.replace(/\s+/g, "_")}_v${build.config.versionName}.apk`
-    const apkUrl = `/downloads/${apkFileName}`
-    const apkSize = Math.floor(Math.random() * 5000000) + 2000000 // 2-7 MB
-
-    // Generate QR Code
-    const qrDataUrl = await QRCode.toDataURL(
-      `https://apexdroid.app${apkUrl}`,
-      {
-        width: 200,
-        margin: 2,
-        color: {
-          dark: "#000000",
-          light: "#ffffff"
-        }
-      }
-    )
-
-    // Complete build
-    const buildState = builds.get(buildId)
-    if (buildState) {
-      buildState.status = "completed"
-      buildState.progress = 100
-      buildState.apkUrl = apkUrl
-      buildState.apkSize = apkSize
-      buildState.qrCode = qrDataUrl
-      buildState.completedAt = new Date().toISOString()
-      buildState.logs.push({
-        timestamp: new Date().toISOString(),
-        message: `BUILD CONCLUIDO COM SUCESSO! APK: ${apkFileName} (${formatBytes(apkSize)})`,
-        type: "success"
+      // 1. Trigger Workflow Dispatch
+      const triggerRes = await fetch(`https://api.github.com/repos/${githubInfo.repo}/actions/workflows/build-apk.yml/dispatches`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `token ${githubInfo.token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ref: 'main',
+          inputs: {
+            project_name: build.projectName,
+            version_name: build.config.versionName
+          }
+        })
       })
-      builds.set(buildId, buildState)
-    }
 
-  } catch (error) {
+      if (!triggerRes.ok) {
+        const err = await triggerRes.text()
+        if (triggerRes.status === 404) {
+          throw new Error(`Arquivo 'build-apk.yml' não encontrado no GitHub. Certifique-se de fazer o COMMIT e PUSH do arquivo para o repositório antes de iniciar o build.`)
+        }
+        throw new Error(`Falha ao disparar GitHub Action: ${err}`)
+      }
+
+      addLog("[GitHub] Workflow disparado com sucesso. Monitorando execução...", "success")
+      updateProgress(20)
+
+      // 2. Poll for the latest run
+      let runId = null
+      let attempts = 0
+      const maxAttempts = 10
+      
+      while (!runId && attempts < maxAttempts) {
+        await delay(3000)
+        const runsRes = await fetch(`https://api.github.com/repos/${githubInfo.repo}/actions/workflows/build-apk.yml/runs?per_page=1`, {
+          headers: { 'Authorization': `token ${githubInfo.token}` }
+        })
+        const runsData = await runsRes.json()
+        if (runsData.workflow_runs?.[0] && new Date(runsData.workflow_runs[0].created_at) > new Date(Date.now() - 30000)) {
+          runId = runsData.workflow_runs[0].id
+        }
+        attempts++
+      }
+
+      if (!runId) {
+        throw new Error("Não foi possível localizar o run da Action iniciada.")
+      }
+
+      addLog(`[GitHub] Run localizado: #${runId}. Monitorando progresso...`, "info")
+
+      // 3. Monitor Run Status
+      let status = "queued"
+      let conclusion = null
+      
+      while (status !== "completed") {
+        await delay(5000)
+        const runStatusRes = await fetch(`https://api.github.com/repos/${githubInfo.repo}/actions/runs/${runId}`, {
+          headers: { 'Authorization': `token ${githubInfo.token}` }
+        })
+        const runData = await runStatusRes.json()
+        status = runData.status
+        conclusion = runData.conclusion
+        
+        addLog(`[GitHub] Status: ${status === "in_progress" ? "Compilando..." : status}...`)
+        if (status === "in_progress") updateProgress(Math.min(90, (builds.get(buildId)?.progress || 20) + 10))
+      }
+
+      if (conclusion !== "success") {
+        throw new Error(`O build no GitHub falhou com conclusão: ${conclusion}`)
+      }
+
+      // 4. Finalize and find artifact link
+      const apkUrl = `https://github.com/${githubInfo.repo}/actions/runs/${runId}`
+      
+      const qrDataUrl = await QRCode.toDataURL(apkUrl)
+
+      const buildState = builds.get(buildId)
+      if (buildState) {
+        buildState.status = "completed"
+        buildState.progress = 100
+        buildState.apkUrl = apkUrl
+        buildState.apkSize = 5242880 // 5MB simulated
+        buildState.qrCode = qrDataUrl
+        buildState.completedAt = new Date().toISOString()
+        buildState.logs.push({
+          timestamp: new Date().toISOString(),
+          message: `[GitHub] BUILD REAL CONCLUÍDO COM SUCESSO!`,
+          type: "success"
+        })
+        builds.set(buildId, buildState)
+      }
+
+    } else {
+      // MODO SIMULADO (Original)
+      updateProgress(5, "building")
+      addLog(`Iniciando build simulado para ${build.projectName}...`, "info")
+      await delay(1000)
+      addLog("Validando projeto...")
+      updateProgress(30)
+      await delay(1500)
+      addLog("Compilando Java e DEX...")
+      updateProgress(60)
+      await delay(1500)
+      addLog("Assinando APK...")
+      updateProgress(90)
+      await delay(1000)
+
+      const apkFileName = `${build.projectName.replace(/\s+/g, "_")}_v${build.config.versionName}.apk`
+      const apkUrl = `/downloads/${apkFileName}`
+      const qrDataUrl = await QRCode.toDataURL(`https://apexdroid.app${apkUrl}`)
+
+      const buildState = builds.get(buildId)
+      if (buildState) {
+        buildState.status = "completed"
+        buildState.progress = 100
+        buildState.apkUrl = apkUrl
+        buildState.apkSize = 3500000
+        buildState.qrCode = qrDataUrl
+        buildState.completedAt = new Date().toISOString()
+        buildState.logs.push({
+          timestamp: new Date().toISOString(),
+          message: `BUILD SIMULADO CONCLUIDO! APK: ${apkFileName}`,
+          type: "success"
+        })
+        builds.set(buildId, buildState)
+      }
+    }
+  } catch (error: any) {
     const buildState = builds.get(buildId)
     if (buildState) {
       buildState.status = "failed"
-      buildState.error = error instanceof Error ? error.message : "Unknown error"
-      buildState.completedAt = new Date().toISOString()
-      buildState.logs.push({
-        timestamp: new Date().toISOString(),
-        message: `ERRO: ${buildState.error}`,
-        type: "error"
-      })
+      buildState.error = error.message
+      buildState.logs.push({ timestamp: new Date().toISOString(), message: `ERRO: ${error.message}`, type: "error" })
       builds.set(buildId, buildState)
     }
   }

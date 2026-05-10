@@ -1,0 +1,13 @@
+{
+  "name": "Battery Utilities",
+  "type": "BatteryUtilities",
+  "properties": [
+    "Battery Level",
+    "Battery Plugged",
+    "Battery Present",
+    "Battery Temperature",
+    "Battery Voltage",
+    "Enabled",
+    "Show Battery Health"
+  ]
+}

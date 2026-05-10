@@ -164,3 +164,33 @@ export async function createFile(
   const data = await response.json()
   return { sha: data.content.sha }
 }
+export async function deleteFile(
+  token: string,
+  owner: string,
+  repo: string,
+  path: string,
+  sha: string,
+  message: string,
+  branch: string = "main"
+): Promise<void> {
+  const response = await fetch(
+    `${GITHUB_API}/repos/${owner}/${repo}/contents/${path}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github.v3+json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        message,
+        sha,
+        branch
+      })
+    }
+  )
+  
+  if (!response.ok) {
+    throw new Error(`GitHub API error: ${response.status}`)
+  }
+}

@@ -14,6 +14,7 @@ import {
   DragOverEvent,
 } from "@dnd-kit/core"
 import { useIDEStore } from "@/lib/ide-store"
+import { toast } from "sonner"
 import { 
   Square, Type, ImageIcon, ToggleLeft, SlidersHorizontal, 
   List, Globe, Video, Layers, Grid3X3, CreditCard, 
@@ -125,6 +126,11 @@ export function IDEDndProvider({ children }: IDEDndProviderProps) {
         const targetName = dropData.targetName || currentProject.Properties.$Name
         addComponent(targetName, dragData.componentType)
         saveSnapshot()
+        
+        toast.success(`${dragData.componentType} adicionado`, {
+          description: `Inserido em ${targetName}`,
+          duration: 2000
+        })
       }
     }
 
@@ -161,7 +167,12 @@ export function IDEDndProvider({ children }: IDEDndProviderProps) {
         onDragCancel={handleDragCancel}
       >
         {children}
-        <DragOverlay dropAnimation={null}>
+        <DragOverlay 
+          dropAnimation={{
+            duration: 250,
+            easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)",
+          }}
+        >
           {activeId && activeData && (
             <DragPreview componentType={activeData.componentType} />
           )}
@@ -175,7 +186,7 @@ function DragPreview({ componentType }: { componentType: string }) {
   const Icon = componentIcons[componentType] || Box
 
   return (
-    <div className="flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-lg shadow-xl border-2 border-primary-foreground/20 cursor-grabbing">
+    <div className="flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-lg shadow-2xl border-2 border-primary-foreground/20 cursor-grabbing animate-in zoom-in-95 duration-200 rotate-2 scale-105">
       <Icon className="w-4 h-4" />
       <span className="text-sm font-medium">{componentType}</span>
     </div>

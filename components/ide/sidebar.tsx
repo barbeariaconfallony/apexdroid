@@ -11,7 +11,8 @@ import {
   Calendar, MapPin, Phone, MessageSquare, Camera, Mic,
   Share2, Settings, Wifi, Bluetooth, ChevronDown, ChevronRight,
   Box, Layers, CreditCard, TextCursorInput, Sparkles, Send,
-  Smartphone, GitPullRequest, HardDrive, Network, Search, X, Star
+  Smartphone, GitPullRequest, HardDrive, Network, Search, X, Star,
+  ChevronLeft, Trash2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,6 +20,8 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { useIDEStore } from "@/lib/ide-store"
 import { fetchUserRepos, fetchRepoTree, fetchFileContent, updateFileContent } from "@/lib/github-service"
 import { cn } from "@/lib/utils"
+import { useProjectManager } from "@/lib/hooks/use-project-manager"
+import { useAIChat } from "@/lib/hooks/use-ai-chat"
 import type { GitHubRepo, ProjectAsset, ScreenFile } from "@/lib/ide-types"
 import { DraggableComponent } from "./draggable-component"
 
@@ -162,8 +165,6 @@ function getAssetIcon(type: "image" | "audio" | "video" | "other") {
   }
 }
 
-
-
 export function Sidebar({ onLoginClick }: SidebarProps) {
   const { 
     activeTab, setActiveTab, cloudUser, setCloudUser,
@@ -173,11 +174,16 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
     repoTree, setRepoTree, repoTreeLoading, setRepoTreeLoading,
     setCurrentProject, setCurrentFile, saveSnapshot, setShowWelcome,
     screenFiles, setScreenFiles, currentScreenName, setCurrentScreenName,
-    projectAssets, setProjectAssets, setCurrentBkyContent, currentFile,
-    setShowProperties, setSelectedComponent
+    projectAssets, setProjectAssets, setCurrentBkyContent, 
+    currentFile, setShowProperties, selectedComponent, setSelectedComponent,
+    isSidebarCompact, setIsSidebarCompact, toggleSidebar
   } = useIDEStore()
   
+  const { selectProject, createNewScreen, deleteScreen } = useProjectManager()
   
+  const [isCreatingScreen, setIsCreatingScreen] = useState(false)
+  const [newScreenName, setNewScreenName] = useState("")
+  const [deletingScreen, setDeletingScreen] = useState<string | null>(null)
   const [loadingScreen, setLoadingScreen] = useState<string | null>(null)
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {}
@@ -212,65 +218,6 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
       setGhReposLoading(false)
     }
   }, [ghToken, setGhRepos, setGhReposLoading, setGhReposError])
-
-  const processRepoFiles = useCallback(async (repo: GitHubRepo) => {
-    if (!ghToken) return
-    
-    setRepoTreeLoading(true)
-    setSelectedRepo(repo)
-    
-    try {
-      const [owner] = repo.full_name.split("/")
-      const tree = await fetchRepoTree(ghToken, owner, repo.name, repo.default_branch)
-      setRepoTree(tree)
-      
-      // Find all .scm files (screens) and their corresponding .bky files
-      const scmFiles = tree.filter(item => item.path.endsWith(".scm"))
-      const bkyFiles = tree.filter(item => item.path.endsWith(".bky"))
-      
-      const screens: ScreenFile[] = scmFiles.map(scm => {
-        const screenName = scm.path.replace(".scm", "")
-        const bky = bkyFiles.find(b => b.path.replace(".bky", "") === screenName)
-        return {
-          name: scm.path.split("/").pop()?.replace(".scm", "") || screenName,
-          scmPath: scm.path,
-          bkyPath: bky?.path || null
-        }
-      })
-      
-      setScreenFiles(screens)
-      
-      // Find assets (usually in assets/ folder or src/assets/)
-      const assetFiles = tree.filter(item => {
-        const isAssetFolder = item.path.includes("assets/") || item.path.includes("Assets/")
-        const isFile = item.type === "blob"
-        const ext = item.path.split(".").pop()?.toLowerCase() || ""
-        const isMediaFile = ["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "mp3", "wav", "ogg", "mp4", "webm"].includes(ext)
-        return isAssetFolder && isFile && isMediaFile
-      })
-      
-      const assets: ProjectAsset[] = assetFiles.map(file => ({
-        name: file.path.split("/").pop() || file.path,
-        path: file.path,
-        url: `https://raw.githubusercontent.com/${repo.full_name}/${repo.default_branch}/${file.path}`,
-        type: getAssetType(file.path)
-      }))
-      
-      setProjectAssets(assets)
-      
-      // Switch to screens tab to show available screens
-      setActiveTab("telas")
-      setCurrentProject(null)
-      setCurrentScreenName(null)
-    } catch (error) {
-      console.error("Erro ao processar repositorio:", error)
-      setRepoTree([])
-      setScreenFiles([])
-      setProjectAssets([])
-    } finally {
-      setRepoTreeLoading(false)
-    }
-  }, [ghToken, setSelectedRepo, setRepoTree, setRepoTreeLoading, setScreenFiles, setProjectAssets, setActiveTab, setCurrentProject, setCurrentScreenName])
 
   // Extract balanced JSON from content - handles nested braces correctly
   const extractBalancedJSON = (content: string, startIndex: number): string | null => {
@@ -341,7 +288,7 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
     return { json, prefix }
   }
 
-  const loadScreen = async (screen: ScreenFile, repo?: GitHubRepo, ownerOverride?: string) => {
+  const loadScreen = useCallback(async (screen: ScreenFile, repo?: GitHubRepo, ownerOverride?: string) => {
     const currentRepo = repo || selectedRepo
     
     if (!ghToken || !currentRepo) {
@@ -411,10 +358,10 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
     } finally {
       setLoadingScreen(null)
     }
-  }
+  }, [ghToken, selectedRepo, fetchFileContent, parseSCMContent, setCurrentProject, setCurrentScreenName, setCurrentFile, setActiveTab, setShowProperties, setSelectedComponent, setShowWelcome, setCurrentBkyContent, saveSnapshot])
 
   // Save to GitHub
-  const saveToGitHub = async () => {
+  const saveToGitHub = useCallback(async () => {
     if (!ghToken || !selectedRepo || !currentFile || !currentProject) return
     
     setSaving(true)
@@ -458,7 +405,7 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
     } finally {
       setSaving(false)
     }
-  }
+  }, [ghToken, selectedRepo, currentFile, currentProject, currentScreenName, updateFileContent, setCurrentFile])
 
   // Load repos when token changes
   useEffect(() => {
@@ -467,11 +414,11 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
     }
   }, [ghToken, ghRepos.length, ghReposLoading, loadRepos])
 
-  const handleComponentClick = (compName: string) => {
+  const handleComponentClick = useCallback((compName: string) => {
     if (currentProject) {
       addComponent(currentProject.Properties.$Name, compName)
     }
-  }
+  }, [currentProject, addComponent])
 
   // Filter components by search
   const filteredCategories = kodularCategories.map(category => ({
@@ -482,21 +429,69 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
     )
   })).filter(category => category.components.length > 0)
 
-  const { chatMessages, addChatMessage } = useIDEStore()
+  const { chatMessages, addChatMessage, executeAIAction, getScreenNames, setIsThinking } = useIDEStore()
+  const { sendMessage, isLoading: isChatLoading } = useAIChat()
 
-  const sendChatMessage = async () => {
-    if (!chatInput.trim()) return
-    const userMessage = { id: Date.now().toString(), role: "user" as const, content: chatInput }
+  const sendChatMessage = useCallback(async () => {
+    if (!chatInput.trim() || isChatLoading) return
+    
+    const text = chatInput.trim()
+    const userMessage = { id: Date.now().toString(), role: "user" as const, content: text }
     addChatMessage(userMessage)
     setChatInput("")
-    setTimeout(() => {
+
+    try {
+      setIsThinking(true)
+      // Preparar contexto do projeto para a IA
+      const getTree = (comps: any[] = []): any[] => comps.map(c => ({
+        name: c.$Name, type: c.$Type, 
+        children: c.$Components ? getTree(c.$Components) : []
+      }));
+      
+      const projectContext = currentProject 
+        ? `TELA ATUAL ABERTA NA IDE: ${currentProject.Properties.$Name}.
+           Qualquer modificação solicitada DEVE ser executada nesta tela (use-a como parentName), a menos que o usuário especifique outra tela ou componente pai.
+           ÁRVORE COMPLETA DE COMPONENTES DESTA TELA: ${JSON.stringify(getTree(currentProject.Properties.$Components))}`
+        : "Nenhum projeto carregado."
+
+      const response = await sendMessage([...chatMessages, userMessage], projectContext)
+      
       addChatMessage({
         id: (Date.now() + 1).toString(),
         role: "assistant" as const,
-        content: "Entendi! Vou ajudar com isso. " + (currentProject ? "Posso adicionar componentes ou modificar propriedades do projeto." : "Primeiro carregue um projeto para eu fazer modificações.")
+        content: response
       })
-    }, 800)
-  }
+
+      // Extrair e executar ações (Regex mais flexível para variações de markdown)
+      const actionMatch = response.match(/```actions\s*([\s\S]*?)\s*```/)
+      if (actionMatch) {
+        try {
+          const rawJson = actionMatch[1].trim()
+          const actions = JSON.parse(rawJson)
+          if (Array.isArray(actions)) {
+            actions.forEach(action => {
+              // Se a IA não mandou targetScreen mas o parentName é uma tela conhecida, trocamos de tela
+              const screenNames = getScreenNames()
+              if (!action.targetScreen && action.parentName && screenNames.includes(action.parentName)) {
+                action.targetScreen = action.parentName
+              }
+              executeAIAction(action)
+            })
+          }
+        } catch (err) {
+          console.error("Erro ao processar ações da IA:", err)
+        }
+      }
+    } catch (err) {
+      addChatMessage({
+        id: (Date.now() + 1).toString(),
+        role: "assistant" as const,
+        content: "Desculpe, ocorreu um erro ao processar sua mensagem. Verifique suas configurações de IA."
+      })
+    } finally {
+      setIsThinking(false)
+    }
+  }, [chatInput, addChatMessage, chatMessages, currentProject, sendMessage, isChatLoading])
 
   const renderComponentTree = (comp: import("@/lib/ide-types").KodularComponent, depth = 0): React.ReactNode => (
     <div key={comp.$Name}>
@@ -519,19 +514,24 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
   const activeTabMeta = tabs.find(t => t.id === activeTab)
 
   return (
-    <aside className="bg-card border-r border-border flex shrink-0" style={{ width: "300px" }}>
+    <aside 
+      className={cn(
+        "glass border-r border-white/5 flex shrink-0 transition-all duration-300 ease-in-out relative z-40 shadow-2xl",
+        isSidebarCompact ? "w-12" : "w-[300px]"
+      )}
+    >
       {/* Icon Rail - vertical tab icons */}
-      <div className="w-12 bg-gradient-to-b from-card to-background border-r border-border flex flex-col items-center py-3 gap-1.5 shrink-0">
+      <div className="w-12 bg-black/20 backdrop-blur-sm border-r border-white/5 flex flex-col items-center py-4 gap-2 shrink-0">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             title={tab.label}
             className={cn(
-              "w-9 h-9 flex items-center justify-center rounded-lg transition-all relative group",
+              "w-9 h-9 flex items-center justify-center rounded-lg transition-all relative group tab-transition hover-glow-border",
               activeTab === tab.id
-                ? "bg-primary text-primary-foreground shadow-lg glow-primary"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                ? "bg-primary text-primary-foreground shadow-lg glow-primary scale-105"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary hover:scale-110"
             )}
           >
             <tab.icon className={cn(
@@ -539,10 +539,19 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
               activeTab !== tab.id && "group-hover:scale-110"
             )} />
             {tab.id === "chat" && chatMessages.length > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-success border-2 border-card" />
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-success border-2 border-card animate-pulse" />
             )}
           </button>
         ))}
+        
+        {/* Toggle Sidebar Button */}
+        <button
+          onClick={toggleSidebar}
+          className="w-9 h-9 flex items-center justify-center rounded-lg transition-all text-muted-foreground hover:text-foreground hover:bg-secondary mt-2"
+          title={isSidebarCompact ? "Expandir Lateral" : "Colapsar Lateral"}
+        >
+          {isSidebarCompact ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </button>
         
         {/* Spacer */}
         <div className="flex-1" />
@@ -552,7 +561,8 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
       </div>
 
       {/* Content panel */}
-      <div className="flex-1 overflow-hidden flex flex-col" style={{ width: "248px" }}>
+      {!isSidebarCompact && (
+        <div className="flex-1 overflow-hidden flex flex-col animate-in slide-in-from-left-2 duration-300" style={{ width: "248px" }}>
         {/* Tab title with gradient */}
         <div className="px-3 py-2.5 border-b border-border shrink-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent">
           <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -659,9 +669,82 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
         {activeTab === "telas" && (
           <ScrollArea className="flex-1">
             <div className="p-3">
-              <div className="flex justify-end mb-2">
-                <Plus className="w-3.5 h-3.5 cursor-pointer hover:text-foreground text-muted-foreground" title="Nova tela" />
+              <div className="flex items-center justify-between mb-3 px-1">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                  TELAS DO PROJETO
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 hover:bg-primary/20 hover:text-primary transition-colors"
+                  onClick={() => setIsCreatingScreen(true)}
+                  disabled={!selectedRepo}
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
               </div>
+
+              {isCreatingScreen && (
+                <div className="mb-3 p-2 bg-secondary/30 rounded-lg border border-primary/20 animate-in fade-in slide-in-from-top-1">
+                  <Input
+                    autoFocus
+                    placeholder="Nome da tela (ex: Main)"
+                    className="h-8 text-xs mb-2"
+                    value={newScreenName}
+                    onChange={(e) => setNewScreenName(e.target.value)}
+                    onKeyDown={async (e) => {
+                      if (e.key === "Enter" && newScreenName) {
+                        try {
+                          setSaving(true)
+                          await createNewScreen(newScreenName)
+                          setNewScreenName("")
+                          setIsCreatingScreen(false)
+                        } catch (err) {
+                          console.error(err)
+                        } finally {
+                          setSaving(false)
+                        }
+                      } else if (e.key === "Escape") {
+                        setIsCreatingScreen(false)
+                        setNewScreenName("")
+                      }
+                    }}
+                  />
+                  <div className="flex gap-2 justify-end">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 px-2 text-[10px]"
+                      onClick={() => {
+                        setIsCreatingScreen(false)
+                        setNewScreenName("")
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      className="h-6 px-2 text-[10px]"
+                      disabled={!newScreenName || saving}
+                      onClick={async () => {
+                        try {
+                          setSaving(true)
+                          await createNewScreen(newScreenName)
+                          setNewScreenName("")
+                          setIsCreatingScreen(false)
+                        } catch (err) {
+                          console.error(err)
+                        } finally {
+                          setSaving(false)
+                        }
+                      }}
+                    >
+                      {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : "Criar"}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {screenFiles.length === 0 ? (
                 <div className="text-center py-8">
                   <Monitor className="w-10 h-10 text-muted-foreground mx-auto mb-2 opacity-50" />
@@ -669,7 +752,7 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
                     Nenhuma tela carregada.
                   </p>
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    Selecione um repositorio na aba PROJETOS.
+                    {selectedRepo ? "Crie uma nova tela acima." : "Selecione um repositorio na aba PROJETOS."}
                   </p>
                 </div>
               ) : (
@@ -677,25 +760,54 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
                   {screenFiles.map((screen) => (
                     <div
                       key={screen.scmPath}
-                      onClick={() => loadScreen(screen)}
                       className={cn(
-                        "flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer transition-all",
+                        "group flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer transition-all border",
                         currentScreenName === screen.name 
-                          ? "bg-primary/20 border border-primary text-primary" 
-                          : "hover:bg-secondary border border-transparent"
+                          ? "bg-primary/10 border-primary/30 text-primary shadow-glow" 
+                          : "hover:bg-secondary border-transparent"
                       )}
+                      onClick={() => loadScreen(screen)}
                     >
                       {loadingScreen === screen.name ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       ) : (
-                        <Monitor className="w-4 h-4" />
+                        <Monitor className="w-3.5 h-3.5" />
                       )}
                       <div className="flex-1 min-w-0">
-                        <span className="text-xs font-medium truncate block">{screen.name}</span>
-                        {screen.bkyPath && (
-                          <span className="text-[10px] text-muted-foreground">+ blocos</span>
-                        )}
+                        <span className="text-xs font-semibold truncate block">{screen.name}</span>
+                        <div className="flex items-center gap-1.5 opacity-60">
+                           <span className="text-[9px] uppercase tracking-tighter">scm</span>
+                           {screen.bkyPath && <span className="text-[9px] uppercase tracking-tighter">bky</span>}
+                        </div>
                       </div>
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                          "h-6 w-6 p-0 opacity-0 group-hover:opacity-100 hover:text-destructive transition-all",
+                          deletingScreen === screen.name && "opacity-100"
+                        )}
+                        onClick={async (e) => {
+                          e.stopPropagation()
+                          if (confirm(`Deseja realmente deletar a tela ${screen.name}?`)) {
+                            try {
+                              setDeletingScreen(screen.name)
+                              await deleteScreen(screen)
+                            } catch (err) {
+                              console.error(err)
+                            } finally {
+                              setDeletingScreen(null)
+                            }
+                          }
+                        }}
+                      >
+                        {deletingScreen === screen.name ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-3 h-3" />
+                        )}
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -703,11 +815,11 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
               
               {/* Save Button */}
               {currentProject && currentFile && (
-                <div className="mt-4 pt-3 border-t border-border">
+                <div className="mt-6 pt-4 border-t border-border">
                   <Button
                     variant="default"
                     size="sm"
-                    className="w-full gap-2"
+                    className="w-full gap-2 shadow-lg"
                     onClick={saveToGitHub}
                     disabled={saving}
                   >
@@ -716,11 +828,12 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
                     ) : (
                       <GitCommit className="w-4 h-4" />
                     )}
-                    {saving ? "Salvando..." : "Salvar no GitHub"}
+                    {saving ? "Salvando..." : "Sincronizar Projeto"}
                   </Button>
-                  <p className="text-[10px] text-muted-foreground text-center mt-2">
-                    Sincroniza automaticamente com seu repositorio
-                  </p>
+                  <div className="flex items-center justify-center gap-1.5 mt-3">
+                    <div className="status-dot status-dot-success" />
+                    <span className="text-[10px] text-muted-foreground font-medium">Auto-save pronto</span>
+                  </div>
                 </div>
               )}
             </div>
@@ -771,10 +884,10 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
                       <ArrowLeft className="w-3.5 h-3.5" />
                     </Button>
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs font-semibold truncate">{selectedRepo.name}</div>
+                      <div className="text-xs font-semibold truncate">{selectedRepo!.name}</div>
                       <div className="text-[10px] text-muted-foreground flex items-center gap-1">
                         <GitBranch className="w-3 h-3" />
-                        {selectedRepo.default_branch}
+                        {selectedRepo!.default_branch}
                       </div>
                     </div>
                   </div>
@@ -851,14 +964,14 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
                       {ghRepos.map((repo) => (
                         <div
                           key={repo.id}
-                          onClick={() => processRepoFiles(repo)}
+                          onClick={() => selectProject(repo)}
                           className="p-2.5 rounded-lg border border-border hover:border-primary hover:bg-secondary cursor-pointer transition-all"
                         >
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-1 min-w-0">
                             <FolderGit2 className="w-4 h-4 text-primary shrink-0" />
-                            <span className="text-xs font-medium truncate">{repo.name}</span>
+                            <span className="text-xs font-medium truncate flex-1">{repo.name}</span>
                             {repo.private && (
-                              <span className="text-[9px] bg-secondary px-1.5 py-0.5 rounded text-muted-foreground">
+                              <span className="text-[9px] bg-secondary px-1.5 py-0.5 rounded text-muted-foreground shrink-0">
                                 Privado
                               </span>
                             )}
@@ -882,9 +995,76 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
         {activeTab === "assets" && (
           <ScrollArea className="flex-1">
             <div className="p-3">
-              <div className="flex justify-between items-center text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">
+              <div className="flex justify-between items-center text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3 px-1">
                 ASSETS DO PROJETO
-                <Upload className="w-3.5 h-3.5 cursor-pointer hover:text-foreground" />
+                <div className="flex items-center gap-1">
+                  {saving && <Loader2 className="w-3 h-3 animate-spin mr-1" />}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 hover:bg-primary/20 hover:text-primary transition-colors"
+                    onClick={() => document.getElementById("asset-upload")?.click()}
+                    disabled={!selectedRepo || saving}
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                  </Button>
+                  <input
+                    id="asset-upload"
+                    type="file"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]
+                      if (!file || !selectedRepo || !ghToken) return
+                      
+                      try {
+                        setSaving(true)
+                        const [owner] = selectedRepo.full_name.split("/")
+                        const reader = new FileReader()
+                        
+                        reader.onload = async (event) => {
+                          const base64 = (event.target?.result as string).split(",")[1]
+                          const assetPath = `assets/${file.name}`
+                          
+                          // Usar API do GitHub para criar arquivo (base64)
+                          const response = await fetch(
+                            `https://api.github.com/repos/${owner}/${selectedRepo.name}/contents/${assetPath}`,
+                            {
+                              method: "PUT",
+                              headers: {
+                                Authorization: `Bearer ${ghToken}`,
+                                Accept: "application/vnd.github.v3+json",
+                                "Content-Type": "application/json"
+                              },
+                              body: JSON.stringify({
+                                message: `Upload asset ${file.name}`,
+                                content: base64,
+                                branch: selectedRepo.default_branch
+                              })
+                            }
+                          )
+                          
+                          if (!response.ok) throw new Error("Erro no upload")
+                          
+                          // Atualizar lista local
+                          const newAsset: ProjectAsset = {
+                            name: file.name,
+                            path: assetPath,
+                            url: `https://raw.githubusercontent.com/${selectedRepo.full_name}/${selectedRepo.default_branch}/${assetPath}`,
+                            type: getAssetType(file.name)
+                          }
+                          setProjectAssets([...projectAssets, newAsset])
+                        }
+                        
+                        reader.readAsDataURL(file)
+                      } catch (err) {
+                        console.error("Erro ao fazer upload:", err)
+                      } finally {
+                        setSaving(false)
+                        e.target.value = "" // Reset input
+                      }
+                    }}
+                  />
+                </div>
               </div>
               {projectAssets.length === 0 ? (
                 <div className="text-center py-8">
@@ -893,7 +1073,7 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
                     Nenhum asset encontrado.
                   </p>
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    Assets devem estar na pasta assets/ do repositorio.
+                    Upload arquivos para a pasta assets/ do repositorio.
                   </p>
                 </div>
               ) : (
@@ -903,25 +1083,58 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
                     return (
                       <div
                         key={asset.path}
-                        className="flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-secondary cursor-pointer transition-all border border-transparent hover:border-border"
+                        className="group flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-secondary cursor-pointer transition-all border border-transparent hover:border-border"
                       >
                         {asset.type === "image" ? (
-                          <div className="w-8 h-8 rounded bg-secondary border border-border overflow-hidden flex-shrink-0">
+                          <div className="w-9 h-9 rounded bg-secondary border border-border overflow-hidden flex-shrink-0 shadow-sm">
                             <img 
                               src={asset.url} 
                               alt={asset.name}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                             />
                           </div>
                         ) : (
-                          <div className="w-8 h-8 rounded bg-secondary border border-border flex items-center justify-center flex-shrink-0">
+                          <div className="w-9 h-9 rounded bg-secondary border border-border flex items-center justify-center flex-shrink-0 shadow-sm">
                             <IconComponent className="w-4 h-4 text-muted-foreground" />
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <span className="text-xs font-medium truncate block">{asset.name}</span>
-                          <span className="text-[10px] text-muted-foreground capitalize">{asset.type}</span>
+                          <span className="text-xs font-semibold truncate block">{asset.name}</span>
+                          <span className="text-[9px] text-muted-foreground uppercase tracking-tighter">{asset.type}</span>
                         </div>
+                        
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 hover:text-destructive transition-all"
+                          onClick={async (e) => {
+                            e.stopPropagation()
+                            if (confirm(`Deseja realmente deletar o asset ${asset.name}?`)) {
+                              try {
+                                setSaving(true)
+                                const [owner] = selectedRepo!.full_name.split("/")
+                                
+                                // Pegar o SHA atual do arquivo
+                                const shaResponse = await fetch(
+                                  `https://api.github.com/repos/${owner}/${selectedRepo!.name}/contents/${asset.path}`,
+                                  {
+                                    headers: { Authorization: `Bearer ${ghToken}` }
+                                  }
+                                )
+                                const shaData = await shaResponse.json()
+                                
+                                await deleteFile(ghToken!, owner, selectedRepo!.name, asset.path, shaData.sha, `Delete asset ${asset.name}`, selectedRepo!.default_branch)
+                                setProjectAssets(projectAssets.filter(a => a.path !== asset.path))
+                              } catch (err) {
+                                console.error(err)
+                              } finally {
+                                setSaving(false)
+                              }
+                            }
+                          }}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
                       </div>
                     )
                   })}
@@ -953,12 +1166,12 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
                   <div className="bg-secondary p-3 rounded-lg flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                       <span className="text-primary font-bold">
-                        {cloudUser.name.charAt(0).toUpperCase()}
+                        {cloudUser!.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div>
-                      <p className="text-sm font-medium">{cloudUser.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{cloudUser.email}</p>
+                      <p className="text-sm font-medium">{cloudUser!.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{cloudUser!.email}</p>
                     </div>
                   </div>
                   <Button 
@@ -991,7 +1204,7 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
                   <div className="text-[10px] text-muted-foreground px-2 mb-2">
                     Clique em um componente para seleciona-lo
                   </div>
-                  {renderComponentTree(currentProject.Properties)}
+                  {renderComponentTree(currentProject!.Properties)}
                 </div>
               )}
             </div>
@@ -1004,9 +1217,9 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
             <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
               {chatMessages.length === 0 && (
                 <div className="flex flex-col items-center justify-center h-full text-center py-8">
-                  <Sparkles className="w-10 h-10 text-primary mb-3 opacity-60" />
-                  <p className="text-xs font-medium mb-1">APEX Droid AI</p>
-                  <p className="text-[10px] text-muted-foreground">
+                  <Sparkles className="w-10 h-10 text-primary mb-3 animate-pulse" />
+                  <p className="text-xs font-medium mb-1">APEX Droid IA</p>
+                  <p className="text-[10px] text-muted-foreground px-4">
                     Pergunte sobre seu projeto, peça para adicionar componentes ou modificar propriedades.
                   </p>
                 </div>
@@ -1015,15 +1228,27 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
                 <div
                   key={msg.id}
                   className={cn(
-                    "max-w-[90%] px-3 py-2 rounded-xl text-xs leading-relaxed",
+                    "max-w-[90%] px-3 py-2 rounded-xl text-xs leading-relaxed animate-in slide-in-from-bottom-2",
                     msg.role === "user"
                       ? "bg-primary text-primary-foreground self-end rounded-br-sm"
                       : "bg-secondary text-secondary-foreground self-start rounded-bl-sm border border-border"
                   )}
                 >
-                  {msg.content}
+                  {msg.role === "assistant" 
+                    ? msg.content.replace(/```actions[\s\S]*?```/g, '').trim() 
+                    : msg.content}
                 </div>
               ))}
+              {isChatLoading && (
+                <div className="bg-secondary text-secondary-foreground self-start px-3 py-2 rounded-xl rounded-bl-sm border border-border text-[10px] flex items-center gap-2">
+                  <div className="flex gap-1">
+                    <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                  IA está pensando...
+                </div>
+              )}
             </div>
             <div className="p-2 border-t border-border flex gap-1.5 shrink-0">
               <Input
@@ -1033,13 +1258,19 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
                 placeholder="Ex: Adicione um botao azul..."
                 className="bg-input border-border text-xs h-8"
               />
-              <Button size="sm" className="px-2 h-8 shrink-0" onClick={sendChatMessage}>
-                <Send className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-          </>
-        )}
-      </div>
+                <Button 
+                  size="sm" 
+                  className="px-2 h-8 shrink-0" 
+                  onClick={sendChatMessage}
+                  disabled={isChatLoading || !chatInput.trim()}
+                >
+                  {isChatLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </aside>
   )
 }

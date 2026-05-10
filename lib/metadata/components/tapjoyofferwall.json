@@ -1,0 +1,13 @@
+{
+  "name": "Tapjoy Offerwall",
+  "type": "TapjoyOfferwall",
+  "properties": [
+    "Ad Enabled",
+    "Currency Name",
+    "Entry Point",
+    "Placement Name",
+    "SDK Key",
+    "Test Mode",
+    "User ID"
+  ]
+}

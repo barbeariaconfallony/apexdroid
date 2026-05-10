@@ -1,0 +1,10 @@
+{
+  "name": "EV3 Gyro Sensor",
+  "type": "EV3GyroSensor",
+  "properties": [
+    "Bluetooth Client",
+    "Mode",
+    "Sensor Port",
+    "Sensor Value Changed Event Enabled"
+  ]
+}

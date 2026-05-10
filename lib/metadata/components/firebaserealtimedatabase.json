@@ -1,0 +1,8 @@
+{
+  "name": "Firebase Realtime Database",
+  "type": "FirebaseRealtimeDatabase",
+  "properties": [
+    "Persist",
+    "Project Path"
+  ]
+}

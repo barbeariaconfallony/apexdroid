@@ -102,6 +102,10 @@ export interface GitHubRepo {
   html_url: string
   default_branch: string
   updated_at: string
+  owner: {
+    login: string
+    avatar_url: string
+  }
 }
 
 export interface GitHubContent {
@@ -149,6 +153,8 @@ export interface DragState {
 export interface HistorySnapshot {
   screens: Record<string, ProjectData>
   currentScreenName: string | null
+  activeTab?: string
+  selectedComponentName?: string | null
   timestamp: number
 }
 

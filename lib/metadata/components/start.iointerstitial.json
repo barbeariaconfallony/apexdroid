@@ -1,0 +1,10 @@
+{
+  "name": "Start.io Interstitial",
+  "type": "Start.ioInterstitial",
+  "properties": [
+    "Ad Type",
+    "Enable Consent",
+    "Set User Consent",
+    "Test Mode"
+  ]
+}

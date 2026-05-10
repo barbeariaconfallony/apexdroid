@@ -1,41 +1,79 @@
 "use client"
 
 import { useState } from "react"
-import { X, Zap, ChevronDown, ChevronRight, Trash2, Copy, Palette } from "lucide-react"
+import { X, Zap, ChevronDown, ChevronRight, Trash2, Copy, Palette, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { useIDEStore } from "@/lib/ide-store"
+import { useAIChat } from "@/lib/hooks/use-ai-chat"
+import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import type { KodularComponent } from "@/lib/ide-types"
+import { componentMetadata } from "@/lib/metadata"
+import { useEffect } from "react"
+
+// Componente para evitar travamentos ao salvar histórico
+function RealtimeInput({ value, onChange, placeholder, className, type = "text" }: any) {
+  const [localValue, setLocalValue] = useState(value)
+
+  // Sincroniza apenas se o valor externo mudar (ex: troca de componente)
+  useEffect(() => {
+    setLocalValue(value)
+  }, [value])
+
+  return (
+    <Input
+      type={type}
+      value={localValue}
+      onChange={(e) => {
+        const val = e.target.value
+        setLocalValue(val)
+        // Atualiza a tela em tempo real SEM salvar snapshot (rápido)
+        onChange(val, true)
+      }}
+      onBlur={() => {
+        // Salva o snapshot apenas quando terminar de digitar
+        onChange(localValue, false)
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          onChange(localValue, false)
+        }
+      }}
+      className={className}
+      placeholder={placeholder}
+    />
+  )
+}
 
 // Property categories for better organization
 const propertyCategories = {
   basic: {
-    name: "Basico",
-    properties: ["Text", "Hint", "Title", "Enabled", "Visible"]
+    name: "Básico",
+    properties: ["Text", "Hint", "Title", "Enabled", "Visible", "HTMLFormat", "Checked", "Selection"]
   },
   appearance: {
-    name: "Aparencia",
-    properties: ["BackgroundColor", "TextColor", "FontSize", "FontBold", "FontItalic", "TextAlignment", "Shape"]
+    name: "Aparência",
+    properties: [
+      "BackgroundColor", "TextColor", "FontSize", "FontBold", "FontItalic", 
+      "FontTypeface", "TextAlignment", "Shape", "Image", "RotationAngle", 
+      "ShowFeedback", "TouchColor", "BorderShadow", "PaintColor", "Color",
+      "ThumbColor", "TrackColor"
+    ]
   },
   size: {
     name: "Tamanho",
-    properties: ["Width", "Height"]
+    properties: ["Width", "Height", "WidthPercent", "HeightPercent", "Radius", "CornerRadius"]
   },
   layout: {
     name: "Layout",
-    properties: ["AlignHorizontal", "AlignVertical", "Orientation"]
-  },
-  media: {
-    name: "Midia",
-    properties: ["Picture", "Source", "Image"]
+    properties: ["AlignHorizontal", "AlignVertical", "Orientation", "Scrollable", "Columns", "Rows"]
   },
   advanced: {
-    name: "Avancado",
-    properties: [] // Will contain remaining properties
+    name: "Avançado",
+    properties: ["Name", "Uuid"] 
   }
 }
 
@@ -98,9 +136,9 @@ export function PropertiesPanel({ onShowBlocks }: PropertiesPanelProps) {
     b => b.component === selectedComponent?.$Name
   )
 
-  const handlePropertyChange = (key: string, value: string) => {
+  const handlePropertyChange = (key: string, value: string, skipSnapshot: boolean = false) => {
     if (selectedComponent) {
-      updateComponent(selectedComponent.$Name, { [key]: value })
+      updateComponent(selectedComponent.$Name, { [key]: value }, skipSnapshot)
     }
   }
 
@@ -123,26 +161,46 @@ export function PropertiesPanel({ onShowBlocks }: PropertiesPanelProps) {
     appearance: [],
     size: [],
     layout: [],
-    media: [],
     advanced: []
   }
 
   if (selectedComponent) {
-    Object.entries(selectedComponent)
-      .filter(([key]) => !key.startsWith("$"))
-      .forEach(([key, value]) => {
-        let found = false
-        for (const [category, config] of Object.entries(propertyCategories)) {
-          if (config.properties.includes(key)) {
-            categorizedProperties[category].push([key, value])
-            found = true
-            break
-          }
+    // 1. Get properties from metadata for this component type
+    const componentType = selectedComponent.$Type.split('.').pop() || ""
+    const metadata = componentMetadata[componentType]
+    const metadataProps = metadata?.properties || []
+    
+    // 2. Get properties currently present in the object
+    const actualProps = Object.keys(selectedComponent).filter(k => !k.startsWith("$"))
+    
+    // 3. Merge them (metadata takes precedence for order/availability)
+    // We normalize names because metadata has spaces (e.g. "Background Color") 
+    // but the object usually has them PascalCase or similar (e.g. "BackgroundColor")
+    const allRelevantProps = new Set<string>()
+    
+    // Add metadata properties (normalized)
+    metadataProps.forEach(p => {
+      const normalized = p.replace(/\s+/g, '')
+      allRelevantProps.add(normalized)
+    })
+    
+    // Add any extra properties already in the object
+    actualProps.forEach(p => allRelevantProps.add(p))
+
+    allRelevantProps.forEach(key => {
+      const value = selectedComponent[key] ?? ""
+      let found = false
+      for (const [category, config] of Object.entries(propertyCategories)) {
+        if (config.properties.includes(key)) {
+          categorizedProperties[category].push([key, value])
+          found = true
+          break
         }
-        if (!found) {
-          categorizedProperties.advanced.push([key, value])
-        }
-      })
+      }
+      if (!found) {
+        categorizedProperties.advanced.push([key, value])
+      }
+    })
   }
 
   // Render property input based on type
@@ -150,49 +208,34 @@ export function PropertiesPanel({ onShowBlocks }: PropertiesPanelProps) {
     const stringValue = String(value)
     
     // Color properties
-    if (key.toLowerCase().includes("color")) {
+    if (key.toLowerCase().includes("color") || key === "TouchColor") {
       return (
         <div className="space-y-1">
           <div className="flex gap-1">
-            <Input
+            <RealtimeInput
               value={stringValue}
-              onChange={(e) => handlePropertyChange(key, e.target.value)}
-              className="bg-input border-border text-xs h-7 font-mono flex-1"
+              onChange={(val: string, skip: boolean) => handlePropertyChange(key, val, skip)}
+              className="bg-input border-border text-[11px] h-8 font-mono flex-1"
             />
             <div 
-              className="w-7 h-7 rounded border border-border cursor-pointer"
+              className="w-8 h-8 rounded border border-border cursor-pointer shrink-0"
               style={{ backgroundColor: convertKodularColor(stringValue) }}
-              title="Cor atual"
+              onClick={() => {/* Open color picker? */}}
             />
           </div>
           <div className="flex flex-wrap gap-1">
-            {colorPresets.slice(0, 5).map(preset => (
+            {colorPresets.map(preset => (
               <button
                 key={preset.value}
                 onClick={() => handlePropertyChange(key, preset.value)}
-                className="w-5 h-5 rounded border border-border hover:ring-1 ring-primary"
+                className={cn(
+                  "w-5 h-5 rounded border border-border transition-all",
+                  stringValue === preset.value ? "ring-1 ring-primary border-primary" : "hover:scale-110"
+                )}
                 style={{ backgroundColor: convertKodularColor(preset.value) }}
                 title={preset.name}
               />
             ))}
-            <Select onValueChange={(v) => handlePropertyChange(key, v)}>
-              <SelectTrigger className="w-7 h-5 p-0 border-border">
-                <Palette className="w-3 h-3 mx-auto" />
-              </SelectTrigger>
-              <SelectContent>
-                {colorPresets.map(preset => (
-                  <SelectItem key={preset.value} value={preset.value} className="text-xs">
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-3 h-3 rounded border"
-                        style={{ backgroundColor: convertKodularColor(preset.value) }}
-                      />
-                      {preset.name}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
         </div>
       )
@@ -201,43 +244,57 @@ export function PropertiesPanel({ onShowBlocks }: PropertiesPanelProps) {
     // Size properties (Width, Height)
     if (key === "Width" || key === "Height") {
       return (
-        <div className="space-y-1">
-          <Input
-            value={stringValue}
-            onChange={(e) => handlePropertyChange(key, e.target.value)}
-            className="bg-input border-border text-xs h-7 font-mono"
-          />
+        <div className="space-y-1.5">
           <div className="flex gap-1">
-            {sizePresets.map(preset => (
-              <button
-                key={preset.value}
-                onClick={() => handlePropertyChange(key, preset.value)}
-                className={cn(
-                  "px-1.5 py-0.5 text-[9px] rounded border transition-all",
-                  stringValue === preset.value 
-                    ? "bg-primary text-primary-foreground border-primary" 
-                    : "border-border hover:border-primary"
-                )}
-              >
-                {preset.name}
-              </button>
-            ))}
+            <Input
+              value={stringValue === "-1" ? "Automático" : stringValue === "-2" ? "Preencher" : stringValue}
+              onChange={(e) => {
+                const val = e.target.value
+                if (val === "Automático") handlePropertyChange(key, "-1")
+                else if (val === "Preencher") handlePropertyChange(key, "-2")
+                else handlePropertyChange(key, val)
+              }}
+              className="bg-input border-border text-[11px] h-8 flex-1"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn("h-8 px-2 border-border", stringValue === "-1" && "bg-primary/20 border-primary")}
+              onClick={() => handlePropertyChange(key, "-1")}
+              title="Automático"
+            >
+              <div className="w-3.5 h-3.5 border border-current rounded-sm opacity-60" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn("h-8 px-2 border-border", stringValue === "-2" && "bg-primary/20 border-primary")}
+              onClick={() => handlePropertyChange(key, "-2")}
+              title="Preencher Principal"
+            >
+              <Zap className="w-3.5 h-3.5" />
+            </Button>
           </div>
         </div>
       )
     }
     
     // Alignment properties
-    if (key.includes("Align")) {
+    if (key.includes("Align") || key === "TextAlignment") {
+      const isHorizontal = key.includes("Horizontal") || key === "TextAlignment"
+      const labels = isHorizontal 
+        ? ["Esquerda", "Centro", "Direita"] 
+        : ["Topo", "Centro", "Base"]
+        
       return (
         <Select value={stringValue} onValueChange={(v) => handlePropertyChange(key, v)}>
-          <SelectTrigger className="bg-input border-border text-xs h-7">
+          <SelectTrigger className="bg-input border-border text-[11px] h-8">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {alignmentPresets.map(preset => (
-              <SelectItem key={preset.value} value={preset.value} className="text-xs">
-                {preset.name}
+            {labels.map((label, idx) => (
+              <SelectItem key={idx} value={String(idx + 1)} className="text-[11px]">
+                {label} : {idx + 1}
               </SelectItem>
             ))}
           </SelectContent>
@@ -245,64 +302,88 @@ export function PropertiesPanel({ onShowBlocks }: PropertiesPanelProps) {
       )
     }
     
-    // Boolean properties
-    if (value === "True" || value === "False" || key === "Enabled" || key === "Visible" || key === "FontBold" || key === "FontItalic") {
+    // Boolean / Checkbox properties
+    if (typeof value === "boolean" || value === "True" || value === "False" || 
+        ["Enabled", "Visible", "FontBold", "FontItalic", "ShowFeedback", "HTMLFormat", "BorderShadow", "Scrollable"].includes(key)) {
+      const isTrue = stringValue === "True" || value === true
       return (
-        <div className="flex gap-1">
-          <button
-            onClick={() => handlePropertyChange(key, "True")}
-            className={cn(
-              "flex-1 py-1 text-[10px] rounded border transition-all",
-              stringValue === "True" 
-                ? "bg-primary text-primary-foreground border-primary" 
-                : "border-border hover:border-primary"
-            )}
-          >
-            Sim
-          </button>
-          <button
-            onClick={() => handlePropertyChange(key, "False")}
-            className={cn(
-              "flex-1 py-1 text-[10px] rounded border transition-all",
-              stringValue === "False" 
-                ? "bg-primary text-primary-foreground border-primary" 
-                : "border-border hover:border-primary"
-            )}
-          >
-            Nao
-          </button>
+        <div 
+          className={cn(
+            "flex items-center gap-2 cursor-pointer group p-1 rounded hover:bg-muted/50 transition-colors",
+            isTrue ? "text-primary" : "text-muted-foreground"
+          )}
+          onClick={() => handlePropertyChange(key, isTrue ? "False" : "True")}
+        >
+          <div className={cn(
+            "w-4 h-4 rounded border flex items-center justify-center transition-all",
+            isTrue ? "bg-primary border-primary" : "bg-input border-border group-hover:border-primary/50"
+          )}>
+            {isTrue && <X className="w-3 h-3 text-primary-foreground stroke-[3]" />}
+          </div>
+          <span className="text-[11px] font-medium">{isTrue ? "Ativado" : "Desativado"}</span>
         </div>
       )
     }
     
-    // TextAlignment
-    if (key === "TextAlignment") {
+    // Font Typeface
+    if (key === "FontTypeface") {
       return (
         <Select value={stringValue} onValueChange={(v) => handlePropertyChange(key, v)}>
-          <SelectTrigger className="bg-input border-border text-xs h-7">
+          <SelectTrigger className="bg-input border-border text-[11px] h-8">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="0" className="text-xs">Esquerda</SelectItem>
-            <SelectItem value="1" className="text-xs">Centro</SelectItem>
-            <SelectItem value="2" className="text-xs">Direita</SelectItem>
+            <SelectItem value="0" className="text-[11px]">Padrão</SelectItem>
+            <SelectItem value="1" className="text-[11px]">Sans Serif</SelectItem>
+            <SelectItem value="2" className="text-[11px]">Serif</SelectItem>
+            <SelectItem value="3" className="text-[11px]">Monospace</SelectItem>
           </SelectContent>
         </Select>
+      )
+    }
+
+    // Shape
+    if (key === "Shape") {
+      return (
+        <Select value={stringValue} onValueChange={(v) => handlePropertyChange(key, v)}>
+          <SelectTrigger className="bg-input border-border text-[11px] h-8">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="0" className="text-[11px]">Padrão</SelectItem>
+            <SelectItem value="1" className="text-[11px]">Arredondado</SelectItem>
+            <SelectItem value="2" className="text-[11px]">Retangular</SelectItem>
+            <SelectItem value="3" className="text-[11px]">Oval</SelectItem>
+          </SelectContent>
+        </Select>
+      )
+    }
+
+    // Number inputs (FontSize, RotationAngle)
+    if (key === "FontSize" || key === "RotationAngle") {
+      return (
+        <RealtimeInput
+          type="number"
+          value={stringValue}
+          onChange={(val: string, skip: boolean) => handlePropertyChange(key, val, skip)}
+          className="bg-input border-border text-[11px] h-8 font-mono"
+        />
       )
     }
     
     // Default text input
     return (
-      <Input
-        value={stringValue}
-        onChange={(e) => handlePropertyChange(key, e.target.value)}
-        className="bg-input border-border text-xs h-7 font-mono"
+      <RealtimeInput
+        value={stringValue === "undefined" ? "" : stringValue}
+        onChange={(val: string, skip: boolean) => handlePropertyChange(key, val, skip)}
+        className="bg-input border-border text-[11px] h-8"
+        placeholder={key}
       />
     )
   }
 
   return (
-    <aside className="w-[300px] bg-card border-l border-border flex flex-col shrink-0">
+    <aside className="w-[300px] bg-card border-l border-border flex flex-col shrink-0 h-full overflow-hidden">
       {/* Header */}
       <div className="px-4 py-3 border-b border-border flex justify-between items-center shrink-0">
         <h3 className="text-sm font-bold">PROPRIEDADES</h3>
@@ -312,89 +393,87 @@ export function PropertiesPanel({ onShowBlocks }: PropertiesPanelProps) {
         />
       </div>
 
-      <ScrollArea className="flex-1">
-        <div className="p-4">
-          {selectedComponent ? (
-            <>
-              {/* Component Header */}
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <div className="text-primary font-bold text-sm">
-                    {selectedComponent.$Name}
-                  </div>
-                  <div className="text-[10px] text-muted-foreground">
-                    {selectedComponent.$Type}
-                  </div>
+      <div className="flex-1 overflow-y-auto min-h-0 p-4">
+        {selectedComponent ? (
+          <>
+            {/* Component Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <div className="text-primary font-bold text-sm">
+                  {selectedComponent.$Name}
                 </div>
-                <div className="flex gap-1">
+                <div className="text-[10px] text-muted-foreground">
+                  {selectedComponent.$Type}
+                </div>
+              </div>
+              <div className="flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0"
+                  onClick={() => {/* Copy component */}}
+                  title="Duplicar"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                </Button>
+                {selectedComponent.$Name !== currentProject?.Properties.$Name && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 w-7 p-0"
-                    onClick={() => {/* Copy component */}}
-                    title="Duplicar"
+                    className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                    onClick={handleDelete}
+                    title="Excluir"
                   >
-                    <Copy className="w-3.5 h-3.5" />
+                    <Trash2 className="w-3.5 h-3.5" />
                   </Button>
-                  {selectedComponent.$Name !== currentProject?.Properties.$Name && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                      onClick={handleDelete}
-                      title="Excluir"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Property Categories */}
+            {Object.entries(categorizedProperties).map(([category, properties]) => {
+              if (properties.length === 0) return null
+              const categoryConfig = propertyCategories[category as keyof typeof propertyCategories]
+              
+              return (
+                <div key={category} className="mb-3">
+                  <button
+                    onClick={() => toggleSection(category)}
+                    className="w-full flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 hover:text-foreground transition-colors"
+                  >
+                    {expandedSections[category] ? (
+                      <ChevronDown className="w-3 h-3" />
+                    ) : (
+                      <ChevronRight className="w-3 h-3" />
+                    )}
+                    {categoryConfig.name}
+                    <span className="text-[9px] text-muted-foreground/50 ml-auto">
+                      {properties.length}
+                    </span>
+                  </button>
+                  
+                  {expandedSections[category] && (
+                    <div className="space-y-2 pl-5">
+                      {properties.map(([key, value]) => (
+                        <div key={key}>
+                          <Label className="text-[10px] text-muted-foreground uppercase block mb-1">
+                            {key}
+                          </Label>
+                          {renderPropertyInput(key, value)}
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
-              </div>
-
-              {/* Property Categories */}
-              {Object.entries(categorizedProperties).map(([category, properties]) => {
-                if (properties.length === 0) return null
-                const categoryConfig = propertyCategories[category as keyof typeof propertyCategories]
-                
-                return (
-                  <div key={category} className="mb-3">
-                    <button
-                      onClick={() => toggleSection(category)}
-                      className="w-full flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 hover:text-foreground transition-colors"
-                    >
-                      {expandedSections[category] ? (
-                        <ChevronDown className="w-3 h-3" />
-                      ) : (
-                        <ChevronRight className="w-3 h-3" />
-                      )}
-                      {categoryConfig.name}
-                      <span className="text-[9px] text-muted-foreground/50 ml-auto">
-                        {properties.length}
-                      </span>
-                    </button>
-                    
-                    {expandedSections[category] && (
-                      <div className="space-y-2 pl-5">
-                        {properties.map(([key, value]) => (
-                          <div key={key}>
-                            <Label className="text-[10px] text-muted-foreground uppercase block mb-1">
-                              {key}
-                            </Label>
-                            {renderPropertyInput(key, value)}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </>
-          ) : (
-            <p className="text-xs text-muted-foreground text-center py-8">
-              Selecione um componente no preview para ver suas propriedades.
-            </p>
-          )}
-        </div>
-      </ScrollArea>
+              )
+            })}
+          </>
+        ) : (
+          <p className="text-xs text-muted-foreground text-center py-8">
+            Selecione um componente no preview para ver suas propriedades.
+          </p>
+        )}
+      </div>
 
       {/* Events Section */}
       <div className="p-4 border-t border-border bg-black/5 shrink-0">
@@ -432,14 +511,16 @@ export function PropertiesPanel({ onShowBlocks }: PropertiesPanelProps) {
               </p>
             )}
 
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="w-full mt-3 text-[10px]"
-              onClick={onShowBlocks}
-            >
-              VER TODOS OS BLOCOS
-            </Button>
+            <div className="flex gap-2 mt-3">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full text-[10px]"
+                onClick={onShowBlocks}
+              >
+                VER TODOS OS BLOCOS
+              </Button>
+            </div>
           </>
         )}
       </div>
@@ -463,4 +544,30 @@ function convertKodularColor(k?: string): string {
     return `#${hex}`
   }
   return k
+}
+
+function Loader2(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 2v4" />
+      <path d="m16.2 7.8 2.9-2.9" />
+      <path d="M18 12h4" />
+      <path d="m16.2 16.2 2.9 2.9" />
+      <path d="M12 18v4" />
+      <path d="m4.9 19.1 2.9-2.9" />
+      <path d="M2 12h4" />
+      <path d="m4.9 4.9 2.9 2.9" />
+    </svg>
+  )
 }

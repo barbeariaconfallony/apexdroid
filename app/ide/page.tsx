@@ -19,7 +19,9 @@ import { LoadingScreen } from "@/components/ide/loading-skeleton"
 import { IDEDndProvider } from "@/components/ide/dnd-context"
 import { AIComponentGenerator } from "@/components/ide/ai-component-generator"
 import { AIDebugAssistant } from "@/components/ide/ai-debug-assistant"
-import { AISuggestionsPanel } from "@/components/ide/ai-suggestions-panel"
+import { AIScreenGenerator } from "@/components/ide/ai-screen-generator"
+import { BuildMonitor } from "@/components/ide/build-monitor"
+import { AssetsModal } from "@/components/ide/assets-modal"
 import { useIDEStore } from "@/lib/ide-store"
 
 export default function IDEPage() {
@@ -32,6 +34,8 @@ export default function IDEPage() {
   const [loginModalOpen, setLoginModalOpen] = useState(false)
   const [aiComponentGeneratorOpen, setAiComponentGeneratorOpen] = useState(false)
   const [aiDebugAssistantOpen, setAiDebugAssistantOpen] = useState(false)
+  const [aiScreenGeneratorOpen, setAiScreenGeneratorOpen] = useState(false)
+  const [assetsModalOpen, setAssetsModalOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
 
   const { 
@@ -84,7 +88,9 @@ export default function IDEPage() {
             onBuildClick={() => setBuildModalOpen(true)}
             onSettingsClick={() => setSettingsModalOpen(true)}
             onAIGeneratorClick={() => setAiComponentGeneratorOpen(true)}
+            onAIScreenClick={() => setAiScreenGeneratorOpen(true)}
             onAIDebugClick={() => setAiDebugAssistantOpen(true)}
+            onAssetsClick={() => setAssetsModalOpen(true)}
           />
 
           <div className="flex flex-1 overflow-hidden">
@@ -128,6 +134,10 @@ export default function IDEPage() {
           isOpen={templatesModalOpen} 
           onClose={() => setTemplatesModalOpen(false)} 
         />
+        <AssetsModal 
+          isOpen={assetsModalOpen} 
+          onClose={() => setAssetsModalOpen(false)} 
+        />
 
         {/* Command Palette */}
         <CommandPalette
@@ -138,6 +148,8 @@ export default function IDEPage() {
           onBlocksEditorClick={() => setBlocksEditorOpen(true)}
           onExportClick={() => setExportModalOpen(true)}
           onTemplatesClick={() => setTemplatesModalOpen(true)}
+          onAssetsClick={() => setAssetsModalOpen(true)}
+          onAIScreenClick={() => setAiScreenGeneratorOpen(true)}
         />
 
         {/* AI Modals */}
@@ -145,13 +157,16 @@ export default function IDEPage() {
           isOpen={aiComponentGeneratorOpen}
           onClose={() => setAiComponentGeneratorOpen(false)}
         />
+        <AIScreenGenerator 
+          isOpen={aiScreenGeneratorOpen}
+          onClose={() => setAiScreenGeneratorOpen(false)}
+        />
         <AIDebugAssistant 
           isOpen={aiDebugAssistantOpen}
           onClose={() => setAiDebugAssistantOpen(false)}
         />
 
-        {/* AI Suggestions Panel */}
-        <AISuggestionsPanel />
+        <BuildMonitor />
 
         {/* Toast Container */}
           <ToastContainer />

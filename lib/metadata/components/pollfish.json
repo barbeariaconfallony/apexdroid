@@ -1,0 +1,10 @@
+{
+  "name": "Pollfish",
+  "type": "Pollfish",
+  "properties": [
+    "API Key",
+    "Request UUID",
+    "Survey Mode",
+    "Test Mode"
+  ]
+}

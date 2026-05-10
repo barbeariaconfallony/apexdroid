@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X, Zap, Globe, Server, ExternalLink } from "lucide-react"
+import { X, Zap, Globe, Server, ExternalLink, CheckCircle2, AlertCircle, RefreshCw, Layers } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -20,10 +20,10 @@ const AI_PROVIDERS = {
     description: "IA ultrarapida (Recomendado)",
     icon: Zap,
     models: [
-      { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B (Rapido)", recommended: true },
-      { id: "deepseek-r1-distill-llama-70b", name: "DeepSeek R1 (Raciocinio)" },
-      { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B (Muito rapido)" },
-      { id: "mixtral-8x7b-32768", name: "Mixtral 8x7B (Balanceado)" },
+      { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B (Versátil/Resiliente)", recommended: true },
+      { id: "deepseek-r1-distill-llama-70b", name: "DeepSeek R1 (Pensamento & Raciocínio)" },
+      { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B (Rápido)" },
+      { id: "meta-llama/llama-prompt-guard-2-86m", name: "Prompt Guard 2 (86m)" },
     ],
     baseUrl: "https://api.groq.com/openai/v1",
     keyPlaceholder: "gsk_...",
@@ -32,13 +32,13 @@ const AI_PROVIDERS = {
   },
   openai: {
     name: "OpenAI",
-    description: "GPT-4 e modelos avancados",
+    description: "GPT-4 e modelos avançados",
     icon: Globe,
     models: [
-      { id: "gpt-4-turbo", name: "GPT-4 Turbo", recommended: true },
-      { id: "gpt-4o", name: "GPT-4o (Multimodal)" },
-      { id: "gpt-4o-mini", name: "GPT-4o Mini (Economico)" },
-      { id: "gpt-3.5-turbo", name: "GPT-3.5 Turbo (Rapido)" },
+      { id: "gpt-4o-mini", name: "GPT-4o Mini (Econômico)", recommended: true },
+      { id: "gpt-4o", name: "GPT-4o (Mais Poderoso)" },
+      { id: "o1-mini", name: "o1 Mini (Raciocínio Rápido)" },
+      { id: "gpt-4-turbo", name: "GPT-4 Turbo (Legacy)" },
     ],
     baseUrl: "https://api.openai.com/v1",
     keyPlaceholder: "sk-...",
@@ -55,7 +55,7 @@ const AI_PROVIDERS = {
       { id: "mistral", name: "Mistral (Balanceado)" },
       { id: "deepseek-coder", name: "DeepSeek Coder" },
     ],
-    baseUrl: "http://localhost:11434/v1",
+    baseUrl: "http://127.0.0.1:11434/v1",
     keyPlaceholder: "Nao requer chave",
     keyUrl: "https://ollama.ai/download",
     color: "text-blue-500"
@@ -68,6 +68,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { aiSettings, setAISettings } = useIDEStore()
   const [settings, setSettings] = useState(aiSettings)
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState<{ status: 'success' | 'error' | 'none'; message: string }>({ status: 'none', message: '' })
+  const [ollamaModels, setOllamaModels] = useState<string[]>([])
+  const [loadingModels, setLoadingModels] = useState(false)
 
   useEffect(() => {
     setSettings(aiSettings)
@@ -85,7 +89,87 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       baseUrl: providerConfig.baseUrl,
       apiKey: provider === settings.provider ? settings.apiKey : ""
     })
+    setTestResult({ status: 'none', message: '' })
   }
+
+  const fetchOllamaModels = async () => {
+    setLoadingModels(true)
+    try {
+      const response = await fetch('/api/ai/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: `${settings.baseUrl}/tags`
+        })
+      })
+      
+      if (!response.ok) throw new Error("Ollama nao está rodando")
+      const data = await response.json()
+      if (data.error) throw new Error(data.error)
+      
+      const models = data.models?.map((m: any) => m.name) || []
+      setOllamaModels(models)
+      if (models.length > 0 && !settings.model) {
+        setSettings(s => ({ ...s, model: models[0] }))
+      }
+    } catch (err: any) {
+      console.error("Erro ao buscar modelos do Ollama:", err)
+      setTestResult({ status: 'error', message: err.message || "Ollama inacessível" })
+      setOllamaModels([])
+    } finally {
+      setLoadingModels(false)
+    }
+  }
+
+  const testConnection = async () => {
+    setTesting(true)
+    setTestResult({ status: 'none', message: 'Testando...' })
+    
+    try {
+      let url = `${settings.baseUrl}/models`
+      let method = 'GET'
+      let headers: Record<string, string> = {}
+      
+      if (settings.provider === 'groq') {
+        headers['Authorization'] = `Bearer ${settings.apiKey}`
+      } else if (settings.provider === 'openai') {
+        headers['Authorization'] = `Bearer ${settings.apiKey}`
+      } else if (settings.provider === 'ollama') {
+        url = `${settings.baseUrl}/tags`
+      }
+
+      const response = await fetch('/api/ai/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, method, headers })
+      })
+      
+      const data = await response.json().catch(() => ({}))
+
+      if (response.ok && !data.error) {
+        setTestResult({ status: 'success', message: 'Conexão estabelecida com sucesso!' })
+        if (settings.provider === 'ollama') fetchOllamaModels()
+      } else {
+        setTestResult({ 
+          status: 'error', 
+          message: data.error?.message || data.error || `Erro ${response.status}: Falha na autenticação` 
+        })
+      }
+    } catch (err) {
+      setTestResult({ 
+        status: 'error', 
+        message: 'Falha de rede: Verifique se o provider está acessível' 
+      })
+    } finally {
+      setTesting(false)
+    }
+  }
+
+  useEffect(() => {
+    if (isOpen && settings.provider === 'ollama') {
+      fetchOllamaModels()
+    }
+  }, [isOpen, settings.provider])
 
   const handleSave = () => {
     setAISettings(settings)
@@ -171,6 +255,29 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               className="bg-input border-border"
               disabled={settings.provider === "ollama"}
             />
+            
+            <div className="mt-3 flex items-center justify-between">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-7 text-[10px] gap-1.5"
+                onClick={testConnection}
+                disabled={testing || (!settings.apiKey && settings.provider !== 'ollama')}
+              >
+                {testing ? <RefreshCw className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                Testar Conexão
+              </Button>
+
+              {testResult.status !== 'none' && (
+                <div className={cn(
+                  "flex items-center gap-1 text-[10px] font-medium",
+                  testResult.status === 'success' ? "text-success" : "text-destructive"
+                )}>
+                  {testResult.status === 'success' ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                  {testResult.message}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Model Selection */}
@@ -178,17 +285,34 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             <Label className="text-xs text-muted-foreground uppercase mb-1 block">
               Modelo
             </Label>
-            <select
-              value={settings.model}
-              onChange={(e) => setSettings({ ...settings, model: e.target.value })}
-              className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm outline-none focus:border-primary"
-            >
-              {currentProvider.models.map((model) => (
-                <option key={model.id} value={model.id}>
-                  {model.name} {model.recommended && "(Recomendado)"}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={settings.model}
+                onChange={(e) => setSettings({ ...settings, model: e.target.value })}
+                className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm outline-none focus:border-primary appearance-none pr-10"
+              >
+                {settings.provider === 'ollama' && ollamaModels.length > 0 ? (
+                  ollamaModels.map(model => (
+                    <option key={model} value={model}>{model}</option>
+                  ))
+                ) : (
+                  currentProvider.models.map((model) => (
+                    <option key={model.id} value={model.id}>
+                      {model.name} {model.recommended && "(Recomendado)"}
+                    </option>
+                  ))
+                )}
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-muted-foreground">
+                {loadingModels ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Layers className="w-3.5 h-3.5" />}
+              </div>
+            </div>
+            {settings.provider === 'ollama' && ollamaModels.length === 0 && !loadingModels && (
+              <p className="text-[10px] text-destructive mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                Nenhum modelo encontrado. Certifique-se que o Ollama está rodando.
+              </p>
+            )}
           </div>
 
           {/* Advanced Settings Toggle */}

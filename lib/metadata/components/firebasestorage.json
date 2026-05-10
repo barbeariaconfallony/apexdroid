@@ -1,0 +1,21 @@
+{
+  "name": "Firebase Storage",
+  "type": "FirebaseStorage",
+  "properties": [
+    "Delete Failed",
+    "Delete File",
+    "Delete Success",
+    "Download Failed",
+    "Download File",
+    "Download Success",
+    "Get Bucket",
+    "Pause Downloads",
+    "Pause Uploads",
+    "Resume Downloads",
+    "Resume Uploads",
+    "Upload Failed",
+    "Upload File",
+    "Upload Progress",
+    "Upload Success"
+  ]
+}

@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import type { ChatMessage } from '@/lib/ide-types'
+import { useIDEStore } from '@/lib/ide-store'
 
 interface UseAIChatOptions {
   onMessageReceived?: (message: ChatMessage) => void
@@ -9,6 +10,7 @@ interface UseAIChatOptions {
 export function useAIChat(options?: UseAIChatOptions) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
+  const { aiSettings } = useIDEStore()
 
   const sendMessage = useCallback(
     async (
@@ -27,7 +29,8 @@ export function useAIChat(options?: UseAIChatOptions) {
               role: msg.role,
               content: msg.content
             })),
-            context
+            context,
+            settings: aiSettings
           })
         })
 
@@ -48,21 +51,7 @@ export function useAIChat(options?: UseAIChatOptions) {
           if (done) break
 
           const chunk = decoder.decode(value)
-          const lines = chunk.split('\n')
-
-          for (const line of lines) {
-            if (line.startsWith('0:')) {
-              const jsonStr = line.slice(2)
-              try {
-                const data = JSON.parse(jsonStr)
-                if (data.type === 'text') {
-                  fullText += data.value
-                }
-              } catch (e) {
-                // Ignorar erros de parse
-              }
-            }
-          }
+          fullText += chunk
         }
 
         return fullText
@@ -89,7 +78,8 @@ export function useAIChat(options?: UseAIChatOptions) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             description,
-            projectContext
+            projectContext,
+            settings: aiSettings
           })
         })
 
@@ -127,7 +117,8 @@ export function useAIChat(options?: UseAIChatOptions) {
           body: JSON.stringify({
             error: errorMessage,
             componentName,
-            context: 'MIT App Inventor/Kodular'
+            context: 'MIT App Inventor/Kodular',
+            settings: aiSettings
           })
         })
 
@@ -153,12 +144,75 @@ export function useAIChat(options?: UseAIChatOptions) {
     [options]
   )
 
+  const explainBlocks = useCallback(
+    async (componentName: string, blocksJson: string) => {
+      setIsLoading(true)
+      setError(null)
+
+      try {
+        const response = await fetch('/api/ai/explain-blocks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            componentName,
+            blocks: blocksJson,
+            settings: aiSettings
+          })
+        })
+
+        if (!response.ok) throw new Error(`API error: ${response.status}`)
+        const data = await response.json()
+        return data.explanation
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error('Unknown error')
+        setError(error)
+        options?.onError?.(error)
+        throw error
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [aiSettings, options]
+  )
+
+  const generateScreen = useCallback(
+    async (description: string) => {
+      setIsLoading(true)
+      setError(null)
+
+      try {
+        const response = await fetch('/api/ai/generate-screen', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            description,
+            settings: aiSettings
+          })
+        })
+
+        if (!response.ok) throw new Error(`API error: ${response.status}`)
+        const data = await response.json()
+        return data.screen
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error('Unknown error')
+        setError(error)
+        options?.onError?.(error)
+        throw error
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [aiSettings, options]
+  )
+
   return {
     isLoading,
     error,
     sendMessage,
     generateComponent,
+    generateScreen,
     debugError,
+    explainBlocks,
     clearError: () => setError(null)
   }
 }

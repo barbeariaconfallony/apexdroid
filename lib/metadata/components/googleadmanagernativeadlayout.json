@@ -1,0 +1,19 @@
+{
+  "name": "Google Ad Manager Native Ad Layout",
+  "type": "GoogleAdManagerNativeAdLayout",
+  "properties": [
+    "Ad Enabled",
+    "Ad Unit ID",
+    "Body Label",
+    "Call To Action Button",
+    "Headline Label",
+    "Height",
+    "Height Percent",
+    "Icon Image",
+    "Test Mode",
+    "Visible",
+    "Width",
+    "Width Percent",
+    "eCPM Floor"
+  ]
+}

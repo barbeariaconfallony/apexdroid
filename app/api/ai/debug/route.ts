@@ -1,39 +1,6 @@
 import { generateText } from 'ai'
-import { createGroq } from '@ai-sdk/groq'
-import { createOpenAI } from '@ai-sdk/openai'
 import { NextRequest, NextResponse } from 'next/server'
-
-// Funcao para criar o modelo baseado no provider
-function getAIModel(provider: string, apiKey: string, model: string, baseUrl?: string) {
-  switch (provider) {
-    case 'groq':
-      const groq = createGroq({
-        apiKey: apiKey || process.env.GROQ_API_KEY,
-      })
-      // Para debug, preferir modelo com bom raciocinio
-      return groq(model || 'deepseek-r1-distill-llama-70b')
-    
-    case 'openai':
-      const openai = createOpenAI({
-        apiKey: apiKey || process.env.OPENAI_API_KEY,
-        baseURL: baseUrl || 'https://api.openai.com/v1',
-      })
-      return openai(model || 'gpt-4-turbo')
-    
-    case 'ollama':
-      const ollama = createOpenAI({
-        apiKey: 'ollama',
-        baseURL: baseUrl || 'http://localhost:11434/v1',
-      })
-      return ollama(model || 'llama3.2')
-    
-    default:
-      const defaultGroq = createGroq({
-        apiKey: apiKey || process.env.GROQ_API_KEY,
-      })
-      return defaultGroq(model || 'deepseek-r1-distill-llama-70b')
-  }
-}
+import { getAIModel } from '@/lib/ai-service'
 
 export async function POST(request: NextRequest) {
   try {
@@ -70,13 +37,13 @@ Forneça uma análise clara e acionável:
 
 Seja conciso e prático.`
 
-    const aiModel = getAIModel(provider, apiKey, model, baseUrl)
+    const aiModel = getAIModel({ provider, apiKey, model, baseUrl })
     
     const { text } = await generateText({
       model: aiModel,
       prompt,
       temperature: 0.6,
-      maxTokens: 1500
+      maxTokens: 4096
     })
 
     return NextResponse.json({

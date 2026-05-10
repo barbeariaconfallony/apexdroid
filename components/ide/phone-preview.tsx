@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback, memo, useRef, useEffect } from "react"
 import { Edit3, Play, Zap, PlusCircle, Github, Smartphone, Tablet, Monitor, RotateCcw, Maximize2, Minimize2, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { BkyWorkspace } from "./bky-workspace"
 import { useIDEStore } from "@/lib/ide-store"
 import type { KodularComponent, ProjectAsset } from "@/lib/ide-types"
 import { cn } from "@/lib/utils"
@@ -80,7 +81,7 @@ function resolveAssetUrl(assetName: string | undefined, assets: ProjectAsset[]):
   return asset?.url || null
 }
 
-function ComponentRenderer({ component, onSelect, selectedName, appMode, assets = [] }: ComponentRendererProps) {
+const ComponentRenderer = memo(({ component, onSelect, selectedName, appMode, assets = [] }: ComponentRendererProps) => {
   const { $Type, $Name, $Components } = component
 
   // Non-visible components (services, not UI)
@@ -114,8 +115,8 @@ function ComponentRenderer({ component, onSelect, selectedName, appMode, assets 
       <div
         onClick={handleClick}
         className={cn(
-          "px-3 py-2 text-center rounded text-sm cursor-pointer transition-all",
-          isSelected && "ring-2 ring-blue-500 ring-offset-1"
+          "px-3 py-2 text-center rounded text-sm cursor-pointer transition-all duration-300",
+          isSelected ? "ring-2 ring-primary ring-offset-2 ring-offset-background glow-primary z-10" : "hover:scale-[1.02]"
         )}
         style={{
           ...baseStyle,
@@ -133,8 +134,8 @@ function ComponentRenderer({ component, onSelect, selectedName, appMode, assets 
       <div
         onClick={handleClick}
         className={cn(
-          "cursor-pointer transition-all px-1",
-          isSelected && "ring-2 ring-blue-500 ring-offset-1 rounded"
+          "cursor-pointer transition-all px-1 duration-300",
+          isSelected ? "ring-2 ring-primary ring-offset-2 ring-offset-background glow-primary z-10 rounded" : "hover:text-foreground"
         )}
         style={{
           ...baseStyle,
@@ -157,8 +158,8 @@ function ComponentRenderer({ component, onSelect, selectedName, appMode, assets 
         onClick={handleClick}
         readOnly={appMode === "edit"}
         className={cn(
-          "px-3 py-2 rounded border text-sm w-full cursor-pointer",
-          isSelected && "ring-2 ring-blue-500 ring-offset-1"
+          "px-3 py-2 rounded border text-sm w-full cursor-pointer transition-all duration-300",
+          isSelected ? "ring-2 ring-primary ring-offset-2 ring-offset-background glow-primary z-10" : "border-border"
         )}
         style={{
           ...baseStyle,
@@ -177,8 +178,8 @@ function ComponentRenderer({ component, onSelect, selectedName, appMode, assets 
         onClick={handleClick}
         readOnly={appMode === "edit"}
         className={cn(
-          "px-3 py-2 rounded border text-sm w-full cursor-pointer",
-          isSelected && "ring-2 ring-blue-500 ring-offset-1"
+          "px-3 py-2 rounded border text-sm w-full cursor-pointer transition-all duration-300",
+          isSelected ? "ring-2 ring-primary ring-offset-2 ring-offset-background glow-primary z-10" : "border-border"
         )}
         style={{
           ...baseStyle,
@@ -293,7 +294,7 @@ function ComponentRenderer({ component, onSelect, selectedName, appMode, assets 
         id={`drop-${$Name}`}
         targetName={$Name}
         className={cn(
-          "flex gap-2 p-2 cursor-pointer transition-all min-h-[40px] relative",
+          "flex gap-2 p-2 cursor-pointer transition-all min-h-[40px] relative isolate",
           isSelected && "ring-2 ring-blue-500 ring-offset-1 rounded",
           isScroll && "overflow-auto"
         )}
@@ -305,7 +306,7 @@ function ComponentRenderer({ component, onSelect, selectedName, appMode, assets 
         }}
         disabled={appMode !== "edit"}
       >
-        <div onClick={handleClick} className="absolute inset-0 z-0" />
+        <div onClick={handleClick} className="absolute inset-0 z-[-1]" />
         {$Components?.map((child) => (
           <ComponentRenderer
             key={child.$Name}
@@ -333,13 +334,13 @@ function ComponentRenderer({ component, onSelect, selectedName, appMode, assets 
         id={`drop-${$Name}`}
         targetName={$Name}
         className={cn(
-          "bg-white rounded-lg shadow-md p-3 cursor-pointer transition-all relative",
+          "bg-white rounded-lg shadow-md p-3 cursor-pointer transition-all relative isolate",
           isSelected && "ring-2 ring-blue-500 ring-offset-1"
         )}
         style={baseStyle}
         disabled={appMode !== "edit"}
       >
-        <div onClick={handleClick} className="absolute inset-0 z-0" />
+        <div onClick={handleClick} className="absolute inset-0 z-[-1]" />
         {$Components?.map((child) => (
           <ComponentRenderer
             key={child.$Name}
@@ -435,7 +436,9 @@ function ComponentRenderer({ component, onSelect, selectedName, appMode, assets 
       {component.Text && <div className="text-sm mt-1">{component.Text}</div>}
     </div>
   )
-}
+})
+
+ComponentRenderer.displayName = "ComponentRenderer"
 
 interface PhonePreviewProps {
   onLoginClick: () => void
@@ -446,7 +449,7 @@ export function PhonePreview({ onLoginClick }: PhonePreviewProps) {
     currentProject, appMode, setAppMode,
     selectedComponent, setSelectedComponent, setShowProperties,
     selectedRepo, currentScreenName, setActiveTab,
-    projectAssets
+    projectAssets, ghToken, isThinking
   } = useIDEStore()
 
   // Device state
@@ -454,12 +457,15 @@ export function PhonePreview({ onLoginClick }: PhonePreviewProps) {
   const [selectedDevice, setSelectedDevice] = useState(devicePresets.phone[1]) // iPhone 14
   const [isLandscape, setIsLandscape] = useState(false)
   const [scale, setScale] = useState(0.7)
+  const [autoFit, setAutoFit] = useState(true)
   const [showHiddenComponents, setShowHiddenComponents] = useState(false)
+  
+  const containerRef = useRef<HTMLDivElement>(null)
 
-  const handleComponentSelect = (comp: KodularComponent) => {
+  const handleComponentSelect = useCallback((comp: KodularComponent) => {
     setSelectedComponent(comp)
     setShowProperties(true)
-  }
+  }, [setSelectedComponent, setShowProperties])
 
   const handleDeviceChange = (deviceName: string) => {
     const allDevices = [...devicePresets.phone, ...devicePresets.tablet, ...devicePresets.custom]
@@ -475,6 +481,31 @@ export function PhonePreview({ onLoginClick }: PhonePreviewProps) {
 
   const deviceWidth = isLandscape ? selectedDevice.height : selectedDevice.width
   const deviceHeight = isLandscape ? selectedDevice.width : selectedDevice.height
+
+  useEffect(() => {
+    if (!containerRef.current || !autoFit) return
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect
+        // Calculate frame size including padding
+        const fw = deviceWidth + (deviceType === "phone" ? 28 : 36)
+        const fh = deviceHeight + (deviceType === "phone" ? 76 : 48)
+        
+        // 40px margin
+        const scaleW = (width - 40) / fw
+        const scaleH = (height - 40) / fh
+        
+        // Use the smaller scale to fit entirely, max 1 (100%)
+        const newScale = Math.min(scaleW, scaleH, 1)
+        
+        // Only update if difference is noticeable to avoid jitter
+        setScale((prev) => Math.abs(prev - newScale) > 0.01 ? newScale : prev)
+      }
+    })
+    
+    resizeObserver.observe(containerRef.current)
+    return () => resizeObserver.disconnect()
+  }, [deviceWidth, deviceHeight, deviceType, autoFit])
 
   // Show welcome screen when no repo selected
   if (!selectedRepo) {
@@ -499,18 +530,20 @@ export function PhonePreview({ onLoginClick }: PhonePreviewProps) {
           </p>
 
           <div className="flex gap-5 justify-center">
-            <div 
-              onClick={() => {
-                onLoginClick()
-              }}
-              className="bg-secondary border border-border p-6 rounded-2xl max-w-[200px] cursor-pointer hover:-translate-y-1 hover:border-primary transition-all"
-            >
-              <Github className="w-8 h-8 text-primary mx-auto mb-3" />
-              <h3 className="font-semibold mb-1">Conectar GitHub</h3>
-              <p className="text-xs text-muted-foreground">
-                Importe seus projetos existentes e comece a editar.
-              </p>
-            </div>
+            {!ghToken && (
+              <div 
+                onClick={() => {
+                  onLoginClick()
+                }}
+                className="bg-secondary border border-border p-6 rounded-2xl max-w-[200px] cursor-pointer hover:-translate-y-1 hover:border-primary transition-all"
+              >
+                <Github className="w-8 h-8 text-primary mx-auto mb-3" />
+                <h3 className="font-semibold mb-1">Conectar GitHub</h3>
+                <p className="text-xs text-muted-foreground">
+                  Importe seus projetos existentes e comece a editar.
+                </p>
+              </div>
+            )}
 
             <div className="bg-secondary border border-border p-6 rounded-2xl max-w-[200px] cursor-pointer hover:-translate-y-1 hover:border-primary transition-all">
               <PlusCircle className="w-8 h-8 text-primary mx-auto mb-3" />
@@ -675,23 +708,39 @@ export function PhonePreview({ onLoginClick }: PhonePreviewProps) {
           </Button>
 
           {/* Scale Controls */}
-          <div className="flex items-center gap-1 ml-2">
+          <div className="flex items-center gap-1 ml-2 bg-secondary rounded-lg px-1">
+            <Button
+              variant={autoFit ? "default" : "ghost"}
+              size="sm"
+              className="h-6 px-2 text-[10px]"
+              onClick={() => setAutoFit(!autoFit)}
+              title="Ajustar Automaticamente"
+            >
+              Auto
+            </Button>
+            <div className="w-px h-4 bg-border mx-1"></div>
             <Button
               variant="ghost"
               size="sm"
               className="h-7 px-2"
-              onClick={() => setScale(Math.max(0.3, scale - 0.1))}
+              onClick={() => {
+                setAutoFit(false)
+                setScale(Math.max(0.3, scale - 0.1))
+              }}
             >
               <Minimize2 className="w-3.5 h-3.5" />
             </Button>
-            <span className="text-xs text-muted-foreground w-10 text-center">
+            <span className="text-[11px] font-mono text-muted-foreground w-10 text-center">
               {Math.round(scale * 100)}%
             </span>
             <Button
               variant="ghost"
               size="sm"
               className="h-7 px-2"
-              onClick={() => setScale(Math.min(1, scale + 0.1))}
+              onClick={() => {
+                setAutoFit(false)
+                setScale(Math.min(1.5, scale + 0.1))
+              }}
             >
               <Maximize2 className="w-3.5 h-3.5" />
             </Button>
@@ -728,44 +777,60 @@ export function PhonePreview({ onLoginClick }: PhonePreviewProps) {
       </div>
 
       {/* Preview Area */}
-      <div className="flex-1 flex items-center justify-center overflow-auto p-4">
-        {/* Device Frame */}
+      <div className="flex-1 flex flex-col relative overflow-hidden bg-grid-pattern">
+        {appMode === "blocks" ? (
+          <BkyWorkspace />
+        ) : (
+          <div ref={containerRef} className="flex-1 flex items-center justify-center p-4 relative overflow-hidden">
+            {/* Decorative Background Elements */}
+            <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/10 rounded-full blur-[100px] animate-pulse-glow" />
+            <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-info/10 rounded-full blur-[100px] animate-pulse-glow" style={{ animationDelay: '2s' }} />
+
+            {/* Device Frame */}
         <div 
-          className="relative transition-all duration-300"
+          className={cn(
+            "relative transition-all duration-500 ease-in-out",
+            isThinking && "ring-4 ring-primary/40 ring-offset-4 ring-offset-background animate-pulse-glow rounded-[3rem]",
+            appMode === "blocks" && "animate-float"
+          )}
           style={{ transform: `scale(${scale})` }}
         >
-          {/* Device Bezel */}
-          <div 
-            className={cn(
-              "bg-zinc-900 rounded-[40px] shadow-2xl relative",
-              deviceType === "tablet" && "rounded-[32px]"
-            )}
-            style={{
-              padding: deviceType === "phone" ? "12px" : "16px",
-              paddingTop: deviceType === "phone" ? "32px" : "20px",
-              paddingBottom: deviceType === "phone" ? "32px" : "20px"
-            }}
-          >
-            {/* Notch/Camera (for phones) */}
-            {deviceType === "phone" && (
-              <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-6 bg-zinc-900 rounded-full flex items-center justify-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-zinc-700"></div>
-                <div className="w-12 h-4 rounded-full bg-zinc-800"></div>
-              </div>
-            )}
-
-            {/* Screen */}
+          {/* Main Phone Frame with Premium Finish */}
+          <div className={cn(
+            "bg-[#0a0a0a] shadow-[0_0_0_2px_#222,0_0_0_10px_#111,0_30px_60px_-15px_rgba(0,0,0,0.8)] border border-white/5 relative",
+            deviceType === "tablet" ? "rounded-[3rem]" : "rounded-[3.5rem]"
+          )}>
+            {/* Bezel Gloss Reflection */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent pointer-events-none z-10 rounded-[inherit]" />
+            
             <div 
-              className="bg-white overflow-hidden flex flex-col"
+              className="relative"
               style={{
-                width: `${deviceWidth}px`,
-                height: `${deviceHeight}px`,
-                borderRadius: deviceType === "phone" ? "28px" : "16px"
+                padding: deviceType === "phone" ? "14px" : "18px",
+                paddingTop: deviceType === "phone" ? "38px" : "24px",
+                paddingBottom: deviceType === "phone" ? "38px" : "24px"
               }}
             >
-              {/* Status Bar */}
-              <div className="h-6 bg-zinc-900 flex items-center justify-between px-4 text-white text-[10px] shrink-0">
-                <span>9:41</span>
+              {/* Notch/Camera (for phones) */}
+              {deviceType === "phone" && (
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 w-28 h-7 bg-[#0a0a0a] rounded-full flex items-center justify-center gap-3 z-20 shadow-inner">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#1a1a1a] border border-white/5"></div>
+                  <div className="w-14 h-4 rounded-full bg-[#111] border border-white/5"></div>
+                </div>
+              )}
+
+              {/* Screen Container */}
+              <div 
+                className="bg-white overflow-hidden flex flex-col relative z-0"
+                style={{
+                  width: `${deviceWidth}px`,
+                  height: `${deviceHeight}px`,
+                  borderRadius: deviceType === "phone" ? "32px" : "18px"
+                }}
+              >
+                {/* Status Bar */}
+                <div className="h-7 bg-[#0a0a0a] flex items-center justify-between px-6 text-white text-[10px] shrink-0 font-medium">
+                  <span>9:41</span>
                 <div className="flex items-center gap-1">
                   <div className="w-4 h-2 border border-white rounded-sm">
                     <div className="w-2/3 h-full bg-white rounded-sm"></div>
@@ -788,9 +853,12 @@ export function PhonePreview({ onLoginClick }: PhonePreviewProps) {
 
               {/* Screen Content */}
               <DroppableZone
-                id={`drop-${props.$Name}`}
+                id="phone-screen-content"
                 targetName={props.$Name}
-                className="flex-1 overflow-auto flex flex-col p-2 relative"
+                className={cn(
+                  "flex-1 overflow-auto flex flex-col p-2 relative transition-all duration-300 isolate",
+                  isThinking && "animate-blinking ring-2 ring-primary/30 ring-inset"
+                )}
                 style={{
                   backgroundColor: convertColor(props.BackgroundColor || "&HFFFFFFFF"),
                   alignItems: convertAlignment(props.AlignHorizontal),
@@ -798,8 +866,16 @@ export function PhonePreview({ onLoginClick }: PhonePreviewProps) {
                 }}
                 disabled={appMode !== "edit"}
               >
+                {isThinking && (
+                  <div className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center bg-primary/5">
+                    <div className="bg-primary/20 backdrop-blur-sm px-3 py-1 rounded-full border border-primary/30 flex items-center gap-2">
+                      <Zap className="w-3 h-3 text-primary animate-pulse" />
+                      <span className="text-[10px] font-bold text-primary uppercase tracking-tighter">AI Processing</span>
+                    </div>
+                  </div>
+                )}
                 <div 
-                  className="absolute inset-0 z-0"
+                  className="absolute inset-0 z-[-1]"
                   onClick={() => {
                     if (appMode === "edit") {
                       // Click on empty area - select the screen itself
@@ -865,9 +941,12 @@ export function PhonePreview({ onLoginClick }: PhonePreviewProps) {
             {deviceType === "phone" && (
               <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-zinc-600 rounded-full"></div>
             )}
+            </div>
           </div>
         </div>
       </div>
-    </main>
+    )}
+  </div>
+</main>
   )
 }

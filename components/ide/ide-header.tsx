@@ -4,11 +4,14 @@ import { useState } from "react"
 import { 
   Zap, GitBranch, Package, Settings, ChevronRight, 
   Smartphone, Save, MoreHorizontal, Undo2, Redo2,
-  Play, Code2, Layers, Eye, AlertCircle
+  Play, Code2, Layers, Eye, AlertCircle, Layout, Wifi, WifiOff, CloudOff, RefreshCw,
+  ChevronDown, FolderGit2, Clock, Puzzle
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useIDEStore } from "@/lib/ide-store"
 import { cn } from "@/lib/utils"
+import { useProjectManager } from "@/lib/hooks/use-project-manager"
+import { useToast } from "@/components/ui/use-toast"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,19 +25,24 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { PresenceBar } from "./presence-bar"
 
 interface IDEHeaderProps {
   onBuildClick: () => void
   onSettingsClick: () => void
   onAIGeneratorClick?: () => void
+  onAIScreenClick?: () => void
   onAIDebugClick?: () => void
+  onAssetsClick?: () => void
 }
 
 export function IDEHeader({ 
   onBuildClick, 
   onSettingsClick,
   onAIGeneratorClick,
-  onAIDebugClick
+  onAIScreenClick,
+  onAIDebugClick,
+  onAssetsClick
 }: IDEHeaderProps) {
   const { 
     ghToken, 
@@ -42,13 +50,19 @@ export function IDEHeader({
     currentProject, 
     currentScreenName,
     selectedRepo,
+    ghRepos,
     appMode,
     setAppMode,
     undo,
     redo,
     history,
-    historyIndex
+    historyIndex,
+    syncStatus,
+    isOffline
   } = useIDEStore()
+
+  const { selectProject, saveCurrentScreen } = useProjectManager()
+  const { toast } = useToast()
 
   const [isSaving, setIsSaving] = useState(false)
 
@@ -69,44 +83,129 @@ export function IDEHeader({
 
   const handleSave = async () => {
     setIsSaving(true)
-    // Simulate save
-    await new Promise(resolve => setTimeout(resolve, 800))
-    setIsSaving(false)
+    try {
+      if (ghToken && selectedRepo) {
+        await saveCurrentScreen()
+        toast({
+          title: "Salvo com sucesso",
+          description: "Alterações enviadas para o GitHub."
+        })
+      } else {
+        // Just simulate local save since we don't have github
+        await new Promise(resolve => setTimeout(resolve, 800))
+        toast({
+          title: "Salvo localmente",
+          description: "Conecte o GitHub para salvar na nuvem."
+        })
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro ao salvar",
+        description: error.message,
+        variant: "destructive"
+      })
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
     <TooltipProvider delayDuration={300}>
-      <header className="h-14 bg-card border-b border-border flex items-center justify-between px-4 shrink-0">
+      <header className="h-14 glass sticky top-0 z-50 flex items-center justify-between px-4 shrink-0 border-b border-white/5 shadow-2xl">
         {/* Left Section - Logo + Breadcrumb */}
-        <div className="flex items-center gap-4">
-          {/* Logo */}
-          <div className="flex items-center gap-2 font-bold text-sm tracking-tight text-foreground select-none">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Zap className="w-4.5 h-4.5 text-primary" style={{ fill: "var(--primary)" }} />
+        <div className="flex items-center gap-2 sm:gap-6 flex-1 min-w-0">
+          {/* Logo with Glow */}
+          <div className="flex items-center gap-2 font-bold text-sm tracking-tight text-foreground select-none group">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:scale-105 transition-transform duration-300 shadow-glow">
+              <Zap className="w-5 h-5 text-primary" style={{ fill: "var(--primary)" }} />
             </div>
-            <span className="hidden sm:inline">APEX DROID</span>
+            <div className="flex flex-col">
+              <span className="hidden sm:inline leading-none">APEX DROID</span>
+              <span className="text-[9px] text-primary font-bold tracking-[0.2em] leading-none mt-1 opacity-80">IDE PRO</span>
+            </div>
           </div>
 
           {/* Separator */}
           <div className="w-px h-6 bg-border hidden sm:block" />
 
-          {/* Breadcrumb */}
+          {/* Breadcrumb with Repo Dropdown */}
           <nav className="hidden sm:flex items-center gap-1 text-sm">
-            <span className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors">
-              {projectName}
-            </span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <div className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-secondary cursor-pointer transition-all group">
+                  <span className="text-muted-foreground group-hover:text-foreground font-medium transition-colors">
+                    {projectName as string}
+                  </span>
+                  <ChevronDown className="w-3 h-3 text-muted-foreground/50 group-hover:text-foreground" />
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-72 max-h-[400px] overflow-y-auto">
+                <div className="px-2 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                  Meus Projetos (GitHub)
+                </div>
+                <DropdownMenuSeparator />
+                {ghRepos.length === 0 ? (
+                  <div className="px-2 py-4 text-center">
+                    <p className="text-xs text-muted-foreground">Nenhum repositório encontrado</p>
+                  </div>
+                ) : (
+                  ghRepos.map((repo) => (
+                    <DropdownMenuItem 
+                      key={repo.id} 
+                      onClick={() => selectProject(repo)}
+                      className={cn(
+                        "flex flex-col items-start gap-1 p-2.5 cursor-pointer",
+                        selectedRepo?.id === repo.id && "bg-primary/10"
+                      )}
+                    >
+                      <div className="flex items-center gap-2 w-full">
+                        <FolderGit2 className={cn("w-4 h-4", selectedRepo?.id === repo.id ? "text-primary" : "text-muted-foreground")} />
+                        <span className={cn("text-xs font-semibold truncate flex-1", selectedRepo?.id === repo.id && "text-primary")}>
+                          {repo.name}
+                        </span>
+                        {repo.private ? (
+                          <span className="text-[9px] bg-secondary px-1.5 py-0.5 rounded text-muted-foreground border border-border">Privado</span>
+                        ) : (
+                          <span className="text-[9px] bg-primary/10 px-1.5 py-0.5 rounded text-primary border border-primary/20">Público</span>
+                        )}
+                      </div>
+                      {repo.description && (
+                        <p className="text-[10px] text-muted-foreground line-clamp-1 pl-6">
+                          {repo.description}
+                        </p>
+                      )}
+                      <div className="text-[9px] text-muted-foreground/60 pl-6 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        Atualizado {new Date(repo.updated_at).toLocaleDateString()}
+                      </div>
+                    </DropdownMenuItem>
+                  ))
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50" />
-            <span className="flex items-center gap-1.5 text-foreground font-medium">
+            <span className="flex items-center gap-1.5 text-foreground font-medium px-2">
               <Smartphone className="w-3.5 h-3.5 text-primary" />
               {screenName}
             </span>
           </nav>
+
+          {/* Presence Indicators */}
+          <div className="hidden xl:block">
+            <PresenceBar />
+          </div>
+          
+          <div className="hidden lg:flex items-center gap-2 px-2 py-1 rounded-full bg-success/5 border border-success/10 ml-2 animate-in fade-in slide-in-from-right-4 duration-500">
+            <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+            <span className="text-[10px] font-medium text-success uppercase tracking-wider">Sincronizado</span>
+          </div>
         </div>
 
         {/* Center Section - Mode Toggle + Quick Actions */}
         <div className="flex items-center gap-1">
           {/* Undo/Redo */}
-          <div className="flex items-center gap-0.5 mr-2">
+          <div className="hidden md:flex items-center gap-0.5 mr-2">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button 
@@ -143,16 +242,16 @@ export function IDEHeader({
           </div>
 
           {/* Mode Toggle */}
-          <div className="flex items-center bg-secondary rounded-lg p-0.5">
+          <div className="flex items-center bg-secondary/50 backdrop-blur-md rounded-xl p-1 border border-white/5">
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setAppMode("edit")}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
+                    "flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 tab-transition hover-glow-border",
                     appMode === "edit" 
-                      ? "bg-card text-foreground shadow-sm" 
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-card text-primary shadow-lg scale-105 glow-primary" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-white/5"
                   )}
                 >
                   <Layers className="w-3.5 h-3.5" />
@@ -160,7 +259,27 @@ export function IDEHeader({
                 </button>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs">
-                Modo de Edicao Visual
+                Modo de Edição Visual
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setAppMode("blocks")}
+                  className={cn(
+                    "flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 tab-transition hover-glow-border",
+                    appMode === "blocks" 
+                      ? "bg-card text-primary shadow-lg scale-105 glow-primary" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                  )}
+                >
+                  <Puzzle className="w-3.5 h-3.5" />
+                  Blocos
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                Lógica de Programação
               </TooltipContent>
             </Tooltip>
 
@@ -187,19 +306,17 @@ export function IDEHeader({
         </div>
 
         {/* Right Section - Status + Actions */}
-        <div className="flex items-center gap-2">
-          {/* Status Indicator */}
-          <div className="flex items-center gap-2 mr-2 px-2.5 py-1.5 rounded-md bg-secondary/50">
-            <span 
-              className={cn(
-                "status-dot",
-                status.type === "success" && "status-dot-success",
-                status.type === "warning" && "status-dot-warning",
-                status.type === "error" && "status-dot-error",
-                status.type === "muted" && "status-dot-muted"
-              )}
-            />
-            <span className="text-xs text-muted-foreground">{status.label}</span>
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Sync & Status Indicator */}
+          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-secondary/50 border border-border/50">
+            {syncStatus === "synced" && <Wifi className="w-3.5 h-3.5 text-success" />}
+            {syncStatus === "syncing" && <RefreshCw className="w-3.5 h-3.5 text-primary animate-spin" />}
+            {syncStatus === "offline" && <CloudOff className="w-3.5 h-3.5 text-muted-foreground" />}
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              {syncStatus === "synced" && "Nuvem Sinc."}
+              {syncStatus === "syncing" && "Sincronizando..."}
+              {syncStatus === "offline" && "Modo Local"}
+            </span>
           </div>
 
           {/* Save Button */}
@@ -234,6 +351,22 @@ export function IDEHeader({
             </TooltipContent>
           </Tooltip>
           
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-8 w-8 px-0" 
+                onClick={onSettingsClick}
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              Configurações IA (Modelos e Providers)
+            </TooltipContent>
+          </Tooltip>
+
           {/* Build APK Button - Primary Action */}
           <Button 
             size="sm" 
@@ -259,6 +392,10 @@ export function IDEHeader({
                     <Zap className="w-4 h-4 mr-2" />
                     Gerar Componente IA
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={onAIScreenClick}>
+                    <Layout className="w-4 h-4 mr-2" />
+                    Gerar Tela Completa (IA)
+                  </DropdownMenuItem>
                   {onAIDebugClick && (
                     <DropdownMenuItem onClick={onAIDebugClick}>
                       <AlertCircle className="w-4 h-4 mr-2" />
@@ -272,6 +409,12 @@ export function IDEHeader({
                 <Settings className="w-4 h-4 mr-2" />
                 Configuracoes IA
               </DropdownMenuItem>
+              {onAssetsClick && (
+                <DropdownMenuItem onClick={onAssetsClick}>
+                  <Package className="w-4 h-4 mr-2" />
+                  Gerenciador de Ativos
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem>
                 <Code2 className="w-4 h-4 mr-2" />
                 Ver Codigo

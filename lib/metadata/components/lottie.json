@@ -1,0 +1,15 @@
+{
+  "name": "Lottie",
+  "type": "Lottie",
+  "properties": [
+    "Animation Speed",
+    "Clickable",
+    "Height",
+    "Height Percent",
+    "Loop Animation",
+    "Source",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

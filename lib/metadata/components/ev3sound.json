@@ -1,0 +1,7 @@
+{
+  "name": "EV3 Sound",
+  "type": "EV3Sound",
+  "properties": [
+    "Bluetooth Client"
+  ]
+}

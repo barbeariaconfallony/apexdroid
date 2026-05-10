@@ -1,0 +1,7 @@
+{
+  "name": "Google reCaptcha",
+  "type": "GooglereCaptcha",
+  "properties": [
+    "Site Key"
+  ]
+}

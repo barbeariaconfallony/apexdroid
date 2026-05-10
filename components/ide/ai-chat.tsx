@@ -27,8 +27,11 @@ function executeActions(
 ): number {
   let parsed: any[]
   try {
-    parsed = JSON.parse(actionsJson)
-  } catch {
+    // Limpa possiveis caracteres problematicos antes de parsear
+    const cleaned = actionsJson.trim()
+    parsed = JSON.parse(cleaned)
+  } catch (e) {
+    console.error('[APEX AI] Erro ao parsear actions JSON:', e, actionsJson)
     return 0
   }
   if (!Array.isArray(parsed)) return 0
@@ -36,35 +39,23 @@ function executeActions(
   let count = 0
   for (const action of parsed) {
     try {
-      if (action.action === "add_component" && action.parentName && action.type) {
-        // Adiciona o componente via store
-        store.addComponent(action.parentName, action.type)
-        // Aplica propriedades extras alem do basico se houver
-        if (action.properties && Object.keys(action.properties).length > 0) {
-          // O nome final pode ter sido ajustado; descobre o ultimo componente adicionado
-          const proj = useIDEStore.getState().currentProject
-          if (proj) {
-            const findLast = (root: any, type: string): any => {
-              let last: any = null
-              if (root.$Type === type) last = root
-              if (root.$Components) {
-                for (const c of root.$Components) {
-                  const found = findLast(c, type)
-                  if (found) last = found
-                }
-              }
-              return last
-            }
-            const added = findLast(proj.Properties, action.type)
-            if (added) {
-              const propsToApply: Record<string, unknown> = {}
-              for (const [k, v] of Object.entries(action.properties)) {
-                if (k !== "$Type") propsToApply[k] = v
-              }
-              store.updateComponent(added.$Name, propsToApply)
-            }
-          }
+      console.log('[APEX AI] Executando acao:', action)
+
+      if (action.action === "clear_screen") {
+        // Limpa todos os componentes da tela atual
+        const proj = useIDEStore.getState().currentProject
+        if (proj && proj.Properties.$Components) {
+          proj.Properties.$Components = []
+          useIDEStore.setState({ 
+            currentProject: JSON.parse(JSON.stringify(proj)),
+            selectedComponent: null 
+          })
         }
+        count++
+      } else if (action.action === "add_component" && action.parentName && action.type) {
+        // Adiciona o componente com propriedades iniciais diretamente
+        const newName = store.addComponent(action.parentName, action.type, action.properties || {})
+        console.log('[APEX AI] Componente adicionado:', newName)
         count++
       } else if (action.action === "update_component" && action.name && action.properties) {
         store.updateComponent(action.name, action.properties)
@@ -73,8 +64,8 @@ function executeActions(
         store.removeComponent(action.name)
         count++
       }
-    } catch {
-      // continua para proxima acao
+    } catch (e) {
+      console.error('[APEX AI] Erro ao executar acao:', action, e)
     }
   }
   return count
@@ -83,13 +74,12 @@ function executeActions(
 export function AIChat() {
   const [input, setInput] = useState("")
   const [collapsed, setCollapsed] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
   const [lastActionCount, setLastActionCount] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
   const messagesRef = useRef<Map<string, string>>(new Map())
 
   const store = useIDEStore()
-  const { chatMessages, addChatMessage, currentProject, aiSettings } = store
+  const { chatMessages, addChatMessage, currentProject, aiSettings, selectedComponent } = store
   const { toast } = useToast()
 
   useEffect(() => {
@@ -109,7 +99,7 @@ export function AIChat() {
 
     addChatMessage(userMessage)
     setInput("")
-    setIsLoading(true)
+    store.setIsThinking(true)
     setLastActionCount(0)
 
     // Contexto completo do projeto
@@ -117,7 +107,11 @@ export function AIChat() {
     if (currentProject) {
       const screenName = currentProject.Properties.$Name || "Screen1"
       const tree = serializeComponents(currentProject.Properties)
-      projectContext = `Tela ativa: "${screenName}"\nEstrutura de componentes:\n${tree}`
+      projectContext = `Tela ativa: "${screenName}"\n`
+      if (selectedComponent) {
+        projectContext += `Componente selecionado atualmente: "${selectedComponent.$Name}" (${selectedComponent.$Type})\n`
+      }
+      projectContext += `Estrutura de componentes:\n${tree}`
     }
 
     const messageId = (Date.now() + 1).toString()
@@ -146,8 +140,6 @@ export function AIChat() {
 
       if (!response.body) throw new Error("Sem corpo na resposta")
 
-      // Leitura do stream no formato AI SDK Data Stream (toDataStreamResponse)
-      // Formato: linhas "0:\"texto\"" para texto, "d:{...}" para finalizacao
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
       let accumulated = ""
@@ -157,31 +149,20 @@ export function AIChat() {
         if (done) break
 
         const chunk = decoder.decode(value, { stream: true })
-        const lines = chunk.split("\n")
-
-        for (const line of lines) {
-          if (!line.trim()) continue
-
-          // Formato AI SDK data stream: "0:" seguido de JSON string com o delta de texto
-          if (line.startsWith("0:")) {
-            try {
-              const delta = JSON.parse(line.slice(2)) as string
-              accumulated += delta
-              // Atualiza mensagem no store em tempo real
-              useIDEStore.setState(state => ({
-                chatMessages: state.chatMessages.map(m =>
-                  m.id === messageId ? { ...m, content: accumulated } : m
-                )
-              }))
-            } catch {
-              // ignorar linhas mal-formadas
-            }
-          }
-        }
+        accumulated += chunk
+        
+        // Atualiza mensagem no store em tempo real
+        useIDEStore.setState(state => ({
+          chatMessages: state.chatMessages.map(m =>
+            m.id === messageId ? { ...m, content: accumulated } : m
+          )
+        }))
       }
 
-      // Procura e executa blocos ```actions no texto final
-      const actionsMatch = accumulated.match(/```actions\n([\s\S]*?)\n```/)
+      // Procura e executa blocos ```actions no texto final (regex flexivel)
+      const actionsMatch = accumulated.match(/```actions\s*\n([\s\S]*?)\n\s*```/)
+      console.log('[APEX AI] Resposta completa:', accumulated.substring(0, 200))
+      console.log('[APEX AI] Actions encontradas:', !!actionsMatch)
       if (actionsMatch && currentProject) {
         const currentStore = useIDEStore.getState()
         const count = executeActions(actionsMatch[1], currentStore)
@@ -191,6 +172,13 @@ export function AIChat() {
             title: `${count} alteracao${count > 1 ? "s" : ""} aplicada${count > 1 ? "s" : ""}`,
             description: "O projeto foi modificado pela IA."
           })
+          
+          // Efeito visual de confirmação (flash no preview)
+          const previewEl = document.getElementById('phone-screen-content')
+          if (previewEl) {
+            previewEl.classList.add('animate-flash')
+            setTimeout(() => previewEl.classList.remove('animate-flash'), 1000)
+          }
         }
       }
 
@@ -209,13 +197,16 @@ export function AIChat() {
         variant: "destructive"
       })
     } finally {
-      setIsLoading(false)
+      store.setIsThinking(false)
     }
   }
 
-  // Texto exibido na mensagem: oculta o bloco ```actions``` do usuario
+  // Texto exibido na mensagem: oculta blocos técnicos e de pensamento
   const renderContent = (content: string) =>
-    content.replace(/```actions[\s\S]*?```/g, "").trim()
+    content
+      .replace(/<thought>[\s\S]*?<\/thought>/g, "") // Remove blocos de pensamento do DeepSeek
+      .replace(/```actions[\s\S]*?```/g, "") // Remove blocos de acao
+      .trim()
 
   return (
     <aside className={cn(
@@ -255,7 +246,7 @@ export function AIChat() {
                         : "bg-secondary text-secondary-foreground self-start rounded-bl-sm border border-border"
                     )}
                   >
-                    {display || (isLoading && msg.role === "assistant" ? "Pensando..." : "")}
+                    {display || (store.isThinking && msg.role === "assistant" ? "Pensando..." : "")}
                   </div>
                   {hasActions && (
                     <div className="self-start flex items-center gap-1 text-[11px] text-success ml-1">
@@ -266,7 +257,7 @@ export function AIChat() {
                 </div>
               )
             })}
-            {isLoading && (
+            {store.isThinking && (
               <div className="self-start flex items-center gap-2 text-xs text-muted-foreground">
                 <Loader className="w-3 h-3 animate-spin" />
                 <span>APEX DROID esta digitando...</span>
@@ -285,18 +276,18 @@ export function AIChat() {
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && !isLoading && sendMessage()}
+              onKeyDown={(e) => e.key === "Enter" && !store.isThinking && sendMessage()}
               placeholder="Ex: Adicione um botao azul..."
               className="bg-input border-border text-sm h-9"
-              disabled={isLoading}
+              disabled={store.isThinking}
             />
             <Button
               size="sm"
               className="px-2.5 h-9"
               onClick={sendMessage}
-              disabled={isLoading || !input.trim()}
+              disabled={store.isThinking || !input.trim()}
             >
-              {isLoading ? (
+              {store.isThinking ? (
                 <Loader className="w-4 h-4 animate-spin" />
               ) : (
                 <Send className="w-4 h-4" />

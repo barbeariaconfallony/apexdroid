@@ -1,38 +1,6 @@
 import { streamText } from 'ai'
-import { createGroq } from '@ai-sdk/groq'
-import { createOpenAI } from '@ai-sdk/openai'
 import { NextRequest } from 'next/server'
-
-// Funcao para criar o modelo baseado no provider
-function getAIModel(provider: string, apiKey: string, model: string, baseUrl?: string) {
-  switch (provider) {
-    case 'groq':
-      const groq = createGroq({
-        apiKey: apiKey || process.env.GROQ_API_KEY,
-      })
-      return groq(model || 'llama-3.3-70b-versatile')
-    
-    case 'openai':
-      const openai = createOpenAI({
-        apiKey: apiKey || process.env.OPENAI_API_KEY,
-        baseURL: baseUrl || 'https://api.openai.com/v1',
-      })
-      return openai(model || 'gpt-4-turbo')
-    
-    case 'ollama':
-      const ollama = createOpenAI({
-        apiKey: 'ollama',
-        baseURL: baseUrl || 'http://localhost:11434/v1',
-      })
-      return ollama(model || 'llama3.2')
-    
-    default:
-      const defaultGroq = createGroq({
-        apiKey: apiKey || process.env.GROQ_API_KEY,
-      })
-      return defaultGroq(model || 'llama-3.3-70b-versatile')
-  }
-}
+import { getAIModel } from '@/lib/ai-service'
 
 export async function POST(request: NextRequest) {
   try {
@@ -73,22 +41,27 @@ Se apropriado, inclua código ou blocos em formato JSON.`
       ? `O usuário está usando o bloco: ${currentBlock}\n\nQuais blocos você sugeriria para complementá-lo?`
       : `O usuário selecionou o componente: ${selectedComponent}\n\nQuais blocos deveriam ser usados para controlar este componente?`
 
-    const aiModel = getAIModel(provider, apiKey, model, baseUrl)
+    const aiModel = getAIModel({ provider, apiKey, model, baseUrl })
     
     const result = await streamText({
       model: aiModel,
       system: systemPrompt,
       prompt,
       temperature: 0.7,
-      maxTokens: 1000
+      maxTokens: 4096
     })
 
-    return result.toAIStream()
-  } catch (error) {
-    console.error('Code suggestions error:', error)
+    return result.toTextStreamResponse()
+  } catch (error: any) {
+    console.error('Code suggestions error details:', {
+      message: error.message,
+      stack: error.stack,
+      cause: error.cause
+    })
     return new Response(
       JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'Falha ao gerar sugestões' 
+        error: error instanceof Error ? error.message : 'Falha ao gerar sugestões',
+        details: error.message
       }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     )

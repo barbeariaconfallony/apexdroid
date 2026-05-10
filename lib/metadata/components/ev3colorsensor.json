@@ -1,0 +1,15 @@
+{
+  "name": "EV3 Color Sensor",
+  "type": "EV3ColorSensor",
+  "properties": [
+    "Above Range Event Enabled",
+    "Below Range Event Enabled",
+    "Bluetooth Client",
+    "Bottom Of Range",
+    "Color Changed Event Enabled",
+    "Mode",
+    "Sensor Port",
+    "Top Of Range",
+    "Within Range Event Enabled"
+  ]
+}

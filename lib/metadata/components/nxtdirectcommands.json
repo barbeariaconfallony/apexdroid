@@ -1,0 +1,7 @@
+{
+  "name": "NXT Direct Commands",
+  "type": "NXTDirectCommands",
+  "properties": [
+    "Bluetooth Client"
+  ]
+}

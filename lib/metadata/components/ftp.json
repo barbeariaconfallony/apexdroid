@@ -1,0 +1,11 @@
+{
+  "name": "FTP",
+  "type": "FTP",
+  "properties": [
+    "FTP-Server (Host)",
+    "Password",
+    "Port",
+    "Username",
+    "Working Directory"
+  ]
+}

@@ -1,39 +1,7 @@
 import { generateObject } from 'ai'
-import { createGroq } from '@ai-sdk/groq'
-import { createOpenAI } from '@ai-sdk/openai'
 import { z } from 'zod'
 import { NextRequest, NextResponse } from 'next/server'
-
-// Funcao para criar o modelo baseado no provider
-function getAIModel(provider: string, apiKey: string, model: string, baseUrl?: string) {
-  switch (provider) {
-    case 'groq':
-      const groq = createGroq({
-        apiKey: apiKey || process.env.GROQ_API_KEY,
-      })
-      return groq(model || 'llama-3.3-70b-versatile')
-    
-    case 'openai':
-      const openai = createOpenAI({
-        apiKey: apiKey || process.env.OPENAI_API_KEY,
-        baseURL: baseUrl || 'https://api.openai.com/v1',
-      })
-      return openai(model || 'gpt-4-turbo')
-    
-    case 'ollama':
-      const ollama = createOpenAI({
-        apiKey: 'ollama',
-        baseURL: baseUrl || 'http://localhost:11434/v1',
-      })
-      return ollama(model || 'llama3.2')
-    
-    default:
-      const defaultGroq = createGroq({
-        apiKey: apiKey || process.env.GROQ_API_KEY,
-      })
-      return defaultGroq(model || 'llama-3.3-70b-versatile')
-  }
-}
+import { getAIModel } from '@/lib/ai-service'
 
 // Schema for component generation
 const ComponentSchema = z.object({
@@ -81,7 +49,7 @@ Retorne um JSON bem estruturado com:
 
 Exemplos de componentes válidos: Button, TextInput, Label, HorizontalArrangement, VerticalArrangement, ListView, Canvas, ImageSprite, Clock, TinyDB, etc`
 
-    const aiModel = getAIModel(provider, apiKey, model, baseUrl)
+    const aiModel = getAIModel({ provider, apiKey, model, baseUrl })
     
     const { object } = await generateObject({
       model: aiModel,

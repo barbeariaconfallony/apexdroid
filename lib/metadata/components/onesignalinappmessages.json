@@ -1,0 +1,7 @@
+{
+  "name": "OneSignal InApp Messages",
+  "type": "OneSignalInAppMessages",
+  "properties": [
+    "Pause InApp Messages"
+  ]
+}
