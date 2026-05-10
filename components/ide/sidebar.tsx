@@ -517,54 +517,65 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
     <aside 
       className={cn(
         "glass border-r border-white/5 flex shrink-0 transition-all duration-300 ease-in-out relative z-40 shadow-2xl",
-        isSidebarCompact ? "w-12" : "w-[300px]"
+        isSidebarCompact ? "w-14" : "w-[340px]"
       )}
     >
-      {/* Icon Rail - vertical tab icons */}
-      <div className="w-12 bg-black/20 backdrop-blur-sm border-r border-white/5 flex flex-col items-center py-4 gap-2 shrink-0">
+      {/* Tab Rail - vertical with icons and labels */}
+      <div className={cn(
+        "bg-black/20 backdrop-blur-sm border-r border-white/5 flex flex-col py-3 gap-1 shrink-0 transition-all",
+        isSidebarCompact ? "w-14 items-center px-0" : "w-[72px] px-1.5"
+      )}>
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            title={tab.label}
+            title={isSidebarCompact ? tab.label : undefined}
             className={cn(
-              "w-9 h-9 flex items-center justify-center rounded-lg transition-all relative group tab-transition hover-glow-border",
+              "flex items-center justify-center rounded-lg transition-all relative group tab-transition",
+              isSidebarCompact 
+                ? "w-10 h-10" 
+                : "w-full h-auto py-2 px-1.5 flex-col gap-0.5",
               activeTab === tab.id
-                ? "bg-primary text-primary-foreground shadow-lg glow-primary scale-105"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary hover:scale-110"
+                ? "bg-primary text-primary-foreground shadow-lg"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary"
             )}
           >
-            <tab.icon className={cn(
-              "w-4 h-4 transition-transform",
-              activeTab !== tab.id && "group-hover:scale-110"
-            )} />
+            <tab.icon className="w-4 h-4 shrink-0" />
+            {!isSidebarCompact && (
+              <span className="text-[9px] font-medium leading-tight text-center truncate w-full">
+                {tab.label}
+              </span>
+            )}
             {tab.id === "chat" && chatMessages.length > 0 && (
               <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-success border-2 border-card animate-pulse" />
             )}
           </button>
         ))}
         
-        {/* Toggle Sidebar Button */}
-        <button
-          onClick={toggleSidebar}
-          className="w-9 h-9 flex items-center justify-center rounded-lg transition-all text-muted-foreground hover:text-foreground hover:bg-secondary mt-2"
-          title={isSidebarCompact ? "Expandir Lateral" : "Colapsar Lateral"}
-        >
-          {isSidebarCompact ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-        </button>
-        
         {/* Spacer */}
         <div className="flex-1" />
         
-        {/* Bottom indicator */}
-        <div className="w-6 h-1 rounded-full bg-border" />
+        {/* Toggle Sidebar Button */}
+        <button
+          onClick={toggleSidebar}
+          className={cn(
+            "flex items-center justify-center rounded-lg transition-all text-muted-foreground hover:text-foreground hover:bg-secondary",
+            isSidebarCompact ? "w-10 h-10 mx-auto" : "w-full py-2 flex-col gap-0.5"
+          )}
+          title={isSidebarCompact ? "Expandir" : undefined}
+        >
+          {isSidebarCompact ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          {!isSidebarCompact && (
+            <span className="text-[9px] font-medium">Recolher</span>
+          )}
+        </button>
       </div>
 
       {/* Content panel */}
       {!isSidebarCompact && (
-        <div className="flex-1 overflow-hidden flex flex-col animate-in slide-in-from-left-2 duration-300" style={{ width: "248px" }}>
+        <div className="flex-1 overflow-hidden flex flex-col animate-in slide-in-from-left-2 duration-300">
         {/* Tab title with gradient */}
-        <div className="px-3 py-2.5 border-b border-border shrink-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent">
+        <div className="px-3 py-2 border-b border-border shrink-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent">
           <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
             {activeTabMeta?.title}
           </span>

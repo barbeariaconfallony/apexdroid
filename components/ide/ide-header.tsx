@@ -3,8 +3,8 @@
 import { useState } from "react"
 import { 
   Zap, GitBranch, Package, Settings, ChevronRight, 
-  Smartphone, Save, MoreHorizontal, Undo2, Redo2,
-  Play, Code2, Layers, Eye, AlertCircle, Layout, Wifi, WifiOff, CloudOff, RefreshCw,
+  Smartphone, Save, MoreHorizontal,
+  Play, Code2, Layers, Eye, AlertCircle, Layout, Wifi, CloudOff, RefreshCw,
   ChevronDown, FolderGit2, Clock, Puzzle
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -25,7 +25,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { PresenceBar } from "./presence-bar"
+
 
 interface IDEHeaderProps {
   onBuildClick: () => void
@@ -53,12 +53,7 @@ export function IDEHeader({
     ghRepos,
     appMode,
     setAppMode,
-    undo,
-    redo,
-    history,
-    historyIndex,
-    syncStatus,
-    isOffline
+    syncStatus
   } = useIDEStore()
 
   const { selectProject, saveCurrentScreen } = useProjectManager()
@@ -68,18 +63,6 @@ export function IDEHeader({
 
   const projectName = selectedRepo?.name || currentProject?.name || "Novo Projeto"
   const screenName = currentScreenName || "Screen1"
-  const canUndo = historyIndex > 0
-  const canRedo = historyIndex < history.length - 1
-
-  // Status configuration
-  const getStatus = () => {
-    if (isSaving) return { label: "Salvando...", type: "warning" as const }
-    if (cloudUser && ghToken) return { label: "Sincronizado", type: "success" as const }
-    if (ghToken) return { label: "GitHub conectado", type: "success" as const }
-    return { label: "Local", type: "muted" as const }
-  }
-
-  const status = getStatus()
 
   const handleSave = async () => {
     setIsSaving(true)
@@ -111,32 +94,33 @@ export function IDEHeader({
 
   return (
     <TooltipProvider delayDuration={300}>
-      <header className="h-14 glass sticky top-0 z-50 flex items-center justify-between px-4 shrink-0 border-b border-white/5 shadow-2xl">
+      <header className="h-12 glass sticky top-0 z-50 flex items-center justify-between px-3 shrink-0 border-b border-white/5 shadow-lg">
         {/* Left Section - Logo + Breadcrumb */}
-        <div className="flex items-center gap-2 sm:gap-6 flex-1 min-w-0">
-          {/* Logo with Glow */}
-          <div className="flex items-center gap-2 font-bold text-sm tracking-tight text-foreground select-none group">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:scale-105 transition-transform duration-300 shadow-glow">
-              <Zap className="w-5 h-5 text-primary" style={{ fill: "var(--primary)" }} />
-            </div>
-            <div className="flex flex-col">
-              <span className="hidden sm:inline leading-none">APEX DROID</span>
-              <span className="text-[9px] text-primary font-bold tracking-[0.2em] leading-none mt-1 opacity-80">IDE PRO</span>
-            </div>
-          </div>
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          {/* Logo Icon Only */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 hover:scale-105 transition-transform duration-300 shadow-glow cursor-pointer shrink-0">
+                <Zap className="w-5 h-5 text-primary" style={{ fill: "var(--primary)" }} />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              APEX DROID IDE
+            </TooltipContent>
+          </Tooltip>
 
           {/* Separator */}
-          <div className="w-px h-6 bg-border hidden sm:block" />
+          <div className="w-px h-6 bg-border/50 shrink-0" />
 
           {/* Breadcrumb with Repo Dropdown */}
-          <nav className="hidden sm:flex items-center gap-1 text-sm">
+          <nav className="flex items-center gap-1 text-sm min-w-0">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <div className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-secondary cursor-pointer transition-all group">
-                  <span className="text-muted-foreground group-hover:text-foreground font-medium transition-colors">
+                <div className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-secondary cursor-pointer transition-all group max-w-[140px]">
+                  <span className="text-muted-foreground group-hover:text-foreground font-medium transition-colors truncate text-xs">
                     {projectName as string}
                   </span>
-                  <ChevronDown className="w-3 h-3 text-muted-foreground/50 group-hover:text-foreground" />
+                  <ChevronDown className="w-3 h-3 text-muted-foreground/50 group-hover:text-foreground shrink-0" />
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-72 max-h-[400px] overflow-y-auto">
@@ -184,198 +168,132 @@ export function IDEHeader({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50" />
-            <span className="flex items-center gap-1.5 text-foreground font-medium px-2">
-              <Smartphone className="w-3.5 h-3.5 text-primary" />
-              {screenName}
+            <ChevronRight className="w-3 h-3 text-muted-foreground/50 shrink-0" />
+            <span className="flex items-center gap-1 text-foreground font-medium text-xs">
+              <Smartphone className="w-3.5 h-3.5 text-primary shrink-0" />
+              <span className="truncate max-w-[80px]">{screenName}</span>
             </span>
           </nav>
-
-          {/* Presence Indicators */}
-          <div className="hidden xl:block">
-            <PresenceBar />
-          </div>
-          
-          <div className="hidden lg:flex items-center gap-2 px-2 py-1 rounded-full bg-success/5 border border-success/10 ml-2 animate-in fade-in slide-in-from-right-4 duration-500">
-            <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-            <span className="text-[10px] font-medium text-success uppercase tracking-wider">Sincronizado</span>
-          </div>
         </div>
 
-        {/* Center Section - Mode Toggle + Quick Actions */}
-        <div className="flex items-center gap-1">
-          {/* Undo/Redo */}
-          <div className="hidden md:flex items-center gap-0.5 mr-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                  onClick={undo}
-                  disabled={!canUndo}
-                >
-                  <Undo2 className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">
-                Desfazer (Ctrl+Z)
-              </TooltipContent>
-            </Tooltip>
-            
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                  onClick={redo}
-                  disabled={!canRedo}
-                >
-                  <Redo2 className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">
-                Refazer (Ctrl+Y)
-              </TooltipContent>
-            </Tooltip>
-          </div>
-
+        {/* Center Section - Mode Toggle */}
+        <div className="flex items-center gap-1 shrink-0">
           {/* Mode Toggle */}
-          <div className="flex items-center bg-secondary/50 backdrop-blur-md rounded-xl p-1 border border-white/5">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => setAppMode("edit")}
-                  className={cn(
-                    "flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 tab-transition hover-glow-border",
-                    appMode === "edit" 
-                      ? "bg-card text-primary shadow-lg scale-105 glow-primary" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-                  )}
-                >
-                  <Layers className="w-3.5 h-3.5" />
-                  Design
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">
-                Modo de Edição Visual
-              </TooltipContent>
-            </Tooltip>
+          <div className="flex items-center bg-secondary/50 backdrop-blur-md rounded-lg p-0.5 border border-white/5">
+            <button
+              onClick={() => setAppMode("edit")}
+              className={cn(
+                "flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all duration-200",
+                appMode === "edit" 
+                  ? "bg-card text-primary shadow-sm" 
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Layers className="w-3 h-3" />
+              <span className="hidden sm:inline">Design</span>
+            </button>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => setAppMode("blocks")}
-                  className={cn(
-                    "flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 tab-transition hover-glow-border",
-                    appMode === "blocks" 
-                      ? "bg-card text-primary shadow-lg scale-105 glow-primary" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-                  )}
-                >
-                  <Puzzle className="w-3.5 h-3.5" />
-                  Blocos
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">
-                Lógica de Programação
-              </TooltipContent>
-            </Tooltip>
+            <button
+              onClick={() => setAppMode("blocks")}
+              className={cn(
+                "flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all duration-200",
+                appMode === "blocks" 
+                  ? "bg-card text-primary shadow-sm" 
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Puzzle className="w-3 h-3" />
+              <span className="hidden sm:inline">Blocos</span>
+            </button>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => setAppMode("run")}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
-                    appMode === "run" 
-                      ? "bg-card text-foreground shadow-sm" 
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  <Play className="w-3.5 h-3.5" />
-                  Preview
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">
-                Testar App
-              </TooltipContent>
-            </Tooltip>
+            <button
+              onClick={() => setAppMode("run")}
+              className={cn(
+                "flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all duration-200",
+                appMode === "run" 
+                  ? "bg-card text-primary shadow-sm" 
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Play className="w-3 h-3" />
+              <span className="hidden sm:inline">Preview</span>
+            </button>
           </div>
         </div>
 
-        {/* Right Section - Status + Actions */}
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Sync & Status Indicator */}
-          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-secondary/50 border border-border/50">
-            {syncStatus === "synced" && <Wifi className="w-3.5 h-3.5 text-success" />}
-            {syncStatus === "syncing" && <RefreshCw className="w-3.5 h-3.5 text-primary animate-spin" />}
-            {syncStatus === "offline" && <CloudOff className="w-3.5 h-3.5 text-muted-foreground" />}
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-              {syncStatus === "synced" && "Nuvem Sinc."}
+        {/* Right Section - Compact Actions */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Sync Status - Icon only with tooltip */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center justify-center w-7 h-7 rounded-md bg-secondary/50 border border-border/50 cursor-default">
+                {syncStatus === "synced" && <Wifi className="w-3.5 h-3.5 text-success" />}
+                {syncStatus === "syncing" && <RefreshCw className="w-3.5 h-3.5 text-primary animate-spin" />}
+                {syncStatus === "offline" && <CloudOff className="w-3.5 h-3.5 text-muted-foreground" />}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              {syncStatus === "synced" && "Sincronizado com a nuvem"}
               {syncStatus === "syncing" && "Sincronizando..."}
-              {syncStatus === "offline" && "Modo Local"}
-            </span>
-          </div>
+              {syncStatus === "offline" && "Modo offline"}
+            </TooltipContent>
+          </Tooltip>
 
-          {/* Save Button */}
+          {/* Save Button - Icon only */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button 
-                variant="outline" 
-                size="sm" 
-                className="gap-1.5 text-xs h-8 hidden sm:flex"
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7"
                 onClick={handleSave}
                 disabled={isSaving}
               >
-                <Save className={cn("w-3.5 h-3.5", isSaving && "animate-pulse")} />
-                Salvar
+                <Save className={cn("w-4 h-4", isSaving && "animate-pulse")} />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom" className="text-xs">
-              Salvar Projeto (Ctrl+S)
+              Salvar (Ctrl+S)
             </TooltipContent>
           </Tooltip>
 
-          {/* Commit Button */}
+          {/* Commit Button - Icon only */}
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8 hidden md:flex">
-                <GitBranch className="w-3.5 h-3.5" />
-                Commit
+              <Button variant="ghost" size="icon" className="h-7 w-7">
+                <GitBranch className="w-4 h-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom" className="text-xs">
-              Enviar para GitHub
+              Commit
             </TooltipContent>
           </Tooltip>
           
+          {/* Settings - Icon only */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-8 w-8 px-0" 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7" 
                 onClick={onSettingsClick}
               >
                 <Settings className="w-4 h-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom" className="text-xs">
-              Configurações IA (Modelos e Providers)
+              Configuracoes
             </TooltipContent>
           </Tooltip>
 
           {/* Build APK Button - Primary Action */}
           <Button 
             size="sm" 
-            className="gap-1.5 text-xs h-8 shine" 
+            className="gap-1 text-[11px] h-7 px-2.5 shine" 
             onClick={onBuildClick}
           >
             <Package className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Build APK</span>
-            <span className="sm:hidden">Build</span>
+            <span className="hidden sm:inline">Build</span>
           </Button>
 
           {/* More Menu */}
