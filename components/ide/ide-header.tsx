@@ -183,7 +183,7 @@ export function IDEHeader({
             <button
               onClick={() => setAppMode("edit")}
               className={cn(
-                "flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all duration-200",
+                "flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold transition-all duration-200",
                 appMode === "edit" 
                   ? "bg-card text-primary shadow-sm" 
                   : "text-muted-foreground hover:text-foreground"
@@ -194,9 +194,22 @@ export function IDEHeader({
             </button>
 
             <button
+              onClick={() => setAppMode("run")}
+              className={cn(
+                "flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold transition-all duration-200",
+                appMode === "run" 
+                  ? "bg-card text-primary shadow-sm" 
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Play className="w-3 h-3" />
+              <span className="hidden sm:inline">Live</span>
+            </button>
+
+            <button
               onClick={() => setAppMode("blocks")}
               className={cn(
-                "flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all duration-200",
+                "flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold transition-all duration-200",
                 appMode === "blocks" 
                   ? "bg-card text-primary shadow-sm" 
                   : "text-muted-foreground hover:text-foreground"
@@ -204,19 +217,6 @@ export function IDEHeader({
             >
               <Puzzle className="w-3 h-3" />
               <span className="hidden sm:inline">Blocos</span>
-            </button>
-
-            <button
-              onClick={() => setAppMode("run")}
-              className={cn(
-                "flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all duration-200",
-                appMode === "run" 
-                  ? "bg-card text-primary shadow-sm" 
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Play className="w-3 h-3" />
-              <span className="hidden sm:inline">Preview</span>
             </button>
           </div>
         </div>

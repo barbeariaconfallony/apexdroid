@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, memo, useRef, useEffect } from "react"
-import { Edit3, Play, Zap, PlusCircle, Github, Smartphone, Tablet, Monitor, RotateCcw, Maximize2, Minimize2, Eye, EyeOff } from "lucide-react"
+import { Zap, PlusCircle, Github, Smartphone, Tablet, RotateCcw, Maximize2, Minimize2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BkyWorkspace } from "./bky-workspace"
@@ -457,10 +457,16 @@ export function PhonePreview({ onLoginClick }: PhonePreviewProps) {
   const [selectedDevice, setSelectedDevice] = useState(devicePresets.phone[1]) // iPhone 14
   const [isLandscape, setIsLandscape] = useState(false)
   const [scale, setScale] = useState(0.7)
-  const [autoFit, setAutoFit] = useState(true)
   const [showHiddenComponents, setShowHiddenComponents] = useState(false)
   
   const containerRef = useRef<HTMLDivElement>(null)
+  
+  // Fictitious connected users
+  const connectedUsers = [
+    { name: "Maria S.", avatar: "https://i.pravatar.cc/32?img=1", color: "#22c55e" },
+    { name: "Joao P.", avatar: "https://i.pravatar.cc/32?img=2", color: "#3b82f6" },
+    { name: "Ana L.", avatar: "https://i.pravatar.cc/32?img=3", color: "#a855f7" },
+  ]
 
   const handleComponentSelect = useCallback((comp: KodularComponent) => {
     setSelectedComponent(comp)
@@ -482,30 +488,38 @@ export function PhonePreview({ onLoginClick }: PhonePreviewProps) {
   const deviceWidth = isLandscape ? selectedDevice.height : selectedDevice.width
   const deviceHeight = isLandscape ? selectedDevice.width : selectedDevice.height
 
+  // Auto-fit always active - recalculate on any change
   useEffect(() => {
-    if (!containerRef.current || !autoFit) return
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const { width, height } = entry.contentRect
-        // Calculate frame size including padding
-        const fw = deviceWidth + (deviceType === "phone" ? 28 : 36)
-        const fh = deviceHeight + (deviceType === "phone" ? 76 : 48)
-        
-        // 40px margin
-        const scaleW = (width - 40) / fw
-        const scaleH = (height - 40) / fh
-        
-        // Use the smaller scale to fit entirely, max 1 (100%)
-        const newScale = Math.min(scaleW, scaleH, 1)
-        
-        // Only update if difference is noticeable to avoid jitter
-        setScale((prev) => Math.abs(prev - newScale) > 0.01 ? newScale : prev)
+    if (!containerRef.current) return
+    
+    const calculateFit = () => {
+      if (!containerRef.current) return
+      const { width, height } = containerRef.current.getBoundingClientRect()
+      // Calculate frame size including padding
+      const fw = deviceWidth + (deviceType === "phone" ? 28 : 36)
+      const fh = deviceHeight + (deviceType === "phone" ? 76 : 48)
+      
+      // 40px margin
+      const scaleW = (width - 40) / fw
+      const scaleH = (height - 40) / fh
+      
+      // Use the smaller scale to fit entirely, max 1 (100%)
+      const newScale = Math.min(scaleW, scaleH, 1)
+      if (newScale > 0.2) {
+        setScale(newScale)
       }
+    }
+    
+    // Calculate immediately
+    calculateFit()
+    
+    const resizeObserver = new ResizeObserver(() => {
+      calculateFit()
     })
     
     resizeObserver.observe(containerRef.current)
     return () => resizeObserver.disconnect()
-  }, [deviceWidth, deviceHeight, deviceType, autoFit])
+  }, [deviceWidth, deviceHeight, deviceType, currentProject])
 
   // Show welcome screen when no repo selected
   if (!selectedRepo) {
@@ -616,141 +630,92 @@ export function PhonePreview({ onLoginClick }: PhonePreviewProps) {
         />
       </div>
 
-      {/* Top Controls Bar */}
-      <div className="flex items-center justify-between px-2 py-1.5 border-b border-border/50 bg-card/80 backdrop-blur-sm z-10">
-        {/* Left: Mode Toggle */}
-        <div className="flex items-center gap-1">
-          <div className="bg-secondary rounded-md p-0.5 flex gap-0.5">
-            <Button
-              variant={appMode === "edit" ? "default" : "ghost"}
-              size="sm"
-              className="gap-1 text-[10px] h-6 px-2"
-              onClick={() => setAppMode("edit")}
-            >
-              <Edit3 className="w-3 h-3" />
-              <span className="hidden sm:inline">Design</span>
-            </Button>
-            <Button
-              variant={appMode === "run" ? "default" : "ghost"}
-              size="sm"
-              className="gap-1 text-[10px] h-6 px-2"
-              onClick={() => setAppMode("run")}
-            >
-              <Play className="w-3 h-3" />
-              <span className="hidden sm:inline">Live</span>
-            </Button>
-          </div>
+      {/* Top Controls Bar - Compact & Responsive */}
+      <div className="flex items-center justify-center gap-2 px-2 py-1 border-b border-border/50 bg-card/80 backdrop-blur-sm z-10 flex-wrap">
+        {/* Device Type Tabs */}
+        <div className="bg-secondary rounded-md p-0.5 flex gap-0.5">
+          <Button
+            variant={deviceType === "phone" ? "default" : "ghost"}
+            size="sm"
+            className="h-6 w-6 p-0"
+            onClick={() => {
+              setDeviceType("phone")
+              setSelectedDevice(devicePresets.phone[1])
+            }}
+          >
+            <Smartphone className="w-3 h-3" />
+          </Button>
+          <Button
+            variant={deviceType === "tablet" ? "default" : "ghost"}
+            size="sm"
+            className="h-6 w-6 p-0"
+            onClick={() => {
+              setDeviceType("tablet")
+              setSelectedDevice(devicePresets.tablet[0])
+            }}
+          >
+            <Tablet className="w-3 h-3" />
+          </Button>
         </div>
 
-        {/* Center: Device Selection */}
-        <div className="flex items-center gap-1">
-          {/* Device Type Tabs */}
-          <div className="bg-secondary rounded-md p-0.5 flex gap-0.5">
-            <Button
-              variant={deviceType === "phone" ? "default" : "ghost"}
-              size="sm"
-              className="h-6 w-6 p-0"
-              onClick={() => {
-                setDeviceType("phone")
-                setSelectedDevice(devicePresets.phone[1])
-              }}
-            >
-              <Smartphone className="w-3 h-3" />
-            </Button>
-            <Button
-              variant={deviceType === "tablet" ? "default" : "ghost"}
-              size="sm"
-              className="h-6 w-6 p-0"
-              onClick={() => {
-                setDeviceType("tablet")
-                setSelectedDevice(devicePresets.tablet[0])
-              }}
-            >
-              <Tablet className="w-3 h-3" />
-            </Button>
-          </div>
+        {/* Device Dropdown */}
+        <Select value={selectedDevice.name} onValueChange={handleDeviceChange}>
+          <SelectTrigger className="w-[100px] h-6 text-[10px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <div className="px-2 py-0.5 text-[9px] font-semibold text-muted-foreground">CELULARES</div>
+            {devicePresets.phone.map(device => (
+              <SelectItem key={device.name} value={device.name} className="text-[10px]">
+                {device.name}
+              </SelectItem>
+            ))}
+            <div className="px-2 py-0.5 text-[9px] font-semibold text-muted-foreground mt-1">TABLETS</div>
+            {devicePresets.tablet.map(device => (
+              <SelectItem key={device.name} value={device.name} className="text-[10px]">
+                {device.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-          {/* Device Dropdown */}
-          <Select value={selectedDevice.name} onValueChange={handleDeviceChange}>
-            <SelectTrigger className="w-[120px] h-6 text-[10px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <div className="px-2 py-0.5 text-[9px] font-semibold text-muted-foreground">CELULARES</div>
-              {devicePresets.phone.map(device => (
-                <SelectItem key={device.name} value={device.name} className="text-[10px]">
-                  {device.name}
-                </SelectItem>
-              ))}
-              <div className="px-2 py-0.5 text-[9px] font-semibold text-muted-foreground mt-1">TABLETS</div>
-              {devicePresets.tablet.map(device => (
-                <SelectItem key={device.name} value={device.name} className="text-[10px]">
-                  {device.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {/* Orientation Toggle */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 w-6 p-0"
+          onClick={toggleOrientation}
+        >
+          <RotateCcw className={cn("w-3 h-3 transition-transform", isLandscape && "rotate-90")} />
+        </Button>
 
-          {/* Orientation Toggle */}
+        {/* Zoom Controls - Always visible */}
+        <div className="flex items-center gap-0.5 bg-secondary rounded-md px-0.5">
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 w-6 p-0"
-            onClick={toggleOrientation}
+            className="h-5 w-5 p-0"
+            onClick={() => setScale(Math.max(0.3, scale - 0.1))}
           >
-            <RotateCcw className={cn("w-3 h-3 transition-transform", isLandscape && "rotate-90")} />
+            <Minimize2 className="w-2.5 h-2.5" />
           </Button>
-
-          {/* Scale Controls */}
-          <div className="hidden md:flex items-center gap-0.5 bg-secondary rounded-md px-0.5">
-            <Button
-              variant={autoFit ? "default" : "ghost"}
-              size="sm"
-              className="h-5 px-1.5 text-[9px]"
-              onClick={() => setAutoFit(!autoFit)}
-              title="Auto"
-            >
-              Auto
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-5 w-5 p-0"
-              onClick={() => {
-                setAutoFit(false)
-                setScale(Math.max(0.3, scale - 0.1))
-              }}
-            >
-              <Minimize2 className="w-2.5 h-2.5" />
-            </Button>
-            <span className="text-[9px] font-mono text-muted-foreground w-7 text-center">
-              {Math.round(scale * 100)}%
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-5 w-5 p-0"
-              onClick={() => {
-                setAutoFit(false)
-                setScale(Math.min(1.5, scale + 0.1))
-              }}
-            >
-              <Maximize2 className="w-2.5 h-2.5" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Right: Screen Name + Size */}
-        <div className="flex items-center gap-1.5">
-          {currentScreenName && (
-            <div className="bg-secondary rounded-md px-2 py-0.5 hidden sm:block">
-              <span className="text-[9px] font-medium">{currentScreenName}</span>
-            </div>
-          )}
-          <span className="text-[9px] text-muted-foreground font-mono">
-            {deviceWidth}x{deviceHeight}
+          <span className="text-[9px] font-mono text-muted-foreground w-7 text-center">
+            {Math.round(scale * 100)}%
           </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-5 w-5 p-0"
+            onClick={() => setScale(Math.min(1.5, scale + 0.1))}
+          >
+            <Maximize2 className="w-2.5 h-2.5" />
+          </Button>
         </div>
+
+        {/* Screen Size */}
+        <span className="text-[9px] text-muted-foreground font-mono">
+          {deviceWidth}x{deviceHeight}
+        </span>
       </div>
 
       {/* Preview Area */}
@@ -920,6 +885,31 @@ export function PhonePreview({ onLoginClick }: PhonePreviewProps) {
             )}
             </div>
           </div>
+        </div>
+        
+        {/* Connected Users - Bottom Right */}
+        <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm rounded-full px-2 py-1 border border-border/50 shadow-lg">
+          <div className="flex -space-x-2">
+            {connectedUsers.map((user, idx) => (
+              <div
+                key={idx}
+                className="relative group"
+                title={user.name}
+              >
+                <img
+                  src={user.avatar}
+                  alt={user.name}
+                  className="w-6 h-6 rounded-full border-2 border-card object-cover"
+                  style={{ borderColor: user.color }}
+                />
+                <span 
+                  className="absolute bottom-0 right-0 w-2 h-2 rounded-full border border-card"
+                  style={{ backgroundColor: user.color }}
+                />
+              </div>
+            ))}
+          </div>
+          <span className="text-[9px] text-muted-foreground font-medium ml-1">+2</span>
         </div>
       </div>
     )}
