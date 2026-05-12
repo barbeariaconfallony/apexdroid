@@ -622,11 +622,14 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
 
   const activeTabMeta = tabs.find(t => t.id === activeTab)
 
-  // Função para abrir aba e expandir painel de conteúdo
+  // Função para toggle da aba - expande ao clicar, recolhe ao clicar novamente na mesma
   const handleTabClick = (tabId: string) => {
-    setActiveTab(tabId)
-    // Sempre expandir o painel de conteúdo ao clicar em uma aba
-    if (!isSidebarContentExpanded) {
+    if (activeTab === tabId && isSidebarContentExpanded) {
+      // Clicar na mesma aba já expandida = recolher
+      setIsSidebarContentExpanded(false)
+    } else {
+      // Clicar em aba diferente ou quando está recolhido = expandir
+      setActiveTab(tabId)
       setIsSidebarContentExpanded(true)
     }
   }
