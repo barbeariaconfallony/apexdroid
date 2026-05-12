@@ -95,9 +95,9 @@ export function IDEHeader({
 
   return (
     <TooltipProvider delayDuration={300}>
-      <header className="h-12 glass sticky top-0 z-50 flex items-center justify-between px-3 shrink-0 border-b border-white/5 shadow-lg">
+      <header className="h-12 glass sticky top-0 z-50 flex items-center px-3 shrink-0 border-b border-white/5 shadow-lg relative">
         {/* Left Section - Logo + Breadcrumb */}
-        <div className="flex items-center gap-3 flex-1 min-w-0">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
           {/* Logo Icon Only */}
           <Tooltip>
             <TooltipTrigger asChild>
@@ -177,10 +177,10 @@ export function IDEHeader({
           </nav>
         </div>
 
-        {/* Center Section - Mode Toggle */}
-        <div className="flex items-center gap-1 shrink-0">
+        {/* Center Section - Mode Toggle (Absolute Centered) */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center">
           {/* Mode Toggle */}
-          <div className="flex items-center bg-secondary/50 backdrop-blur-md rounded-lg p-0.5 border border-white/5">
+          <div className="flex items-center bg-secondary/50 backdrop-blur-md rounded-lg p-0.5 border border-white/5 shadow-lg">
             <button
               onClick={() => setAppMode("edit")}
               className={cn(
@@ -236,7 +236,7 @@ export function IDEHeader({
         </div>
 
         {/* Right Section - Compact Actions */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0 flex-1 justify-end">
           {/* Sync Status - Clicável para forçar sync */}
           <Tooltip>
             <TooltipTrigger asChild>
