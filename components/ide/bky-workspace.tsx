@@ -1,23 +1,88 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useCallback } from "react"
 import { useIDEStore } from "@/lib/ide-store"
-import { Loader2, Info, RefreshCw, ZoomIn, ZoomOut, Puzzle, Layers } from "lucide-react"
+import { RefreshCw, ZoomIn, ZoomOut, Save, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import * as Blockly from 'blockly'
 import { registerKodularBlocks, generateDynamicToolbox } from "@/lib/blocks-utils"
-
-// Configurar o idioma do Blockly
-// Blockly.setLocale(En); // O pacote blockly ja vem com o locale padrao em ingles
+import { generateCodeFromWorkspace, registerCodeGenerators } from "@/lib/blocks-codegen"
+import { toast } from "sonner"
 
 export function BkyWorkspace() {
-  const { currentBkyContent, currentProject, isThinking, setCurrentBkyContent } = useIDEStore()
+  const { 
+    currentBkyContent, 
+    currentProject, 
+    setCurrentBkyContent,
+    currentScreenName,
+    screens
+  } = useIDEStore()
+  
   const blocklyDiv = useRef<HTMLDivElement>(null)
   const [loading, setLoading] = useState(true)
   const [workspace, setWorkspace] = useState<Blockly.WorkspaceSvg | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const saveTimeout = useRef<NodeJS.Timeout | null>(null)
 
-  // Inicialização Única do Workspace
+  // Funcao para carregar blocos (suporta JSON novo e XML legado)
+  const loadBlocksContent = useCallback((content: string, ws: Blockly.WorkspaceSvg) => {
+    if (!content || !ws) return
+    
+    try {
+      // Tentar carregar como JSON (formato novo do Blockly 12)
+      if (content.trim().startsWith('{')) {
+        const state = JSON.parse(content)
+        Blockly.serialization.workspaces.load(state, ws)
+        return
+      }
+      
+      // Se comecar com <, e XML legado - ignorar (nao mais suportado no Blockly 12)
+      if (content.trim().startsWith('<')) {
+        console.log('[v0] Formato XML legado detectado - sera convertido ao salvar')
+        return
+      }
+      
+      // Tentar parse JSON de qualquer forma
+      const state = JSON.parse(content)
+      Blockly.serialization.workspaces.load(state, ws)
+    } catch (e) {
+      console.error("Erro ao carregar blocos:", e)
+    }
+  }, [])
+
+  // Funcao para salvar blocos na screen atual
+  const saveBlocksToScreen = useCallback((ws: Blockly.WorkspaceSvg) => {
+    const state = Blockly.serialization.workspaces.save(ws)
+    const blocksJson = JSON.stringify(state)
+    
+    // Atualizar o bkyContent da screen atual
+    setCurrentBkyContent(blocksJson)
+    
+    // Atualizar diretamente no objeto screens para sincronizar com GitHub
+    const { screens, currentScreenName } = useIDEStore.getState()
+    if (currentScreenName && screens[currentScreenName]) {
+      screens[currentScreenName].bkyContent = blocksJson
+      
+      // Gerar codigo JavaScript para o preview Live
+      try {
+        registerCodeGenerators()
+        const generatedCode = generateCodeFromWorkspace(ws)
+        // Armazenar codigo gerado para uso no Live preview
+        if (typeof window !== 'undefined') {
+          (window as any).__apexGeneratedCode = (window as any).__apexGeneratedCode || {}
+          ;(window as any).__apexGeneratedCode[currentScreenName] = generatedCode
+        }
+      } catch (e) {
+        console.error('Erro ao gerar codigo:', e)
+      }
+    }
+    
+    setLastSaved(new Date())
+    setIsSaving(false)
+  }, [setCurrentBkyContent])
+
+  // Inicializacao Unica do Workspace
   useEffect(() => {
     if (!blocklyDiv.current) return
 
@@ -52,7 +117,7 @@ export function BkyWorkspace() {
             'text_blocks': { 'colourPrimary': '#59AD89' },
           }
         },
-        renderer: 'geras', // Renderizador padrão balanceado
+        renderer: 'geras',
         move: { scrollbars: true, drag: true, wheel: true },
         zoom: { controls: false, wheel: true, startScale: 1.0, maxScale: 3, minScale: 0.3, scaleSpeed: 1.2 },
         trashcan: true,
@@ -66,28 +131,26 @@ export function BkyWorkspace() {
             event.type === Blockly.Events.BLOCK_CREATE || 
             event.type === Blockly.Events.BLOCK_DELETE) {
           
+          setIsSaving(true)
+          
           if (saveTimeout.current) clearTimeout(saveTimeout.current)
           
+          // Auto-save apos 1.5 segundos de inatividade
           saveTimeout.current = setTimeout(() => {
-            // Blockly 12: Usar serialization API em vez de Xml
-            const state = Blockly.serialization.workspaces.save(ws)
-            setCurrentBkyContent(JSON.stringify(state))
-          }, 2000) // Salva apos 2 segundos de inatividade
+            saveBlocksToScreen(ws)
+          }, 1500)
         }
       })
 
       setWorkspace(ws)
       setLoading(false)
 
-      // Carregar conteudo BKY inicial
-      if (currentBkyContent) {
-        try {
-          // Blockly 12: Usar serialization API
-          const state = JSON.parse(currentBkyContent)
-          Blockly.serialization.workspaces.load(state, ws)
-        } catch (e) {
-          console.error("Erro ao restaurar blocos:", e)
-        }
+      // Carregar conteudo BKY inicial da screen atual
+      const { currentScreenName, screens } = useIDEStore.getState()
+      const screenBky = currentScreenName ? screens[currentScreenName]?.bkyContent : currentBkyContent
+      
+      if (screenBky) {
+        loadBlocksContent(screenBky, ws)
       }
 
       return () => {
@@ -97,7 +160,7 @@ export function BkyWorkspace() {
     } catch (err) {
       console.error("Erro ao injetar Blockly:", err)
     }
-  }, []) // Executa apenas uma vez no mount
+  }, [])
 
   // Atualizar Toolbox Dinamicamente quando o Designer mudar (SCM Sync)
   useEffect(() => {
@@ -107,11 +170,52 @@ export function BkyWorkspace() {
     }
   }, [currentProject, workspace])
 
+  // Recarregar blocos quando trocar de tela
+  useEffect(() => {
+    if (workspace && currentScreenName && screens[currentScreenName]) {
+      const screenBky = screens[currentScreenName].bkyContent
+      workspace.clear()
+      if (screenBky) {
+        loadBlocksContent(screenBky, workspace)
+      }
+    }
+  }, [currentScreenName, workspace, loadBlocksContent])
+
+  // Salvar manualmente
+  const handleManualSave = useCallback(() => {
+    if (workspace) {
+      saveBlocksToScreen(workspace)
+      toast.success("Blocos salvos com sucesso!")
+    }
+  }, [workspace, saveBlocksToScreen])
+
   return (
     <div className="absolute inset-0 flex flex-col bg-[#0a0a0a] overflow-hidden">
-      {/* Controles de Zoom - Compacto */}
-      <div className="absolute top-3 right-3 z-20 flex gap-1">
+      {/* Controles de Zoom e Save - Compacto */}
+      <div className="absolute top-3 right-3 z-20 flex gap-2">
+        {/* Indicador de salvamento */}
+        <div className="bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10 flex items-center gap-2">
+          {isSaving ? (
+            <>
+              <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
+              <span className="text-[10px] text-yellow-500 font-medium">Salvando...</span>
+            </>
+          ) : lastSaved ? (
+            <>
+              <CheckCircle className="w-3 h-3 text-green-500" />
+              <span className="text-[10px] text-green-500 font-medium">Salvo</span>
+            </>
+          ) : (
+            <span className="text-[10px] text-muted-foreground">Pronto</span>
+          )}
+        </div>
+        
+        {/* Botoes de controle */}
         <div className="bg-black/70 backdrop-blur-md p-1 rounded-lg border border-white/10 flex gap-1">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleManualSave} title="Salvar blocos">
+            <Save className="w-3.5 h-3.5" />
+          </Button>
+          <div className="w-px h-5 bg-white/10 self-center" />
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => workspace?.zoom(0, 0, 1.2)}>
             <ZoomIn className="w-3.5 h-3.5" />
           </Button>

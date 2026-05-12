@@ -10,6 +10,7 @@ import type { KodularComponent, ProjectAsset } from "@/lib/ide-types"
 import { cn } from "@/lib/utils"
 import { DroppableZone, EmptyDropZone } from "./droppable-zone"
 import { useIDEDnd } from "./dnd-context"
+import { toast } from "sonner"
 
 // Device presets
 const devicePresets = {
@@ -65,6 +66,20 @@ function convertAlignment(v?: string): string {
   return "flex-start"
 }
 
+// Runtime global para executar codigo dos blocos
+interface BlocksRuntime {
+  triggerEvent: (component: string, event: string, ...args: any[]) => void
+  getEventHandlers: () => Record<string, Record<string, Function[]>>
+}
+
+// Funcao para obter o runtime global
+function getBlocksRuntime(): BlocksRuntime | null {
+  if (typeof window !== 'undefined' && (window as any).__apexBlocksRuntime) {
+    return (window as any).__apexBlocksRuntime as BlocksRuntime
+  }
+  return null
+}
+
 interface ComponentRendererProps {
   component: KodularComponent
   onSelect: (comp: KodularComponent) => void
@@ -76,6 +91,7 @@ interface ComponentRendererProps {
   setDragOverInfo: (info: { name: string | null, position: 'top' | 'middle' | 'bottom' | 'left' | 'right' | null }) => void
   parentName?: string
   index?: number
+  onTriggerEvent?: (component: string, event: string) => void
 }
 
 // Resolve asset URL from asset name
@@ -89,9 +105,16 @@ function resolveAssetUrl(assetName: string | undefined, assets: ProjectAsset[]):
 const ComponentRenderer = memo(({ 
   component, onSelect, selectedName, appMode, assets = [], 
   moveComponent, dragOverInfo, setDragOverInfo,
-  parentName, index
+  parentName, index, onTriggerEvent
 }: ComponentRendererProps) => {
   const { $Type, $Name, $Components } = component
+  
+  // Handler para disparar eventos no modo run
+  const handleRunClick = useCallback(() => {
+    if (appMode === "run" && onTriggerEvent) {
+      onTriggerEvent($Name, "Click")
+    }
+  }, [appMode, $Name, onTriggerEvent])
 
   // Non-visible components (services, not UI)
   const nonVisibleTypes = [
@@ -162,9 +185,11 @@ const ComponentRenderer = memo(({
   }
 
   const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
     if (appMode === "edit") {
-      e.stopPropagation()
       onSelect(component)
+    } else if (appMode === "run") {
+      handleRunClick()
     }
   }
 
@@ -402,6 +427,7 @@ const ComponentRenderer = memo(({
             setDragOverInfo={setDragOverInfo}
             parentName={$Name}
             index={idx}
+            onTriggerEvent={onTriggerEvent}
           />
         ))}
         {(!$Components || $Components.length === 0) && appMode === "edit" && (
@@ -441,6 +467,7 @@ const ComponentRenderer = memo(({
             setDragOverInfo={setDragOverInfo}
             parentName={$Name}
             index={idx}
+            onTriggerEvent={onTriggerEvent}
           />
         ))}
         {(!$Components || $Components.length === 0) && appMode === "edit" && (
@@ -556,6 +583,128 @@ export function PhonePreview({ onLoginClick }: PhonePreviewProps) {
   }>({ name: null, position: null });
   
   const containerRef = useRef<HTMLDivElement>(null)
+  const [runtimeInitialized, setRuntimeInitialized] = useState(false)
+  
+  // Inicializar runtime dos blocos quando entrar no modo run
+  useEffect(() => {
+    if (appMode === "run" && currentScreenName && !runtimeInitialized) {
+      initializeBlocksRuntime()
+    }
+  }, [appMode, currentScreenName])
+
+  // Funcao para inicializar e executar o codigo dos blocos
+  const initializeBlocksRuntime = useCallback(() => {
+    try {
+      // Obter codigo gerado dos blocos
+      const generatedCode = typeof window !== 'undefined' 
+        ? (window as any).__apexGeneratedCode?.[currentScreenName || ''] 
+        : null
+
+      if (!generatedCode) {
+        console.log('[v0] Nenhum codigo de blocos para executar')
+        setRuntimeInitialized(true)
+        return
+      }
+
+      // Criar contexto de componentes
+      const componentProps: Record<string, any> = {}
+      const collectComponents = (comp: KodularComponent) => {
+        componentProps[comp.$Name] = { ...comp }
+        comp.$Components?.forEach(collectComponents)
+      }
+      if (currentProject?.Properties) {
+        collectComponents(currentProject.Properties)
+      }
+
+      // Criar runtime
+      const eventHandlers: Record<string, Record<string, Function[]>> = {}
+      const globals: Record<string, any> = {}
+
+      const runtime = {
+        on: (component: string, event: string, handler: Function) => {
+          if (!eventHandlers[component]) eventHandlers[component] = {}
+          if (!eventHandlers[component][event]) eventHandlers[component][event] = []
+          eventHandlers[component][event].push(handler)
+        },
+        get: (component: string, property: string) => {
+          return componentProps[component]?.[property] ?? null
+        },
+        set: (component: string, property: string, value: any) => {
+          if (componentProps[component]) {
+            componentProps[component][property] = value
+            updateComponent(component, { [property]: value }, true)
+          }
+        },
+        call: (component: string, method: string, args: any[]) => {
+          if (method === 'ShowAlert' || method === 'ShowMessageDialog') {
+            toast.info(args[0] || 'Alerta')
+          } else {
+            console.log(`[Runtime] ${component}.${method}(${args.join(', ')})`)
+          }
+        },
+        openScreen: (name: string) => toast.info(`Abrindo tela: ${name}`),
+        closeScreen: () => toast.info('Fechando tela'),
+        getStartValue: () => null,
+        setAny: (comp: any, prop: string, val: any) => runtime.set(typeof comp === 'string' ? comp : comp?.$Name, prop, val),
+        getAny: (comp: any, prop: string) => runtime.get(typeof comp === 'string' ? comp : comp?.$Name, prop),
+        callAny: (comp: any, method: string, args: any[]) => runtime.call(typeof comp === 'string' ? comp : comp?.$Name, method, args),
+        splitColor: (c: string) => [0,0,0]
+      }
+
+      // Expor runtime globalmente
+      if (typeof window !== 'undefined') {
+        (window as any).__apexBlocksRuntime = {
+          triggerEvent: (component: string, event: string, ...args: any[]) => {
+            const handlers = eventHandlers[component]?.[event] || []
+            handlers.forEach(h => {
+              try { h(...args) } catch(e) { console.error('Erro no handler:', e) }
+            })
+          },
+          getEventHandlers: () => eventHandlers
+        }
+      }
+
+      // Executar codigo gerado
+      const wrappedCode = `
+        (function(__runtime, __globals) {
+          ${generatedCode}
+        })
+      `
+      
+      try {
+        const fn = eval(wrappedCode)
+        fn(runtime, globals)
+        console.log('[v0] Codigo dos blocos executado com sucesso')
+        toast.success('Modo Live ativado!')
+      } catch (e) {
+        console.error('[v0] Erro ao executar codigo:', e)
+      }
+
+      setRuntimeInitialized(true)
+    } catch (e) {
+      console.error('[v0] Erro ao inicializar runtime:', e)
+      setRuntimeInitialized(true)
+    }
+  }, [currentScreenName, currentProject, updateComponent])
+
+  // Handler para disparar eventos de componentes
+  const handleTriggerEvent = useCallback((componentName: string, eventName: string) => {
+    const runtime = getBlocksRuntime()
+    if (runtime) {
+      console.log(`[v0] Disparando evento: ${componentName}.${eventName}`)
+      runtime.triggerEvent(componentName, eventName)
+    }
+  }, [])
+
+  // Reset runtime quando sair do modo run
+  useEffect(() => {
+    if (appMode !== "run") {
+      setRuntimeInitialized(false)
+      if (typeof window !== 'undefined') {
+        delete (window as any).__apexBlocksRuntime
+      }
+    }
+  }, [appMode])
   
   // Fictitious connected users (all, shown 3 inline + rest in modal)
   const allUsers = [
@@ -973,6 +1122,7 @@ export function PhonePreview({ onLoginClick }: PhonePreviewProps) {
                 setDragOverInfo={setDragOverInfo}
                 parentName={currentProject.Properties.$Name}
                 index={idx}
+                onTriggerEvent={handleTriggerEvent}
               />
             ))}
                 
