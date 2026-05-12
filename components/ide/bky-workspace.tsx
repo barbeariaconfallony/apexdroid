@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { useIDEStore } from "@/lib/ide-store"
 import { Loader2, Info, RefreshCw, ZoomIn, ZoomOut, Puzzle, Layers } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import Blockly from 'blockly'
+import * as Blockly from 'blockly'
 import { registerKodularBlocks, generateDynamicToolbox } from "@/lib/blocks-utils"
 
 // Configurar o idioma do Blockly
