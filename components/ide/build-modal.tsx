@@ -139,118 +139,50 @@ export function BuildModal({ isOpen, onClose }: BuildModalProps) {
     }
 
     try {
-      const { ghToken, selectedRepo } = useIDEStore.getState()
+      const { ghToken, selectedRepo, screens } = useIDEStore.getState()
       
-      // 1. Auto-Sync to GitHub if connected
+      addLogMessage("Iniciando processo de build...", "info")
+      
+      // Verificar conexao GitHub
       if (ghToken && selectedRepo) {
-        addLogMessage(`[Auto-Sync] Iniciando sincronização com ${selectedRepo.full_name}...`, "info")
-        setProgress(5)
-
-        // Prepara os arquivos para o commit
-        const workflowContent = `name: Build Android APK
-
-on:
-  workflow_dispatch:
-    inputs:
-      project_name:
-        description: 'Nome do projeto'
-        required: true
-        default: 'ApexApp'
-      version_name:
-        description: 'Versão'
-        required: true
-        default: '1.0.0'
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Set up JDK 8
-        uses: actions/setup-java@v4
-        with:
-          java-version: '8'
-          distribution: 'temurin'
-      - name: Build APK
-        run: |
-          mkdir -p build
-          echo "Compilando real..."
-          sleep 5
-          touch build/${currentProject.Properties?.$Name || 'App'}.apk
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: APK-Result
-          path: build/*.apk`
-
-        // Prepara TODOS os arquivos do projeto para o commit
-        const { screens, currentProject: fullProject } = useIDEStore.getState()
-        
-        const projectFiles = [
-          { path: ".github/workflows/build-apk.yml", content: workflowContent },
-          { path: "project.json", content: JSON.stringify(fullProject, null, 2) }
-        ]
-
-        // Adiciona cada tela ao commit buscando os dados reais do objeto 'screens'
-        Object.entries(screens).forEach(([name, screen]) => {
-          projectFiles.push({
-            path: `src/${name}.scm`,
-            content: JSON.stringify(screen.data || {}, null, 2)
-          })
-          if (screen.bkyContent) {
-            projectFiles.push({
-              path: `src/${name}.bky`,
-              content: screen.bkyContent
-            })
-          }
-        })
-
-        const syncRes = await fetch("/api/github/sync", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            token: ghToken,
-            repo: selectedRepo.full_name,
-            message: `Full Project Build: v${config.versionName}`,
-            files: projectFiles
-          })
-        })
-
-        if (!syncRes.ok) {
-          const syncErr = await syncRes.json()
-          throw new Error(`Falha no Auto-Sync: ${syncErr.error}`)
-        }
-
-        addLogMessage("[Auto-Sync] Projeto sincronizado com sucesso!", "success")
-        setProgress(15)
+        addLogMessage(`Build real via GitHub Actions em ${selectedRepo.full_name}`, "info")
+      } else {
+        addLogMessage("Modo offline: Build simulado (conecte o GitHub para APKs reais)", "warning")
       }
+      
+      setProgress(5)
 
-      // 2. Start Build
+      // Iniciar Build via API (que faz o empacotamento AIA e aciona GitHub Actions)
       const response = await fetch("/api/build", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           project: currentProject,
+          screens: screens,
           config,
-          github: ghToken ? {
+          github: ghToken && selectedRepo ? {
             token: ghToken,
-            repo: selectedRepo?.full_name,
-            owner: selectedRepo?.owner.login,
-            name: selectedRepo?.name
+            repo: selectedRepo.full_name,
+            owner: selectedRepo.owner.login,
+            name: selectedRepo.name
           } : null
         })
       })
 
-      if (!response.ok) throw new Error("Failed to start build")
+      if (!response.ok) {
+        const errData = await response.json()
+        throw new Error(errData.error || "Falha ao iniciar build")
+      }
       
       const data = await response.json()
       setBuildId(data.buildId)
+      
+      addLogMessage(data.message || "Build iniciado com sucesso", "success")
 
-      // Start polling
+      // Iniciar polling para acompanhar progresso
       pollIntervalRef.current = setInterval(() => {
         pollBuildStatus(data.buildId)
-      }, 1000)
+      }, 2000)
 
     } catch (error) {
       setPhase("failed")
