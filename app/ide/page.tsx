@@ -23,6 +23,7 @@ import { AIScreenGenerator } from "@/components/ide/ai-screen-generator"
 import { BuildMonitor } from "@/components/ide/build-monitor"
 import { AssetsModal } from "@/components/ide/assets-modal"
 import { useIDEStore } from "@/lib/ide-store"
+import { setupGlobalAutoSync } from "@/lib/hooks/use-github-sync"
 
 export default function IDEPage() {
   const [buildModalOpen, setBuildModalOpen] = useState(false)
@@ -47,6 +48,13 @@ export default function IDEPage() {
 
   useEffect(() => {
     setMounted(true)
+    
+    // Configurar auto-sync global com GitHub
+    const unsubscribeSync = setupGlobalAutoSync()
+    
+    return () => {
+      if (unsubscribeSync) unsubscribeSync()
+    }
   }, [])
 
   // Keyboard shortcuts

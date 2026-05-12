@@ -226,16 +226,24 @@ export function IDEHeader({
           {/* Sync Status - Icon only with tooltip */}
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center justify-center w-7 h-7 rounded-md bg-secondary/50 border border-border/50 cursor-default">
+              <div className={cn(
+                "flex items-center justify-center w-7 h-7 rounded-md border cursor-default transition-colors",
+                syncStatus === "synced" && "bg-success/10 border-success/30",
+                syncStatus === "syncing" && "bg-primary/10 border-primary/30",
+                syncStatus === "error" && "bg-destructive/10 border-destructive/30",
+                syncStatus === "offline" && "bg-secondary/50 border-border/50"
+              )}>
                 {syncStatus === "synced" && <Wifi className="w-3.5 h-3.5 text-success" />}
                 {syncStatus === "syncing" && <RefreshCw className="w-3.5 h-3.5 text-primary animate-spin" />}
+                {syncStatus === "error" && <AlertCircle className="w-3.5 h-3.5 text-destructive" />}
                 {syncStatus === "offline" && <CloudOff className="w-3.5 h-3.5 text-muted-foreground" />}
               </div>
             </TooltipTrigger>
             <TooltipContent side="bottom" className="text-xs">
-              {syncStatus === "synced" && "Sincronizado com a nuvem"}
-              {syncStatus === "syncing" && "Sincronizando..."}
-              {syncStatus === "offline" && "Modo offline"}
+              {syncStatus === "synced" && "Auto-sync ativo - Sincronizado com GitHub"}
+              {syncStatus === "syncing" && "Sincronizando com GitHub..."}
+              {syncStatus === "error" && "Erro ao sincronizar - Clique para tentar novamente"}
+              {syncStatus === "offline" && "GitHub nao conectado"}
             </TooltipContent>
           </Tooltip>
 

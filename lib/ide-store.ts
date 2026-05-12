@@ -479,7 +479,7 @@ export const useIDEStore = create<IDEState>()(
       },
 
       updateComponent: (name, props, skipSnapshot = false) => {
-        const { currentProject, findComponent, saveSnapshot, selectedComponent } = get()
+        const { currentProject, findComponent, saveSnapshot, selectedComponent, currentScreenName, screens } = get()
         if (!currentProject) return
         const comp = findComponent(currentProject.Properties, name)
         if (comp) {
@@ -491,6 +491,16 @@ export const useIDEStore = create<IDEState>()(
           // Fix: update selectedComponent to point to the new reference so PropertiesPanel stays stable
           if (selectedComponent && selectedComponent.$Name === name) {
              updates.selectedComponent = get().findComponent(newProject.Properties, name) || newProject.Properties
+          }
+          
+          // Sincronizar com o objeto screens para auto-sync com GitHub
+          if (currentScreenName && screens[currentScreenName]) {
+            const newScreens = { ...screens }
+            newScreens[currentScreenName] = {
+              ...newScreens[currentScreenName],
+              data: newProject
+            }
+            updates.screens = newScreens
           }
           
           set(updates)
@@ -534,7 +544,22 @@ export const useIDEStore = create<IDEState>()(
 
           parent.$Components.push(newComp)
           saveSnapshot()
-          set({ currentProject: JSON.parse(JSON.stringify(currentProject)) })
+          const newProject = JSON.parse(JSON.stringify(currentProject))
+          
+          // Sincronizar com o objeto screens para auto-sync com GitHub
+          const { currentScreenName, screens } = get()
+          const updates: Partial<IDEState> = { currentProject: newProject }
+          
+          if (currentScreenName && screens[currentScreenName]) {
+            const newScreens = { ...screens }
+            newScreens[currentScreenName] = {
+              ...newScreens[currentScreenName],
+              data: newProject
+            }
+            updates.screens = newScreens
+          }
+          
+          set(updates)
           return newName
         }
         return undefined
@@ -561,7 +586,22 @@ export const useIDEStore = create<IDEState>()(
 
         if (removeFromParent(currentProject.Properties)) {
           saveSnapshot()
-          set({ currentProject: JSON.parse(JSON.stringify(currentProject)), selectedComponent: null })
+          const newProject = JSON.parse(JSON.stringify(currentProject))
+          
+          // Sincronizar com o objeto screens para auto-sync com GitHub
+          const { currentScreenName, screens } = get()
+          const updates: Partial<IDEState> = { currentProject: newProject, selectedComponent: null }
+          
+          if (currentScreenName && screens[currentScreenName]) {
+            const newScreens = { ...screens }
+            newScreens[currentScreenName] = {
+              ...newScreens[currentScreenName],
+              data: newProject
+            }
+            updates.screens = newScreens
+          }
+          
+          set(updates)
         }
       },
 
@@ -599,7 +639,22 @@ export const useIDEStore = create<IDEState>()(
             targetParent.$Components.splice(index, 0, componentToMove)
             
             saveSnapshot()
-            set({ currentProject: JSON.parse(JSON.stringify(currentProject)) })
+            const newProject = JSON.parse(JSON.stringify(currentProject))
+            
+            // Sincronizar com o objeto screens para auto-sync com GitHub
+            const { currentScreenName, screens } = get()
+            const updates: Partial<IDEState> = { currentProject: newProject }
+            
+            if (currentScreenName && screens[currentScreenName]) {
+              const newScreens = { ...screens }
+              newScreens[currentScreenName] = {
+                ...newScreens[currentScreenName],
+                data: newProject
+              }
+              updates.screens = newScreens
+            }
+            
+            set(updates)
             toast.success(`${name} movido para ${targetParentName}`)
           }
         }
