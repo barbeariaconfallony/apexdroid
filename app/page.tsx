@@ -26,14 +26,20 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen relative">
-      {/* Background Effects */}
-      <div className="fixed inset-0 bg-grid-pattern -z-10" />
-      <div className="fixed top-0 right-0 w-[60%] h-[60%] bg-primary/10 rounded-full blur-[150px] -z-10 animate-pulse-glow" />
+    <div className="min-h-screen relative bg-dot-premium">
+      {/* Spotlight effect */}
+      <div className="spotlight" />
+      
+      {/* Grid lines overlay */}
+      <div className="grid-lines" />
+      
+      {/* Secondary glow accents */}
+      <div className="glow-secondary -top-40 -right-40 opacity-60" />
+      <div className="glow-secondary bottom-1/4 -left-60 opacity-40" />
       
       <Header onLoginClick={openLogin} onRegisterClick={openRegister} />
       
-      <main>
+      <main className="relative z-10">
         <Hero />
         <Features />
       </main>

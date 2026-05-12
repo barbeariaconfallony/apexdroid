@@ -249,10 +249,74 @@
   background: oklch(0.06 0.005 280);
 }
 
-/* Background Pattern */
+/* Background Pattern - Modern Dotted Grid */
 .bg-grid-pattern {
-  background-image: radial-gradient(circle at 1px 1px, oklch(0.15 0.01 280) 1px, transparent 0);
+  background-image: radial-gradient(circle at 1px 1px, oklch(0.25 0.01 280) 1.2px, transparent 0);
+  background-size: 20px 20px;
+}
+
+/* Animated dot grid with subtle glow */
+.bg-dot-grid {
+  position: relative;
+  background-color: oklch(0.08 0.005 280);
+}
+
+.bg-dot-grid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at center, oklch(0.35 0.015 280) 1px, transparent 1px);
   background-size: 24px 24px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black 20%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black 20%, transparent 70%);
+}
+
+/* Premium dot pattern with gradient fade */
+.bg-dot-premium {
+  background-color: oklch(0.06 0.005 280);
+  background-image: 
+    radial-gradient(circle at center, oklch(0.3 0.01 280) 1px, transparent 1px),
+    radial-gradient(ellipse at 50% 0%, oklch(0.15 0.05 265 / 0.15) 0%, transparent 60%);
+  background-size: 24px 24px, 100% 100%;
+  background-position: 0 0, 0 0;
+}
+
+/* Spotlight effect for hero sections */
+.spotlight {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 50% 40% at 50% 20%,
+    oklch(0.62 0.15 265 / 0.08) 0%,
+    transparent 70%
+  );
+}
+
+/* Secondary glow */
+.glow-secondary {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, oklch(0.55 0.12 280 / 0.1) 0%, transparent 70%);
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+/* Grid lines effect */
+.grid-lines {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(to right, oklch(1 0 0 / 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, oklch(1 0 0 / 0.02) 1px, transparent 1px);
+  background-size: 80px 80px;
+  mask-image: linear-gradient(to bottom, black 0%, transparent 80%);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 80%);
 }
 
 /* Glass effect */
@@ -473,6 +537,63 @@
 
 .animate-float {
   animation: float 4s ease-in-out infinite;
+}
+
+/* Stagger animation delays */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+.stagger-6 { animation-delay: 0.6s; }
+
+/* Subtle border glow on hover */
+@keyframes border-glow {
+  0%, 100% { border-color: oklch(0.25 0.02 280); }
+  50% { border-color: oklch(0.4 0.08 265); }
+}
+
+.animate-border-glow:hover {
+  animation: border-glow 2s ease-in-out infinite;
+}
+
+/* Reveal animation */
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-reveal {
+  animation: reveal 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+/* Text gradient shimmer */
+@keyframes text-shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.text-shimmer {
+  background: linear-gradient(
+    90deg,
+    oklch(0.85 0 0) 0%,
+    oklch(0.62 0.2 265) 25%,
+    oklch(0.85 0 0) 50%,
+    oklch(0.62 0.2 265) 75%,
+    oklch(0.85 0 0) 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: text-shimmer 8s linear infinite;
 }
 
 .tab-transition {
