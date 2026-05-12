@@ -65,6 +65,72 @@ export function CodeEditor({ className }: CodeEditorProps) {
   const [isAIModalOpen, setIsAIModalOpen] = useState(false)
   const [aiPrompt, setAiPrompt] = useState("")
   const [isAIProcessing, setIsAIProcessing] = useState(false)
+  
+  // Error tracking state
+  const [jsonErrors, setJsonErrors] = useState<Array<{
+    line: number
+    column: number
+    message: string
+  }>>([])
+  const [isValidJson, setIsValidJson] = useState(true)
+  const monacoRef = useRef<any>(null)
+
+  // Função para validar JSON e extrair erros com posição
+  const validateJson = useCallback((jsonString: string) => {
+    try {
+      JSON.parse(jsonString)
+      setJsonErrors([])
+      setIsValidJson(true)
+      return true
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        // Tentar extrair posição do erro
+        const match = error.message.match(/position (\d+)/)
+        let line = 1
+        let column = 1
+        
+        if (match) {
+          const position = parseInt(match[1], 10)
+          // Calcular linha e coluna a partir da posição
+          const lines = jsonString.substring(0, position).split('\n')
+          line = lines.length
+          column = lines[lines.length - 1].length + 1
+        }
+        
+        // Tentar extrair mais detalhes do erro
+        let message = error.message
+        if (message.includes("Unexpected token")) {
+          const tokenMatch = message.match(/Unexpected token (.+)/)
+          if (tokenMatch) {
+            message = `Token inesperado: ${tokenMatch[1]}`
+          }
+        } else if (message.includes("Unexpected end")) {
+          message = "Fim inesperado do JSON - verifique se fechou todas as chaves e colchetes"
+        }
+        
+        setJsonErrors([{ line, column, message }])
+        setIsValidJson(false)
+        
+        // Adicionar marcadores de erro no Monaco
+        if (monacoRef.current && editorRef.current) {
+          const model = editorRef.current.getModel()
+          if (model) {
+            monacoRef.current.editor.setModelMarkers(model, 'json-validator', [{
+              severity: monacoRef.current.MarkerSeverity.Error,
+              message,
+              startLineNumber: line,
+              startColumn: column,
+              endLineNumber: line,
+              endColumn: column + 1
+            }])
+          }
+        }
+        
+        return false
+      }
+      return false
+    }
+  }, [])
 
   // Gerar o código SCM do projeto atual
   useEffect(() => {
@@ -73,11 +139,14 @@ export function CodeEditor({ className }: CodeEditorProps) {
       setCode(jsonContent)
       setOriginalCode(jsonContent)
       setHasChanges(false)
+      setJsonErrors([])
+      setIsValidJson(true)
     }
   }, [currentProject])
 
   const handleEditorDidMount: OnMount = (editor, monaco) => {
     editorRef.current = editor
+    monacoRef.current = monaco
 
     // Configurar tema customizado
     monaco.editor.defineTheme("apex-dark", {
@@ -118,6 +187,8 @@ export function CodeEditor({ className }: CodeEditorProps) {
     if (value !== undefined) {
       setCode(value)
       setHasChanges(value !== originalCode)
+      // Validar JSON em tempo real (com debounce implícito do Monaco)
+      validateJson(value)
     }
   }
 
@@ -136,10 +207,18 @@ export function CodeEditor({ className }: CodeEditorProps) {
       return
     }
 
+    // Bloquear salvamento se houver erros
+    if (!isValidJson || jsonErrors.length > 0) {
+      toast.error("Corrija os erros no codigo antes de salvar!", {
+        description: jsonErrors[0]?.message || "JSON invalido"
+      })
+      return
+    }
+
     setIsSaving(true)
 
     try {
-      // Validar JSON antes de salvar
+      // Validar JSON antes de salvar (dupla verificação)
       let parsedJson
       try {
         parsedJson = JSON.parse(code)
@@ -174,7 +253,7 @@ export function CodeEditor({ className }: CodeEditorProps) {
     } finally {
       setIsSaving(false)
     }
-  }, [ghToken, selectedRepo, code, hasChanges, currentScreenName, screens, setCurrentProject])
+  }, [ghToken, selectedRepo, code, hasChanges, currentScreenName, screens, setCurrentProject, isValidJson, jsonErrors])
 
   const handleReset = useCallback(() => {
     setCode(originalCode)
@@ -485,24 +564,29 @@ export function CodeEditor({ className }: CodeEditorProps) {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant={hasChanges ? "default" : "ghost"}
+                  variant={hasChanges && isValidJson ? "default" : "ghost"}
                   size="sm"
                   className={cn(
                     "h-7 px-3 text-xs gap-1.5",
-                    hasChanges && "bg-primary hover:bg-primary/90"
+                    hasChanges && isValidJson && "bg-primary hover:bg-primary/90",
+                    !isValidJson && hasChanges && "bg-destructive/20 text-destructive border-destructive/30 cursor-not-allowed"
                   )}
                   onClick={handleSave}
-                  disabled={!hasChanges || isSaving}
+                  disabled={!hasChanges || isSaving || !isValidJson}
                 >
                   {isSaving ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : !isValidJson ? (
+                    <AlertCircle className="w-3.5 h-3.5" />
                   ) : (
                     <Save className="w-3.5 h-3.5" />
                   )}
-                  Salvar
+                  {!isValidJson ? "Erros" : "Salvar"}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Salvar no GitHub (Ctrl+S)</TooltipContent>
+              <TooltipContent side="bottom" className="text-xs">
+                {!isValidJson ? "Corrija os erros antes de salvar" : "Salvar no GitHub (Ctrl+S)"}
+              </TooltipContent>
             </Tooltip>
           </div>
         </div>
@@ -548,15 +632,64 @@ export function CodeEditor({ className }: CodeEditorProps) {
           />
         </div>
 
+        {/* Error Panel - exibe erros em tempo real */}
+        {jsonErrors.length > 0 && (
+          <div className="border-t border-destructive/30 bg-destructive/5">
+            <div className="flex items-center gap-2 px-3 py-1.5 border-b border-destructive/20 bg-destructive/10">
+              <AlertCircle className="w-3.5 h-3.5 text-destructive" />
+              <span className="text-xs font-medium text-destructive">
+                Problemas ({jsonErrors.length})
+              </span>
+            </div>
+            <div className="max-h-24 overflow-y-auto">
+              {jsonErrors.map((error, index) => (
+                <button
+                  key={index}
+                  className="w-full flex items-start gap-2 px-3 py-1.5 text-left hover:bg-destructive/10 transition-colors"
+                  onClick={() => {
+                    // Ir para a linha do erro no editor
+                    if (editorRef.current) {
+                      editorRef.current.setPosition({ lineNumber: error.line, column: error.column })
+                      editorRef.current.revealLineInCenter(error.line)
+                      editorRef.current.focus()
+                    }
+                  }}
+                >
+                  <X className="w-3 h-3 text-destructive mt-0.5 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[10px] text-destructive font-mono">
+                      Linha {error.line}, Coluna {error.column}
+                    </span>
+                    <p className="text-[11px] text-destructive/90 truncate">
+                      {error.message}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Status bar */}
         <div className="flex items-center justify-between px-3 py-1 border-t border-white/5 bg-[#0f0f0f] text-[10px] text-muted-foreground">
           <div className="flex items-center gap-3">
             <span>JSON</span>
             <span>UTF-8</span>
             <span>Espacos: 2</span>
+            {jsonErrors.length > 0 && (
+              <span className="flex items-center gap-1 text-destructive">
+                <X className="w-3 h-3" />
+                {jsonErrors.length} erro(s)
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-3">
-            {hasChanges ? (
+            {!isValidJson ? (
+              <span className="flex items-center gap-1 text-destructive animate-pulse">
+                <AlertCircle className="w-3 h-3" />
+                JSON invalido
+              </span>
+            ) : hasChanges ? (
               <span className="flex items-center gap-1 text-amber-500">
                 <AlertCircle className="w-3 h-3" />
                 Alteracoes nao salvas
