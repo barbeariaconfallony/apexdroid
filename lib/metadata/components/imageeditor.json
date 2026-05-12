@@ -1,0 +1,7 @@
+{
+  "name": "Image Editor",
+  "type": "ImageEditor",
+  "properties": [
+    "Save New Image As"
+  ]
+}

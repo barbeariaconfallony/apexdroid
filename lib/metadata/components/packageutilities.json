@@ -1,0 +1,10 @@
+{
+  "name": "Package Utilities",
+  "type": "PackageUtilities",
+  "properties": [
+    "App Name",
+    "Package Name",
+    "Version Code",
+    "Version Name"
+  ]
+}

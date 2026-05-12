@@ -1,0 +1,13 @@
+{
+  "name": "Custom Tabs",
+  "type": "CustomTabs",
+  "properties": [
+    "Default Share Menu Item",
+    "Instant Apps Enabled",
+    "Prefer Native",
+    "Show Title",
+    "Toolbar Color",
+    "URL",
+    "Url Bar Hiding On Scroll"
+  ]
+}

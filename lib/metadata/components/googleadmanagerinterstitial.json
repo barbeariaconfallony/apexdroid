@@ -1,0 +1,9 @@
+{
+  "name": "Google Ad Manager Interstitial",
+  "type": "GoogleAdManagerInterstitial",
+  "properties": [
+    "Ad Unit Id",
+    "Test Mode",
+    "eCPM Floor"
+  ]
+}

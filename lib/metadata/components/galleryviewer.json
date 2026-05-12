@@ -1,0 +1,16 @@
+{
+  "name": "Gallery Viewer",
+  "type": "GalleryViewer",
+  "properties": [
+    "Height",
+    "Height Percent",
+    "Images",
+    "Padding",
+    "Selection",
+    "Thumbnail Height in DIP",
+    "Thumbnail Width in DIP",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

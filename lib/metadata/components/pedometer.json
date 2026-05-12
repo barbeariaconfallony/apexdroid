@@ -1,0 +1,15 @@
+{
+  "name": "Pedometer",
+  "type": "Pedometer",
+  "properties": [
+    "Calibrate Stride Length",
+    "Distance",
+    "Elapsed Time",
+    "Moving",
+    "Simple Steps",
+    "Stop Detection Timeout",
+    "Stride Length",
+    "Use GPS",
+    "Walk Steps"
+  ]
+}

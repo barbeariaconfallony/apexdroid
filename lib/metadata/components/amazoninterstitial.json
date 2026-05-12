@@ -1,0 +1,12 @@
+{
+  "name": "Amazon Interstitial",
+  "type": "AmazonInterstitial",
+  "properties": [
+    "Application Key",
+    "Enable Debug",
+    "Enable Geo Location Targeting",
+    "Enable Testing",
+    "Interstitial Commission",
+    "Target Age"
+  ]
+}

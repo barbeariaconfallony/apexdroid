@@ -1,0 +1,22 @@
+{
+  "name": "Checkbox",
+  "type": "Checkbox",
+  "properties": [
+    "Background Color",
+    "Checkbox Color",
+    "Checked",
+    "Enabled",
+    "Font Bold",
+    "Font Italic",
+    "Font Size",
+    "Font Typeface",
+    "Font Typeface Import",
+    "Height",
+    "Height Percent",
+    "Text",
+    "Text Color",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

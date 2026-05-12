@@ -1,0 +1,13 @@
+{
+  "name": "Magnetic Field Sensor",
+  "type": "MagneticFieldSensor",
+  "properties": [
+    "Absolute Strength",
+    "Available",
+    "Enabled",
+    "Maximum Range",
+    "X Strength",
+    "Y Strength",
+    "Z Strength"
+  ]
+}

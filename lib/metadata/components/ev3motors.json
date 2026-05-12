@@ -1,0 +1,13 @@
+{
+  "name": "EV3 Motors",
+  "type": "EV3Motors",
+  "properties": [
+    "Bluetooth Client",
+    "Enable Speed Regulation",
+    "Motor Ports",
+    "Reverse Direction",
+    "Stop Before Disconnect",
+    "Tacho Count Changed Event Enabled",
+    "Wheel Diameter"
+  ]
+}

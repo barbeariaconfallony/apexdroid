@@ -1,0 +1,15 @@
+{
+  "name": "Bluetooth Client",
+  "type": "BluetoothClient",
+  "properties": [
+    "Addresses And Names",
+    "Available",
+    "Character Encoding",
+    "Delimiter Byte",
+    "Enabled",
+    "High Byte First",
+    "Is Connected",
+    "No Location Needed",
+    "Secure"
+  ]
+}

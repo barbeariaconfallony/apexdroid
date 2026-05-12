@@ -1,0 +1,10 @@
+{
+  "name": "Near Field",
+  "type": "NearField",
+  "properties": [
+    "Last Message",
+    "Read Mode",
+    "Text To Write",
+    "Write Type"
+  ]
+}

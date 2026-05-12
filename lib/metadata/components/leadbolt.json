@@ -1,0 +1,9 @@
+{
+  "name": "LeadBolt",
+  "type": "LeadBolt",
+  "properties": [
+    "API Key",
+    "Interstitial Commission",
+    "Rewarded Video Commission"
+  ]
+}

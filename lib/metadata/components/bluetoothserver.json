@@ -1,0 +1,14 @@
+{
+  "name": "Bluetooth Server",
+  "type": "BluetoothServer",
+  "properties": [
+    "Available",
+    "Character Encoding",
+    "Delimiter Byte",
+    "Enabled",
+    "High Byte First",
+    "Is Accepting",
+    "Is Connected",
+    "Secure"
+  ]
+}

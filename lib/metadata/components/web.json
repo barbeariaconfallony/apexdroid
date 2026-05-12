@@ -1,0 +1,12 @@
+{
+  "name": "Web",
+  "type": "Web",
+  "properties": [
+    "Allow Cookies",
+    "Request Headers",
+    "Response File Name",
+    "Save Response",
+    "Timeout",
+    "URL"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "name": "Clock",
+  "type": "Clock",
+  "properties": [
+    "Timer Always Fires",
+    "Timer Enabled",
+    "Timer Interval"
+  ]
+}

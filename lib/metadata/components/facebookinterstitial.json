@@ -1,0 +1,8 @@
+{
+  "name": "Facebook Interstitial",
+  "type": "FacebookInterstitial",
+  "properties": [
+    "Interstitial Commission",
+    "Placement ID"
+  ]
+}

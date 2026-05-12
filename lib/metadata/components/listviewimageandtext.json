@@ -1,0 +1,29 @@
+{
+  "name": "List View Image and Text",
+  "type": "ListViewImageandText",
+  "properties": [
+    "Background Color",
+    "Divider Color",
+    "Height",
+    "Height Percent",
+    "Image Side",
+    "Item Size",
+    "Subtitle Bold",
+    "Subtitle Color",
+    "Subtitle Font Typeface",
+    "Subtitle Font Typeface Import",
+    "Subtitle HTML",
+    "Subtitle Italic",
+    "Subtitle Text Size",
+    "Title Bold",
+    "Title Color",
+    "Title Font Typeface",
+    "Title Font Typeface Import",
+    "Title HTML",
+    "Title Italic",
+    "Title Text Size",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

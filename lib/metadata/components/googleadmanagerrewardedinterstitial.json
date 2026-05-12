@@ -1,0 +1,9 @@
+{
+  "name": "Google Ad Manager Rewarded Interstitial",
+  "type": "GoogleAdManagerRewardedInterstitial",
+  "properties": [
+    "Ad Unit Id",
+    "Test Mode",
+    "eCPM Floor"
+  ]
+}

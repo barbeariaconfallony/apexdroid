@@ -1,0 +1,11 @@
+{
+  "name": "Audio",
+  "type": "Audio",
+  "properties": [
+    "Get Audio Mode",
+    "Show UI",
+    "Volume Alarm",
+    "Volume Music",
+    "Volume Ring"
+  ]
+}

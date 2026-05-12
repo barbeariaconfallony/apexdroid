@@ -1,0 +1,9 @@
+{
+  "name": "Shortcut Badge",
+  "type": "ShortcutBadge",
+  "properties": [
+    "Apply Count",
+    "Count",
+    "Remove Count"
+  ]
+}

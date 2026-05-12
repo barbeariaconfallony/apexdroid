@@ -1,0 +1,11 @@
+{
+  "name": "Shell",
+  "type": "Shell",
+  "properties": [
+    "Execute",
+    "Got Output",
+    "Has Super User Apk Installed",
+    "Is Rooted",
+    "Is System User"
+  ]
+}

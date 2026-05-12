@@ -1,0 +1,17 @@
+{
+  "name": "Ball",
+  "type": "Ball",
+  "properties": [
+    "Enabled",
+    "Heading",
+    "Interval",
+    "Origin At Center",
+    "Paint Color",
+    "Radius",
+    "Speed",
+    "Visible",
+    "X",
+    "Y",
+    "Z"
+  ]
+}

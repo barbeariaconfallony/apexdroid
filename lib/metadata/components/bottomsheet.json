@@ -1,0 +1,8 @@
+{
+  "name": "Bottom Sheet",
+  "type": "BottomSheet",
+  "properties": [
+    "Dim Background",
+    "Show Status Bar"
+  ]
+}

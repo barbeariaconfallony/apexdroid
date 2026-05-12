@@ -1,0 +1,28 @@
+{
+  "name": "Spotlight",
+  "type": "Spotlight",
+  "properties": [
+    "Circle Padding",
+    "Component",
+    "Dismiss On Back Press",
+    "Dismiss On Touch",
+    "Enable Dismiss After Shown",
+    "Enable Reveal Animation",
+    "Fadein Text Duration",
+    "Font Heading Typeface",
+    "Font Heading Typeface Import",
+    "Font Subheading Typeface",
+    "Font Subheading Typeface Import",
+    "Heading Text",
+    "Heading Text Color",
+    "Heading Text Size",
+    "Intro Animation Duration",
+    "Line And Arc Color",
+    "Line Animation Duration",
+    "Mask Color",
+    "Show Target Arc",
+    "Subheading Text",
+    "Subheading Text Color",
+    "Subheading Text Size"
+  ]
+}

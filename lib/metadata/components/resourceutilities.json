@@ -1,0 +1,8 @@
+{
+  "name": "Resource Utilities",
+  "type": "ResourceUtilities",
+  "properties": [
+    "Resource File From Asset",
+    "Resource File From Path"
+  ]
+}

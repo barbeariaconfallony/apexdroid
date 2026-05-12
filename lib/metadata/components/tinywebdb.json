@@ -1,0 +1,7 @@
+{
+  "name": "Tiny Web DB",
+  "type": "TinyWebDB",
+  "properties": [
+    "Service URL"
+  ]
+}

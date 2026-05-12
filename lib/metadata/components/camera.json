@@ -1,0 +1,7 @@
+{
+  "name": "Camera",
+  "type": "Camera",
+  "properties": [
+    "Use Front"
+  ]
+}

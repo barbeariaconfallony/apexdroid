@@ -1,0 +1,13 @@
+{
+  "name": "Supabase Authentication",
+  "type": "SupabaseAuthentication",
+  "properties": [
+    "Access Token",
+    "Is Signed In",
+    "Project URL",
+    "Publishable API Key",
+    "Refresh Token",
+    "User Email",
+    "User ID"
+  ]
+}

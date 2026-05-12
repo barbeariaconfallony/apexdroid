@@ -1,0 +1,14 @@
+{
+  "name": "Arduino",
+  "type": "Arduino",
+  "properties": [
+    "After Read",
+    "Baud Rate",
+    "Close",
+    "Initialize",
+    "Is Opened",
+    "Open",
+    "Read",
+    "Write"
+  ]
+}

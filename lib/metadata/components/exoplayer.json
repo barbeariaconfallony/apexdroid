@@ -1,0 +1,11 @@
+{
+  "name": "ExoPlayer",
+  "type": "ExoPlayer",
+  "properties": [
+    "Current Position",
+    "Duration",
+    "Loop",
+    "Source",
+    "Volume"
+  ]
+}
