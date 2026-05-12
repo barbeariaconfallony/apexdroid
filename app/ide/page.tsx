@@ -23,7 +23,7 @@ import { AIScreenGenerator } from "@/components/ide/ai-screen-generator"
 import { BuildMonitor } from "@/components/ide/build-monitor"
 import { AssetsModal } from "@/components/ide/assets-modal"
 import { useIDEStore } from "@/lib/ide-store"
-import { setupGlobalAutoSync } from "@/lib/hooks/use-github-sync"
+import { syncService } from "@/lib/sync/sync-service"
 
 export default function IDEPage() {
   const [buildModalOpen, setBuildModalOpen] = useState(false)
@@ -49,11 +49,16 @@ export default function IDEPage() {
   useEffect(() => {
     setMounted(true)
     
-    // Configurar auto-sync global com GitHub
-    const unsubscribeSync = setupGlobalAutoSync()
+    // Inicializar serviço de sincronização automática
+    syncService.initialize({
+      debounceMs: 3000,
+      maxRetries: 3,
+      enableRealtime: false, // Habilitar quando Railway estiver configurado
+      // railwayUrl: process.env.NEXT_PUBLIC_RAILWAY_WS_URL
+    })
     
     return () => {
-      if (unsubscribeSync) unsubscribeSync()
+      syncService.disconnect()
     }
   }, [])
 

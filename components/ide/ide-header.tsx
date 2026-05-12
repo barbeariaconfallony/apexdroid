@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { useIDEStore } from "@/lib/ide-store"
 import { cn } from "@/lib/utils"
 import { useProjectManager } from "@/lib/hooks/use-project-manager"
+import { syncService } from "@/lib/sync/sync-service"
 import { useToast } from "@/components/ui/use-toast"
 import {
   DropdownMenu,
@@ -223,27 +224,45 @@ export function IDEHeader({
 
         {/* Right Section - Compact Actions */}
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* Sync Status - Icon only with tooltip */}
+          {/* Sync Status - Clicável para forçar sync */}
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className={cn(
-                "flex items-center justify-center w-7 h-7 rounded-md border cursor-default transition-colors",
-                syncStatus === "synced" && "bg-success/10 border-success/30",
-                syncStatus === "syncing" && "bg-primary/10 border-primary/30",
-                syncStatus === "error" && "bg-destructive/10 border-destructive/30",
-                syncStatus === "offline" && "bg-secondary/50 border-border/50"
-              )}>
+              <button 
+                onClick={() => {
+                  if (syncStatus === "error" || syncStatus === "synced") {
+                    syncService.forceSync()
+                  }
+                }}
+                disabled={syncStatus === "syncing" || syncStatus === "offline"}
+                className={cn(
+                  "flex items-center justify-center w-7 h-7 rounded-md border transition-all",
+                  syncStatus === "synced" && "bg-success/10 border-success/30 hover:bg-success/20 cursor-pointer",
+                  syncStatus === "syncing" && "bg-primary/10 border-primary/30 cursor-wait",
+                  syncStatus === "error" && "bg-destructive/10 border-destructive/30 hover:bg-destructive/20 cursor-pointer",
+                  syncStatus === "offline" && "bg-secondary/50 border-border/50 cursor-not-allowed opacity-50"
+                )}
+              >
                 {syncStatus === "synced" && <Wifi className="w-3.5 h-3.5 text-success" />}
                 {syncStatus === "syncing" && <RefreshCw className="w-3.5 h-3.5 text-primary animate-spin" />}
                 {syncStatus === "error" && <AlertCircle className="w-3.5 h-3.5 text-destructive" />}
                 {syncStatus === "offline" && <CloudOff className="w-3.5 h-3.5 text-muted-foreground" />}
-              </div>
+              </button>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs">
-              {syncStatus === "synced" && "Auto-sync ativo - Sincronizado com GitHub"}
-              {syncStatus === "syncing" && "Sincronizando com GitHub..."}
-              {syncStatus === "error" && "Erro ao sincronizar - Clique para tentar novamente"}
-              {syncStatus === "offline" && "GitHub nao conectado"}
+            <TooltipContent side="bottom" className="text-xs max-w-[200px]">
+              {syncStatus === "synced" && (
+                <div className="space-y-1">
+                  <div className="font-medium text-success">Auto-sync Ativo</div>
+                  <div className="text-muted-foreground">Clique para forçar sincronização</div>
+                </div>
+              )}
+              {syncStatus === "syncing" && "Sincronizando alterações..."}
+              {syncStatus === "error" && (
+                <div className="space-y-1">
+                  <div className="font-medium text-destructive">Erro na sincronização</div>
+                  <div className="text-muted-foreground">Clique para tentar novamente</div>
+                </div>
+              )}
+              {syncStatus === "offline" && "Conecte ao GitHub para sincronizar"}
             </TooltipContent>
           </Tooltip>
 
