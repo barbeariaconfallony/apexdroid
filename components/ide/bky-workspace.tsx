@@ -69,21 +69,22 @@ export function BkyWorkspace() {
           if (saveTimeout.current) clearTimeout(saveTimeout.current)
           
           saveTimeout.current = setTimeout(() => {
-            const xml = Blockly.Xml.workspaceToDom(ws)
-            const xmlText = Blockly.Xml.domToText(xml)
-            setCurrentBkyContent(xmlText)
-          }, 2000) // Salva após 2 segundos de inatividade
+            // Blockly 12: Usar serialization API em vez de Xml
+            const state = Blockly.serialization.workspaces.save(ws)
+            setCurrentBkyContent(JSON.stringify(state))
+          }, 2000) // Salva apos 2 segundos de inatividade
         }
       })
 
       setWorkspace(ws)
       setLoading(false)
 
-      // Carregar conteúdo BKY inicial
+      // Carregar conteudo BKY inicial
       if (currentBkyContent) {
         try {
-          const xml = Blockly.Xml.textToDom(currentBkyContent)
-          Blockly.Xml.domToWorkspace(xml, ws)
+          // Blockly 12: Usar serialization API
+          const state = JSON.parse(currentBkyContent)
+          Blockly.serialization.workspaces.load(state, ws)
         } catch (e) {
           console.error("Erro ao restaurar blocos:", e)
         }
@@ -107,83 +108,87 @@ export function BkyWorkspace() {
   }, [currentProject, workspace])
 
   return (
-    <div className="flex-1 flex flex-col bg-[#0a0a0a] relative overflow-hidden">
-      {/* Indicador de Sincronia */}
-      <div className="absolute top-4 left-4 z-20 flex items-center gap-3">
-        <div className="bg-black/60 backdrop-blur-md px-4 py-2 rounded-xl flex items-center gap-3 border border-white/10 shadow-2xl">
-          <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
-            <Puzzle className="w-4 h-4 text-blue-500" />
-          </div>
-          <div>
-            <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest">Logic Engine</p>
-            <p className="text-xs font-semibold text-white/90">SCM Synchronized</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Controles de Zoom */}
-      <div className="absolute top-4 right-4 z-20 flex flex-col gap-2">
-        <div className="bg-black/60 backdrop-blur-md p-1 rounded-xl border border-white/10 shadow-2xl flex flex-col gap-1">
-          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => workspace?.zoom(0, 0, 1.2)}>
-            <ZoomIn className="w-4 h-4" />
+    <div className="absolute inset-0 flex flex-col bg-[#0a0a0a] overflow-hidden">
+      {/* Controles de Zoom - Compacto */}
+      <div className="absolute top-3 right-3 z-20 flex gap-1">
+        <div className="bg-black/70 backdrop-blur-md p-1 rounded-lg border border-white/10 flex gap-1">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => workspace?.zoom(0, 0, 1.2)}>
+            <ZoomIn className="w-3.5 h-3.5" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => workspace?.zoom(0, 0, 0.8)}>
-            <ZoomOut className="w-4 h-4" />
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => workspace?.zoom(0, 0, 0.8)}>
+            <ZoomOut className="w-3.5 h-3.5" />
           </Button>
-          <div className="h-px bg-white/10 mx-2" />
-          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => workspace?.zoom(0, 0, 1)}>
-            <RefreshCw className="w-4 h-4" />
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => workspace?.zoom(0, 0, 1)}>
+            <RefreshCw className="w-3.5 h-3.5" />
           </Button>
         </div>
       </div>
 
       {loading && (
-        <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-4">
-          <div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
-          <p className="text-sm font-medium">Otimizando motor de blocos...</p>
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground gap-4 bg-[#0a0a0a] z-30">
+          <div className="w-12 h-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+          <p className="text-sm font-medium">Carregando blocos...</p>
         </div>
       )}
 
-      <div ref={blocklyDiv} className="flex-1 w-full h-full" />
-      
-      {/* Status Bar */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
-         <div className="bg-black/60 backdrop-blur-md px-5 py-2 rounded-full border border-white/10 shadow-2xl flex items-center gap-3">
-            <div className="flex items-center gap-1.5">
-               <div className="w-2 h-2 rounded-full bg-green-500" />
-               <span className="text-[10px] text-white/70 font-bold uppercase tracking-widest">Editor Otimizado</span>
-            </div>
-            <div className="w-px h-3 bg-white/20" />
-            <div className="flex items-center gap-1.5">
-               <Layers className="w-3 h-3 text-blue-500" />
-               <span className="text-[10px] text-white/70 font-bold uppercase tracking-widest">Nativo NPM</span>
-            </div>
-         </div>
-      </div>
+      {/* Blockly Container - Full Space */}
+      <div ref={blocklyDiv} className="absolute inset-0 w-full h-full" />
 
       <style jsx global>{`
+        /* Toolbox estilo Kodular */
         .blocklyToolboxDiv {
           background-color: #1a1a1a !important;
-          border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
-          padding: 8px !important;
+          border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+          padding: 4px !important;
+          width: 200px !important;
         }
         .blocklyTreeLabel {
-          font-size: 11px !important;
-          text-transform: uppercase !important;
-          letter-spacing: 0.05em !important;
+          font-size: 12px !important;
+          font-weight: 500 !important;
+          letter-spacing: 0.02em !important;
         }
         .blocklyTreeRow {
-          margin: 2px 0 !important;
-          border-radius: 6px !important;
+          margin: 1px 0 !important;
+          border-radius: 4px !important;
+          padding: 4px 8px !important;
+          height: auto !important;
+          line-height: 1.4 !important;
+        }
+        .blocklyTreeRow:hover {
+          background-color: rgba(255, 255, 255, 0.05) !important;
         }
         .blocklyTreeSelected {
-          background-color: rgba(0, 112, 243, 0.2) !important;
+          background-color: rgba(0, 112, 243, 0.15) !important;
+        }
+        .blocklyTreeSeparator {
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+          margin: 8px 0 !important;
         }
         .blocklyFlyoutBackground {
-          fill: #1a1a1a !important;
+          fill: #141414 !important;
         }
-        .blocklyBlockCanvas {
-          transition: transform 0.1s ease-out;
+        .blocklyFlyout {
+          border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+        }
+        .blocklyMainBackground {
+          stroke: none !important;
+        }
+        .blocklyTrash {
+          opacity: 0.6;
+        }
+        .blocklyTrash:hover {
+          opacity: 1;
+        }
+        /* Scrollbar estilizada */
+        .blocklyScrollbarVertical, .blocklyScrollbarHorizontal {
+          opacity: 0.3 !important;
+        }
+        .blocklyScrollbarVertical:hover, .blocklyScrollbarHorizontal:hover {
+          opacity: 0.6 !important;
+        }
+        /* Workspace grid */
+        .blocklyMainWorkspaceScrollbar {
+          display: block !important;
         }
       `}</style>
     </div>

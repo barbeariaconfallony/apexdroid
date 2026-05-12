@@ -86,12 +86,14 @@ export function BlocksEditor({ isOpen, onClose }: BlocksEditorProps) {
           </div>
         </div>
         
-        {/* Main Content - Unificado e Leve */}
-        <div className="flex-1 relative flex overflow-hidden">
+        {/* Main Content - Full Space para Blockly */}
+        <div className="flex-1 relative overflow-hidden">
           {viewMode === "blocks" ? (
-            <BkyWorkspace />
+            <div className="absolute inset-0">
+              <BkyWorkspace />
+            </div>
           ) : (
-            <div className="flex-1 flex flex-col bg-[#0a0a0a]">
+            <div className="absolute inset-0 flex flex-col bg-[#0a0a0a]">
               <div className="flex items-center justify-between px-6 py-3 border-b border-white/5 bg-secondary/20">
                 <div className="flex items-center gap-2">
                   <Code2 className="w-4 h-4 text-blue-400" />
@@ -101,12 +103,12 @@ export function BlocksEditor({ isOpen, onClose }: BlocksEditorProps) {
                 </div>
                 <Button variant="ghost" size="sm" className="h-8 text-[10px] gap-2 font-bold uppercase tracking-widest hover:bg-white/10" onClick={copyCode}>
                   <Copy className="w-3.5 h-3.5" />
-                  Copiar Código
+                  Copiar Codigo
                 </Button>
               </div>
               <div className="flex-1 p-6 overflow-auto">
                 <pre className="text-xs font-mono text-muted-foreground leading-relaxed">
-                  {`// Código gerado automaticamente para ${viewMode.toUpperCase()}\n// Sincronizado com os blocos visuais\n\nclass ${currentScreenName || "Screen1"} {\n    // Lógica em processamento...\n}`}
+                  {`// Codigo gerado automaticamente para ${viewMode.toUpperCase()}\n// Sincronizado com os blocos visuais\n\nclass ${currentScreenName || "Screen1"} {\n    // Logica em processamento...\n}`}
                 </pre>
               </div>
             </div>
