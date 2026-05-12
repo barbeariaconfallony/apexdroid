@@ -1,0 +1,10 @@
+{
+  "name": "File",
+  "type": "File",
+  "properties": [
+    "Default Scope",
+    "Read Permission",
+    "Scope",
+    "Write Permission"
+  ]
+}

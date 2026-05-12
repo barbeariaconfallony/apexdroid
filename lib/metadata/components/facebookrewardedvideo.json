@@ -1,0 +1,8 @@
+{
+  "name": "Facebook Rewarded Video",
+  "type": "FacebookRewardedVideo",
+  "properties": [
+    "Placement ID",
+    "Rewarded Video Commission"
+  ]
+}

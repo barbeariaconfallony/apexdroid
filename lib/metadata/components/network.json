@@ -1,0 +1,14 @@
+{
+  "name": "Network",
+  "type": "Network",
+  "properties": [
+    "Is Connected",
+    "Is Fast Connection",
+    "Is Mobile Connection",
+    "Is Roaming",
+    "Is Wifi Connection",
+    "On Connect",
+    "On Disconnect",
+    "Type"
+  ]
+}

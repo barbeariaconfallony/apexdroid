@@ -1,0 +1,27 @@
+{
+  "name": "Device Utilities",
+  "type": "DeviceUtilities",
+  "properties": [
+    "API Version",
+    "Android Version",
+    "Board",
+    "Bootloader Version",
+    "Brand",
+    "Build Number",
+    "Country Code",
+    "Device Id",
+    "Device Name",
+    "Fingerprint",
+    "Hardware",
+    "ID",
+    "Language Code",
+    "Manufacturer",
+    "Model Name",
+    "Product",
+    "Radio Version",
+    "Serial",
+    "Show Success Toast",
+    "Tags",
+    "Type"
+  ]
+}

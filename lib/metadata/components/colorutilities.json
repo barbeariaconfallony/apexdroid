@@ -1,0 +1,11 @@
+{
+  "name": "Color Utilities",
+  "type": "ColorUtilities",
+  "properties": [
+    "Convert Hex To Int",
+    "Convert Int To Hex",
+    "Get Luminance",
+    "Is Dark Color",
+    "Set Alpha Value"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "Supabase Database",
+  "type": "SupabaseDatabase",
+  "properties": [
+    "Access Token",
+    "Default Schema",
+    "Project URL",
+    "Publishable API Key"
+  ]
+}

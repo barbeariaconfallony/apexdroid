@@ -1,0 +1,9 @@
+{
+  "name": "Google Ad Manager Rewarded",
+  "type": "GoogleAdManagerRewarded",
+  "properties": [
+    "Ad Unit Id",
+    "Test Mode",
+    "eCPM Floor"
+  ]
+}

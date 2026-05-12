@@ -1,0 +1,30 @@
+{
+  "name": "Map",
+  "type": "Map",
+  "properties": [
+    "Bounding Box",
+    "Center From String",
+    "Enable Pan",
+    "Enable Rotation",
+    "Enable Zoom",
+    "Features",
+    "Height",
+    "Height Percent",
+    "Latitude",
+    "Location Sensor",
+    "Longitude",
+    "Map Type",
+    "Rotation",
+    "Scale Units",
+    "Show Compass",
+    "Show Scale",
+    "Show User",
+    "Show Zoom",
+    "User Latitude",
+    "User Longitude",
+    "Visible",
+    "Width",
+    "Width Percent",
+    "Zoom Level"
+  ]
+}

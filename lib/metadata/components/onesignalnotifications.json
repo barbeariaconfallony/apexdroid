@@ -1,0 +1,7 @@
+{
+  "name": "OneSignal Notifications",
+  "type": "OneSignalNotifications",
+  "properties": [
+    "Can Request Permission"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "Texting",
+  "type": "Texting",
+  "properties": [
+    "Google Voice Enabled",
+    "Message",
+    "Phone Number",
+    "Receiving Enabled"
+  ]
+}

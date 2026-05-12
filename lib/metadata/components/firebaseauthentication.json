@@ -1,0 +1,31 @@
+{
+  "name": "Firebase Authentication",
+  "type": "FirebaseAuthentication",
+  "properties": [
+    "Current User Failed",
+    "Current User Success",
+    "Email Password Login",
+    "Email Password Sign Up",
+    "Email Verification Sent",
+    "Get Current User",
+    "Get Id Token",
+    "Google Sign In",
+    "Got Id Token",
+    "Is Signed In",
+    "Login Failed",
+    "Login Success",
+    "Logout",
+    "Phone Number Sign In",
+    "Reset Password Email Done",
+    "Send Reset Password Email",
+    "Sign Up Failed",
+    "Sign Up Success",
+    "Update Email",
+    "Update Phone Number",
+    "Update Profile",
+    "User Update Failed",
+    "User Update Success",
+    "Verify Email",
+    "Verify Phone Code"
+  ]
+}

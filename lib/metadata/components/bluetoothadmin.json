@@ -1,0 +1,7 @@
+{
+  "name": "Bluetooth Admin",
+  "type": "BluetoothAdmin",
+  "properties": [
+    "Use Codes"
+  ]
+}

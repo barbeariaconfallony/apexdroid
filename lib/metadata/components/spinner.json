@@ -1,0 +1,28 @@
+{
+  "name": "Spinner",
+  "type": "Spinner",
+  "properties": [
+    "Elements",
+    "Elements From String",
+    "Font Bold",
+    "Font Italic",
+    "Font Size",
+    "Font Typeface",
+    "Font Typeface Import",
+    "Height",
+    "Height Percent",
+    "Item Background Color",
+    "Item Text Color",
+    "Prompt",
+    "Prompt Item Color",
+    "Selection",
+    "Selection Index",
+    "Spinner Color",
+    "Spinner Text Size",
+    "Text Alignment",
+    "Use Prompt",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

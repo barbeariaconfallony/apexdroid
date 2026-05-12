@@ -1,0 +1,10 @@
+{
+  "name": "Sound Sensor",
+  "type": "SoundSensor",
+  "properties": [
+    "Amplitude",
+    "Listen",
+    "Max Sound Level",
+    "Sound Level"
+  ]
+}

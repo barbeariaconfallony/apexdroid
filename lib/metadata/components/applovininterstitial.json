@@ -1,0 +1,9 @@
+{
+  "name": "AppLovin Interstitial",
+  "type": "AppLovinInterstitial",
+  "properties": [
+    "SDK Key",
+    "Test Mode",
+    "User Consent"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "Google AdMob App Open",
+  "type": "GoogleAdMobAppOpen",
+  "properties": [
+    "Ad Enabled",
+    "Ad Unit ID",
+    "Auto Load On Initialize",
+    "Is Ad Available",
+    "Test Mode"
+  ]
+}

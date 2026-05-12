@@ -1,0 +1,13 @@
+{
+  "name": "QR Code",
+  "type": "QRCode",
+  "properties": [
+    "Background Color",
+    "Charset",
+    "Format",
+    "Front Color",
+    "Margin",
+    "Size",
+    "Text"
+  ]
+}

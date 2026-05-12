@@ -1,0 +1,22 @@
+{
+  "name": "Radio Button",
+  "type": "RadioButton",
+  "properties": [
+    "Checked",
+    "Enabled",
+    "Font Bold",
+    "Font Italic",
+    "Font Size",
+    "Font Typeface",
+    "Font Typeface Import",
+    "Height",
+    "Height Percent",
+    "Radio Button Color",
+    "Text",
+    "Text Color",
+    "Visible",
+    "Width",
+    "Width Percent",
+    "is Checked"
+  ]
+}

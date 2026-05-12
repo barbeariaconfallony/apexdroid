@@ -1,0 +1,22 @@
+{
+  "name": "Grid View",
+  "type": "GridView",
+  "properties": [
+    "Background Color",
+    "Columns",
+    "Elements",
+    "Elements From String",
+    "Font Size",
+    "Height",
+    "Height Percent",
+    "Padding",
+    "Selection",
+    "Stretch Enabled",
+    "Text Color",
+    "Thumbnail Height in DIP",
+    "Thumbnail Width in DIP",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

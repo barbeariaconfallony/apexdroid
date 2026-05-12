@@ -1,0 +1,9 @@
+{
+  "name": "AdColony Interstitial",
+  "type": "AdColonyInterstitial",
+  "properties": [
+    "App ID",
+    "User Consent",
+    "Zone ID"
+  ]
+}

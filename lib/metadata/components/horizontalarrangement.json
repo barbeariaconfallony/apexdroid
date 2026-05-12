@@ -1,0 +1,19 @@
+{
+  "name": "Horizontal Arrangement",
+  "type": "HorizontalArrangement",
+  "properties": [
+    "Align Horizontal",
+    "Align Vertical",
+    "Background Color",
+    "Clickable",
+    "Height",
+    "Height Percent",
+    "Image",
+    "Is Card",
+    "Scrollbar",
+    "Use Round Card",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

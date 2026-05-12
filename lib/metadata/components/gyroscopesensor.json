@@ -1,0 +1,11 @@
+{
+  "name": "Gyroscope Sensor",
+  "type": "GyroscopeSensor",
+  "properties": [
+    "Available",
+    "Enabled",
+    "X Angular Velocity",
+    "Y Angular Velocity",
+    "Z Angular Velocity"
+  ]
+}

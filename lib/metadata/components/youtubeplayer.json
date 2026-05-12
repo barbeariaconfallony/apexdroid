@@ -1,0 +1,28 @@
+{
+  "name": "Youtube Player",
+  "type": "YoutubePlayer",
+  "properties": [
+    "Custom Video Title",
+    "Enable Live Video UI",
+    "Get Current Second",
+    "Get Video Duration",
+    "Height",
+    "Height Percent",
+    "Is Fullscreen",
+    "Show Buffering Progress",
+    "Show Current Time",
+    "Show Duration",
+    "Show Fullscreen Button",
+    "Show Play Pause Button",
+    "Show SeekBar",
+    "Show UI",
+    "Show Video Title",
+    "Show YouTube Button",
+    "Start Second",
+    "Test Video Id",
+    "Visible",
+    "Volume",
+    "Width",
+    "Width Percent"
+  ]
+}

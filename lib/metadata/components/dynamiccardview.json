@@ -1,0 +1,17 @@
+{
+  "name": "Dynamic Card View",
+  "type": "DynamicCardView",
+  "properties": [
+    "Background Color",
+    "Content Padding Bottom",
+    "Content Padding Left",
+    "Content Padding Right",
+    "Content Padding Top",
+    "Corner Radius",
+    "Elevation",
+    "Full Clickable",
+    "Stroke Color",
+    "Stroke Width",
+    "Touch Color"
+  ]
+}

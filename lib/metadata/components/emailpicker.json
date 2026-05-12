@@ -1,0 +1,30 @@
+{
+  "name": "Email Picker",
+  "type": "EmailPicker",
+  "properties": [
+    "Background Color",
+    "Current Position",
+    "Cursor Color",
+    "Cursor Visible",
+    "Enable Copy & Paste",
+    "Enabled",
+    "Font Bold",
+    "Font Italic",
+    "Font Size",
+    "Font Typeface",
+    "Font Typeface Import",
+    "Height",
+    "Height Percent",
+    "Hint",
+    "Hint Color",
+    "Line Color",
+    "Rotation Angle",
+    "Text",
+    "Text Alignment",
+    "Text Color",
+    "Text Length",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

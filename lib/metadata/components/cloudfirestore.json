@@ -1,0 +1,7 @@
+{
+  "name": "Cloud Firestore",
+  "type": "CloudFirestore",
+  "properties": [
+    "Project Path"
+  ]
+}

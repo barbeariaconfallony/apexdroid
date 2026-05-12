@@ -1,0 +1,8 @@
+{
+  "name": "Notification",
+  "type": "Notification",
+  "properties": [
+    "Priority",
+    "Visibility"
+  ]
+}

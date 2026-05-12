@@ -1,0 +1,13 @@
+{
+  "name": "Orientation Sensor",
+  "type": "OrientationSensor",
+  "properties": [
+    "Angle",
+    "Available",
+    "Azimuth",
+    "Enabled",
+    "Magnitude",
+    "Pitch",
+    "Roll"
+  ]
+}

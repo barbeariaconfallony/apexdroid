@@ -1,0 +1,10 @@
+{
+  "name": "Hygrometer",
+  "type": "Hygrometer",
+  "properties": [
+    "Available",
+    "Enabled",
+    "Humidity",
+    "Refresh Time"
+  ]
+}

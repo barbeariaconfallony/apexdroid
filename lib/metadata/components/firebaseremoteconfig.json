@@ -1,0 +1,7 @@
+{
+  "name": "Firebase Remote Config",
+  "type": "FirebaseRemoteConfig",
+  "properties": [
+    "Cache Expiration"
+  ]
+}

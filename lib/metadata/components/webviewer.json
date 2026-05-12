@@ -1,0 +1,28 @@
+{
+  "name": "Web Viewer",
+  "type": "WebViewer",
+  "properties": [
+    "Current Page Title",
+    "Current URL",
+    "Desktop Mode",
+    "Enable JavaScript",
+    "Follow Links",
+    "Height",
+    "Height Percent",
+    "Home Url",
+    "Ignore SSL Errors",
+    "Load Images",
+    "Prompt for Permission",
+    "Scrollbar",
+    "Use External Browser",
+    "User Agent",
+    "Uses Location",
+    "Visible",
+    "Web View String",
+    "Width",
+    "Width Percent",
+    "Zoom Display",
+    "Zoom Enabled",
+    "Zoom Percent"
+  ]
+}

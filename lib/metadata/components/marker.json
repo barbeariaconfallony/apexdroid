@@ -1,0 +1,25 @@
+{
+  "name": "Marker",
+  "type": "Marker",
+  "properties": [
+    "Anchor Horizontal",
+    "Anchor Vertical",
+    "Draggable",
+    "Enable Infobox",
+    "Fill Color",
+    "Fill Opacity",
+    "Height",
+    "Height Percent",
+    "Image Asset",
+    "Latitude",
+    "Longitude",
+    "Stroke Color",
+    "Stroke Opacity",
+    "Stroke Width",
+    "Title",
+    "Type",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

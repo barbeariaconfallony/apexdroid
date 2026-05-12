@@ -1,0 +1,13 @@
+{
+  "name": "OCR",
+  "type": "OCR",
+  "properties": [
+    "API Key",
+    "Create Searchable PDF",
+    "Language",
+    "Overlaid",
+    "Return Only Message",
+    "Return Only PDF Link",
+    "Test Image URL"
+  ]
+}

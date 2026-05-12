@@ -1,0 +1,14 @@
+{
+  "name": "Accelerometer Sensor",
+  "type": "AccelerometerSensor",
+  "properties": [
+    "Available",
+    "Enabled",
+    "Legacy Mode",
+    "Minimum Interval (ms)",
+    "Sensitivity",
+    "X Accel",
+    "Y Accel",
+    "Z Accel"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "Custom Progress",
+  "type": "CustomProgress",
+  "properties": [
+    "Animation Style",
+    "Background Color",
+    "Color",
+    "Height",
+    "Height Percent",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

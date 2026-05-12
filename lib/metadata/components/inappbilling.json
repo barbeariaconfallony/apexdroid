@@ -1,0 +1,13 @@
+{
+  "name": "In App Billing",
+  "type": "InAppBilling",
+  "properties": [
+    "Is IAB Service Available",
+    "Is One Time Purchase Available",
+    "Is Subscription Update Supported",
+    "Is Subscriptions Supported",
+    "Ready To Purchase",
+    "Suppress Toast",
+    "Test Mode"
+  ]
+}

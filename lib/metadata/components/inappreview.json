@@ -1,0 +1,8 @@
+{
+  "name": "InApp Review",
+  "type": "InAppReview",
+  "properties": [
+    "Is Ready",
+    "Test Mode"
+  ]
+}

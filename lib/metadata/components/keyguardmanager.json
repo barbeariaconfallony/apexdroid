@@ -1,0 +1,11 @@
+{
+  "name": "Keyguard Manager",
+  "type": "KeyguardManager",
+  "properties": [
+    "Title",
+    "is Device Locked",
+    "is Device Secure",
+    "is Keyguard Locked",
+    "is Keyguard Secure"
+  ]
+}
