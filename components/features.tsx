@@ -18,39 +18,45 @@ import { cn } from "@/lib/utils"
 const features = [
   {
     icon: Layout,
-    title: "Interface Visual",
-    description: "Arraste e solte componentes nativos Android diretamente no canvas com preview em tempo real.",
-    className: "md:col-span-2",
+    title: "Interface Drag & Drop",
+    description: "Paleta completa de componentes nativos. Arraste botoes, campos de texto e layouts para criar interfaces incriveis com visualizacao em tempo real.",
+    image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=800",
+    className: "md:col-span-2 md:row-span-2",
     highlight: true
   },
   {
     icon: Sparkles,
-    title: "IA Assistente",
-    description: "Gere telas, corrija bugs e otimize codigo com comandos em linguagem natural.",
+    title: "APEX DROID AI",
+    description: "Inteligencia artificial integrada que entende seus comandos. Peca para criar telas, ajustar estilos ou explicar logicas complexas.",
+    image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=800",
     className: "md:col-span-1"
   },
   {
     icon: Blocks,
     title: "Logica por Blocos",
-    description: "Programe visualmente com blocos conectaveis, sem escrever codigo.",
+    description: "Sistema de programacao visual poderoso. Visualize o fluxo de eventos sem a complexidade de codigo puro.",
+    image: "https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&fit=crop&q=80&w=800",
     className: "md:col-span-1"
   },
   {
     icon: GitBranch,
-    title: "GitHub Integrado",
-    description: "Sincronize projetos, gerencie branches e faca commits direto da IDE.",
+    title: "Sincronizacao & GitHub",
+    description: "Conecte seus repositorios, gerencie branches e faca commits sem sair da IDE.",
+    image: "https://images.unsplash.com/photo-1618401471353-b98aadebc25b?auto=format&fit=crop&q=80&w=800",
     className: "md:col-span-1"
   },
   {
     icon: Package,
-    title: "Build APK",
-    description: "Compile na nuvem e baixe o APK pronto em segundos.",
+    title: "Build APK Instantaneo",
+    description: "Compilacao remota de alto desempenho. Gere seu APK pronto para instalacao em segundos.",
+    image: "https://images.unsplash.com/photo-1605379399642-870262d3d051?auto=format&fit=crop&q=80&w=800",
     className: "md:col-span-1"
   },
   {
     icon: FolderOpen,
-    title: "Gerenciador de Assets",
-    description: "Organize imagens, sons e fontes do seu app em um so lugar.",
+    title: "Gestao de Assets",
+    description: "Gerencie multiplas telas e organize seus arquivos de midia com um gerenciador integrado.",
+    image: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=800",
     className: "md:col-span-1"
   }
 ]
@@ -82,6 +88,7 @@ function FeatureCard({
   icon: Icon, 
   title, 
   description, 
+  image,
   className,
   highlight,
   index 
@@ -89,6 +96,7 @@ function FeatureCard({
   icon: typeof Layout
   title: string
   description: string
+  image: string
   className?: string
   highlight?: boolean
   index: number
@@ -112,36 +120,61 @@ function FeatureCard({
     return () => observer.disconnect()
   }, [])
 
+  const isLarge = highlight
+
   return (
     <div
       ref={cardRef}
       className={cn(
-        "opacity-0 group relative rounded-xl p-6 transition-all duration-300",
+        "opacity-0 group relative rounded-xl overflow-hidden transition-all duration-300",
         "bg-card/40 border border-border/50 backdrop-blur-sm",
         "hover:bg-card/60 hover:border-border hover:shadow-lg hover:shadow-primary/5",
-        "hover-glow-border",
+        "hover-glow-border flex flex-col",
         className
       )}
       style={{ animationDelay: `${index * 0.1}s` }}
     >
-      {highlight && (
-        <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
-      )}
-      
+      {/* Image Section */}
       <div className={cn(
-        "w-10 h-10 rounded-lg flex items-center justify-center mb-4 transition-colors duration-300",
-        "bg-primary/10 group-hover:bg-primary/20"
+        "relative overflow-hidden",
+        isLarge ? "h-48 md:h-64" : "h-32"
       )}>
-        <Icon className="w-5 h-5 text-primary" />
+        <img 
+          src={image} 
+          alt={title}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
+        
+        {/* Icon badge */}
+        <div className={cn(
+          "absolute bottom-3 left-4 w-10 h-10 rounded-lg flex items-center justify-center",
+          "bg-primary/90 backdrop-blur-sm shadow-lg"
+        )}>
+          <Icon className="w-5 h-5 text-primary-foreground" />
+        </div>
       </div>
-      
-      <h3 className="text-base font-semibold text-foreground mb-2">
-        {title}
-      </h3>
-      
-      <p className="text-sm text-muted-foreground leading-relaxed">
-        {description}
-      </p>
+
+      {/* Content Section */}
+      <div className="p-5 flex-1 flex flex-col">
+        {highlight && (
+          <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
+        )}
+        
+        <h3 className={cn(
+          "font-semibold text-foreground mb-2",
+          isLarge ? "text-lg" : "text-base"
+        )}>
+          {title}
+        </h3>
+        
+        <p className={cn(
+          "text-muted-foreground leading-relaxed",
+          isLarge ? "text-sm" : "text-xs"
+        )}>
+          {description}
+        </p>
+      </div>
     </div>
   )
 }
