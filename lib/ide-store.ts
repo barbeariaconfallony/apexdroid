@@ -65,11 +65,14 @@ interface IDEState {
   setShowProperties: (show: boolean) => void
   showWelcome: boolean
   setShowWelcome: (show: boolean) => void
-  appMode: "edit" | "run" | "blocks"
-  setAppMode: (mode: "edit" | "run" | "blocks") => void
+  appMode: "edit" | "run" | "blocks" | "code"
+  setAppMode: (mode: "edit" | "run" | "blocks" | "code") => void
   isSidebarCompact: boolean
   setIsSidebarCompact: (compact: boolean) => void
   toggleSidebar: () => void
+  isSidebarContentExpanded: boolean
+  setIsSidebarContentExpanded: (expanded: boolean) => void
+  toggleSidebarContent: () => void
 
   // Chat
   chatMessages: ChatMessage[]
@@ -202,8 +205,11 @@ export const useIDEStore = create<IDEState>()(
       appMode: "edit",
       setAppMode: (mode) => set({ appMode: mode }),
       isSidebarCompact: false,
-      setIsSidebarCompact: (compact) => set({ isSidebarCompact: compact }),
-      toggleSidebar: () => set((state) => ({ isSidebarCompact: !state.isSidebarCompact })),
+setIsSidebarCompact: (compact) => set({ isSidebarCompact: compact }),
+  toggleSidebar: () => set((state) => ({ isSidebarCompact: !state.isSidebarCompact })),
+  isSidebarContentExpanded: true,
+  setIsSidebarContentExpanded: (expanded) => set({ isSidebarContentExpanded: expanded }),
+  toggleSidebarContent: () => set((state) => ({ isSidebarContentExpanded: !state.isSidebarContentExpanded })),
 
       // Chat
       chatMessages: [

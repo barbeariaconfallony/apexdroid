@@ -178,7 +178,8 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
     screenFiles, setScreenFiles, currentScreenName, setCurrentScreenName,
     projectAssets, setProjectAssets, setCurrentBkyContent, 
     currentFile, setShowProperties, selectedComponent, setSelectedComponent,
-    isSidebarCompact, setIsSidebarCompact, toggleSidebar
+    isSidebarCompact, setIsSidebarCompact, toggleSidebar,
+    isSidebarContentExpanded, setIsSidebarContentExpanded, toggleSidebarContent
   } = useIDEStore()
   
   const { selectProject, createNewScreen, deleteScreen } = useProjectManager()
@@ -621,11 +622,24 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
 
   const activeTabMeta = tabs.find(t => t.id === activeTab)
 
+  // Função para abrir aba e expandir painel de conteúdo
+  const handleTabClick = (tabId: string) => {
+    setActiveTab(tabId)
+    // Sempre expandir o painel de conteúdo ao clicar em uma aba
+    if (!isSidebarContentExpanded) {
+      setIsSidebarContentExpanded(true)
+    }
+  }
+
   return (
     <aside 
       className={cn(
         "glass border-r border-white/5 flex shrink-0 h-full transition-all duration-300 ease-in-out relative z-40 shadow-lg",
-        isSidebarCompact ? "w-12" : "w-[280px] sm:w-[300px] md:w-[320px] lg:w-[340px]"
+        isSidebarCompact 
+          ? "w-12" 
+          : isSidebarContentExpanded 
+            ? "w-[280px] sm:w-[300px] md:w-[320px] lg:w-[340px]"
+            : "w-[64px]"
       )}
     >
       {/* Tab Rail - vertical with icons and labels */}
@@ -636,8 +650,8 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            title={isSidebarCompact ? tab.label : undefined}
+            onClick={() => handleTabClick(tab.id)}
+            title={isSidebarCompact || !isSidebarContentExpanded ? tab.label : undefined}
             className={cn(
               "flex items-center justify-center rounded-md transition-all relative group",
               isSidebarCompact 
@@ -663,42 +677,54 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
         {/* Spacer */}
         <div className="flex-1" />
         
-        {/* Toggle Sidebar Button */}
+        {/* Toggle Sidebar Button (compact mode) */}
         <button
           onClick={toggleSidebar}
           className={cn(
             "flex items-center justify-center rounded-md transition-all text-muted-foreground hover:text-foreground hover:bg-secondary/80",
             isSidebarCompact ? "w-9 h-9 mx-auto" : "w-full py-1.5 flex-col gap-0"
           )}
-          title={isSidebarCompact ? "Expandir" : undefined}
+          title={isSidebarCompact ? "Expandir" : "Recolher barra"}
         >
           {isSidebarCompact ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
           {!isSidebarCompact && (
-            <span className="text-[8px] font-medium mt-0.5">Recolher</span>
+            <span className="text-[8px] font-medium mt-0.5">Barra</span>
           )}
         </button>
       </div>
 
       {/* Content panel */}
-      {!isSidebarCompact && (
+      {!isSidebarCompact && isSidebarContentExpanded && (
         <div className="flex-1 overflow-hidden flex flex-col h-full animate-in slide-in-from-left-2 duration-200">
-        {/* Tab title with gradient */}
-        <div className="px-2 py-1.5 border-b border-border/50 shrink-0 flex items-center justify-between">
-          <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+        {/* Tab title with gradient and collapse button */}
+        <div className="px-2 py-1.5 border-b border-border/50 shrink-0 flex items-center justify-between gap-2">
+          <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground flex-1 truncate">
             {activeTabMeta?.title}
           </span>
-          {activeTab === "assets" && (
+          <div className="flex items-center gap-1">
+            {activeTab === "assets" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground shadow-sm hover:shadow-glow transition-all duration-300"
+                onClick={() => document.getElementById("asset-upload")?.click()}
+                disabled={!selectedRepo || saving}
+                title="Importar do computador"
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </Button>
+            )}
+            {/* Botão para recolher o painel de conteúdo */}
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground shadow-sm hover:shadow-glow transition-all duration-300"
-              onClick={() => document.getElementById("asset-upload")?.click()}
-              disabled={!selectedRepo || saving}
-              title="Importar do computador"
+              className="h-6 w-6 p-0 rounded text-muted-foreground hover:text-foreground hover:bg-secondary/80"
+              onClick={toggleSidebarContent}
+              title="Recolher painel"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <ChevronLeft className="w-3.5 h-3.5" />
             </Button>
-          )}
+          </div>
         </div>
         {/* Palette Tab - Complete Kodular Components */}
         {activeTab === "componentes" && (
