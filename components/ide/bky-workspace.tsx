@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react"
 import { useIDEStore } from "@/lib/ide-store"
-import { RefreshCw, ZoomIn, ZoomOut, Save, CheckCircle } from "lucide-react"
+import { RefreshCw, ZoomIn, ZoomOut, Save, CheckCircle, Cloud, CloudOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import * as Blockly from 'blockly'
 import { registerKodularBlocks, generateDynamicToolbox } from "@/lib/blocks-utils"
@@ -15,15 +15,86 @@ export function BkyWorkspace() {
     currentProject, 
     setCurrentBkyContent,
     currentScreenName,
-    screens
+    screens,
+    ghToken,
+    selectedRepo,
+    setSyncStatus
   } = useIDEStore()
   
   const blocklyDiv = useRef<HTMLDivElement>(null)
   const [loading, setLoading] = useState(true)
   const [workspace, setWorkspace] = useState<Blockly.WorkspaceSvg | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [isSyncing, setIsSyncing] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [lastSynced, setLastSynced] = useState<Date | null>(null)
   const saveTimeout = useRef<NodeJS.Timeout | null>(null)
+  const syncTimeout = useRef<NodeJS.Timeout | null>(null)
+
+  // Funcao para sincronizar com GitHub
+  const syncToGitHub = useCallback(async (screenName: string, bkyContent: string) => {
+    const { ghToken, selectedRepo, screens, currentProject } = useIDEStore.getState()
+    
+    if (!ghToken || !selectedRepo) {
+      return // Nao conectado ao GitHub
+    }
+
+    setIsSyncing(true)
+    setSyncStatus("syncing")
+
+    try {
+      // Preparar arquivos para commit
+      const files = [
+        {
+          path: `src/${screenName}.bky`,
+          content: bkyContent
+        }
+      ]
+
+      // Incluir tambem o SCM da tela se existir
+      const screenData = screens[screenName]
+      if (screenData?.data) {
+        files.push({
+          path: `src/${screenName}.scm`,
+          content: JSON.stringify(screenData.data, null, 2)
+        })
+      }
+
+      // Incluir project.json atualizado
+      if (currentProject) {
+        files.push({
+          path: "project.json",
+          content: JSON.stringify(currentProject, null, 2)
+        })
+      }
+
+      const response = await fetch("/api/github/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: ghToken,
+          repo: selectedRepo.full_name,
+          message: `[Auto-sync] Blocks updated: ${screenName}`,
+          files
+        })
+      })
+
+      if (response.ok) {
+        setLastSynced(new Date())
+        setSyncStatus("synced")
+        toast.success("Sincronizado com GitHub", { duration: 2000 })
+      } else {
+        const err = await response.json()
+        throw new Error(err.error || "Falha ao sincronizar")
+      }
+    } catch (error) {
+      console.error("Erro ao sincronizar com GitHub:", error)
+      setSyncStatus("error")
+      toast.error("Erro ao sincronizar com GitHub")
+    } finally {
+      setIsSyncing(false)
+    }
+  }, [setSyncStatus])
 
   // Funcao para carregar blocos (suporta JSON novo e XML legado)
   const loadBlocksContent = useCallback((content: string, ws: Blockly.WorkspaceSvg) => {
@@ -52,7 +123,7 @@ export function BkyWorkspace() {
   }, [])
 
   // Funcao para salvar blocos na screen atual
-  const saveBlocksToScreen = useCallback((ws: Blockly.WorkspaceSvg) => {
+  const saveBlocksToScreen = useCallback((ws: Blockly.WorkspaceSvg, autoSync: boolean = true) => {
     const state = Blockly.serialization.workspaces.save(ws)
     const blocksJson = JSON.stringify(state)
     
@@ -76,11 +147,19 @@ export function BkyWorkspace() {
       } catch (e) {
         console.error('Erro ao gerar codigo:', e)
       }
+
+      // Auto-sync com GitHub (debounced para evitar muitos commits)
+      if (autoSync) {
+        if (syncTimeout.current) clearTimeout(syncTimeout.current)
+        syncTimeout.current = setTimeout(() => {
+          syncToGitHub(currentScreenName, blocksJson)
+        }, 5000) // Sincroniza 5 segundos apos ultima alteracao
+      }
     }
     
     setLastSaved(new Date())
     setIsSaving(false)
-  }, [setCurrentBkyContent])
+  }, [setCurrentBkyContent, syncToGitHub])
 
   // Inicializacao Unica do Workspace
   useEffect(() => {
@@ -155,6 +234,7 @@ export function BkyWorkspace() {
 
       return () => {
         if (saveTimeout.current) clearTimeout(saveTimeout.current)
+        if (syncTimeout.current) clearTimeout(syncTimeout.current)
         ws.dispose()
       }
     } catch (err) {
@@ -184,16 +264,56 @@ export function BkyWorkspace() {
   // Salvar manualmente
   const handleManualSave = useCallback(() => {
     if (workspace) {
-      saveBlocksToScreen(workspace)
-      toast.success("Blocos salvos com sucesso!")
+      saveBlocksToScreen(workspace, false) // Nao auto-sync
+      toast.success("Blocos salvos localmente!")
     }
   }, [workspace, saveBlocksToScreen])
+
+  // Sincronizar manualmente com GitHub
+  const handleManualSync = useCallback(async () => {
+    if (!workspace || !currentScreenName) return
+    
+    // Primeiro salvar
+    const state = Blockly.serialization.workspaces.save(workspace)
+    const blocksJson = JSON.stringify(state)
+    setCurrentBkyContent(blocksJson)
+    
+    const { screens } = useIDEStore.getState()
+    if (screens[currentScreenName]) {
+      screens[currentScreenName].bkyContent = blocksJson
+    }
+    
+    // Depois sincronizar
+    await syncToGitHub(currentScreenName, blocksJson)
+  }, [workspace, currentScreenName, setCurrentBkyContent, syncToGitHub])
 
   return (
     <div className="absolute inset-0 flex flex-col bg-[#0a0a0a] overflow-hidden">
       {/* Controles de Zoom e Save - Compacto */}
       <div className="absolute top-3 right-3 z-20 flex gap-2">
-        {/* Indicador de salvamento */}
+        {/* Indicador de sincronizacao GitHub */}
+        {ghToken && selectedRepo && (
+          <div className="bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10 flex items-center gap-2">
+            {isSyncing ? (
+              <>
+                <Cloud className="w-3 h-3 text-blue-500 animate-pulse" />
+                <span className="text-[10px] text-blue-500 font-medium">Sincronizando...</span>
+              </>
+            ) : lastSynced ? (
+              <>
+                <Cloud className="w-3 h-3 text-green-500" />
+                <span className="text-[10px] text-green-500 font-medium">Synced</span>
+              </>
+            ) : (
+              <>
+                <CloudOff className="w-3 h-3 text-muted-foreground" />
+                <span className="text-[10px] text-muted-foreground">Pendente</span>
+              </>
+            )}
+          </div>
+        )}
+        
+        {/* Indicador de salvamento local */}
         <div className="bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10 flex items-center gap-2">
           {isSaving ? (
             <>
