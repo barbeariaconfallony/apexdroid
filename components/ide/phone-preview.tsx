@@ -870,14 +870,6 @@ export function PhonePreview() {
           <p className="text-muted-foreground text-sm mb-4 max-w-xs">
             Selecione uma tela na aba TELAS para visualizar e editar no preview.
           </p>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setActiveTab("telas")}
-            className="w-10 h-10 p-0"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </Button>
         </div>
       </main>
     )
