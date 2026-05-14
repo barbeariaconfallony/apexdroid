@@ -1,31 +1,91 @@
 # 🚀 APEX DROID IDE - Inicialização
 
-## Comando para iniciar o servidor
+## Pré-requisitos
+
+- Node.js instalado (versão 18 ou superior)
+- npm (gerenciador de pacotes padrão)
+
+## 1. Instalar dependências
+
+Execute este comando apenas na primeira vez ou quando adicionar novos pacotes:
+
+```bash
+npm install
+```
+
+## 2. Iniciar o servidor de desenvolvimento
+
+Para iniciar o servidor Next.js em modo de desenvolvimento com hot reload:
 
 ```bash
 npm run dev
 ```
 
-O servidor Next.js será iniciado em: **http://localhost:3000**
+O servidor será iniciado em: **http://localhost:3000**
+
+## 3. Comandos adicionais
+
+**Build para produção:**
+```bash
+npm run build
+```
+
+**Iniciar servidor de produção (após build):**
+```bash
+npm start
+```
+
+**Executar linter:**
+```bash
+npm run lint
+```
 
 ## Solução de problemas
 
-### Localhost não funciona mas o IP da rede funciona
+### Porta 3000 já está em uso
 
-Isso acontece quando um processo `node.exe` antigo ficou preso na porta 3000.
+Se você receber um erro indicando que a porta 3000 já está em uso, existem várias causas possíveis:
 
-**1. Verificar processos na porta 3000:**
+**Windows - Verificar processos na porta 3000:**
 ```bash
 netstat -ano | findstr "3000" | findstr "LISTENING"
 ```
 
-**2. Se houver mais de um processo LISTENING, matar o conflitante:**
+**Windows - Matar processo na porta 3000:**
 ```bash
-taskkill /PID <PID_DO_PROCESSO_ANTIGO> /F
+taskkill /PID <PID_DO_PROCESSO> /F
 ```
 
-**3. Se precisar reiniciar tudo do zero:**
+**Windows - Matar todos os processos Node:**
 ```bash
 taskkill /F /IM node.exe
+```
+
+**macOS/Linux - Matar processo na porta 3000:**
+```bash
+lsof -ti:3000 | xargs kill -9
+```
+
+Depois, execute novamente:
+```bash
+npm run dev
+```
+
+### Erro de módulos não encontrados
+
+Se receber erros sobre módulos não encontrados, reinstale as dependências:
+
+```bash
+rm -rf node_modules package-lock.json
+npm install
+npm run dev
+```
+
+### Hot reload não está funcionando
+
+Limpe o cache do Next.js e reinicie:
+
+```bash
+rm -rf .next
 npm run dev
 ```
