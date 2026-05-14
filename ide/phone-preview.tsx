@@ -85,7 +85,7 @@ interface ComponentRendererProps {
   component: KodularComponent
   onSelect: (comp: KodularComponent) => void
   selectedName?: string
-  appMode: "edit" | "run" | "blocks"
+  appMode: "edit" | "run" | "blocks" | "code"
   assets?: ProjectAsset[]
   moveComponent: (name: string, targetParent: string, targetIndex?: number) => void
   dragOverInfo: { name: string | null, position: 'top' | 'middle' | 'bottom' | 'left' | 'right' | null }

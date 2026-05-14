@@ -67,8 +67,8 @@ interface IDEState {
   setShowWelcome: (show: boolean) => void
   isCodeEditorOpen: boolean
   setIsCodeEditorOpen: (open: boolean) => void
-  appMode: "edit" | "run" | "blocks"
-  setAppMode: (mode: "edit" | "run" | "blocks") => void
+  appMode: "edit" | "run" | "blocks" | "code"
+  setAppMode: (mode: "edit" | "run" | "blocks" | "code") => void
   isSidebarCompact: boolean
   setIsSidebarCompact: (compact: boolean) => void
   toggleSidebar: () => void

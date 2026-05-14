@@ -5,6 +5,7 @@ import { Zap, PlusCircle, Github, Smartphone, Tablet, RotateCcw, Maximize2, Mini
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BkyWorkspace } from "./bky-workspace"
+import { CodeEditor } from "./code-editor"
 import { useIDEStore } from "@/lib/ide-store"
 import type { KodularComponent, ProjectAsset } from "@/lib/ide-types"
 import { cn } from "@/lib/utils"
@@ -84,7 +85,7 @@ interface ComponentRendererProps {
   component: KodularComponent
   onSelect: (comp: KodularComponent) => void
   selectedName?: string
-  appMode: "edit" | "run" | "blocks"
+  appMode: "edit" | "run" | "blocks" | "code"
   assets?: ProjectAsset[]
   moveComponent: (name: string, targetParent: string, targetIndex?: number) => void
   dragOverInfo: { name: string | null, position: 'top' | 'middle' | 'bottom' | 'left' | 'right' | null }
@@ -980,7 +981,9 @@ export function PhonePreview() {
 
       {/* Preview Area */}
       <div className="flex-1 flex flex-col relative overflow-hidden bg-grid-pattern">
-        {appMode === "blocks" ? (
+        {appMode === "code" ? (
+          <CodeEditor className="flex-1" />
+        ) : appMode === "blocks" ? (
           <BkyWorkspace />
         ) : (
           <div ref={containerRef} className="flex-1 flex items-center justify-center p-2 relative overflow-hidden">
