@@ -874,8 +874,9 @@ export function PhonePreview() {
             variant="outline" 
             size="sm"
             onClick={() => setActiveTab("telas")}
+            className="w-10 h-10 p-0"
           >
-            Ver telas do projeto
+            <ChevronRight className="w-4 h-4" />
           </Button>
         </div>
       </main>
