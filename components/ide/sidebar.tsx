@@ -145,10 +145,6 @@ const kodularCategories = [
   }
 ]
 
-interface SidebarProps {
-  onLoginClick: () => void
-}
-
 function getAssetType(filename: string): "image" | "audio" | "video" | "other" {
   const ext = filename.split(".").pop()?.toLowerCase() || ""
   if (["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp"].includes(ext)) return "image"
@@ -166,7 +162,7 @@ function getAssetIcon(type: "image" | "audio" | "video" | "other") {
   }
 }
 
-export function Sidebar({ onLoginClick }: SidebarProps) {
+export function Sidebar() {
   const { 
     activeTab, setActiveTab, cloudUser, setCloudUser,
     currentProject, addComponent, updateComponent, removeComponent, moveComponent,
@@ -975,26 +971,7 @@ export function Sidebar({ onLoginClick }: SidebarProps) {
         {activeTab === "github" && (
           <ScrollArea className="flex-1 min-h-0">
             <div className="p-3">
-              {!ghToken ? (
-                <>
-                  <div className="flex flex-col items-center py-6 text-center">
-                    <FolderGit2 className="w-12 h-12 text-muted-foreground mb-3" />
-                    <p className="text-sm font-medium mb-1">Conecte ao GitHub</p>
-                    <p className="text-xs text-muted-foreground mb-4">
-                      Importe projetos Kodular/App Inventor diretamente dos seus repositorios.
-                    </p>
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full"
-                    onClick={onLoginClick}
-                  >
-                    <GitBranch className="w-4 h-4 mr-2" />
-                    Conectar GitHub
-                  </Button>
-                </>
-              ) : selectedRepo ? (
+              {selectedRepo ? (
                 // Repository selected - show screens summary
                 <div>
                   <div className="flex items-center gap-2 mb-3">

@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react"
 import { 
   Plus, Layout, GitBranch, Package, Settings, 
-  Github, Blocks, X, Download, Code2, Sparkles
+  Blocks, X, Download, Code2, Sparkles
 } from "lucide-react"
 import { useIDEStore } from "@/lib/ide-store"
 import { cn } from "@/lib/utils"
@@ -11,7 +11,6 @@ import { cn } from "@/lib/utils"
 interface CommandPaletteProps {
   onBuildClick: () => void
   onSettingsClick: () => void
-  onLoginClick: () => void
   onBlocksClick: () => void
   onBlocksEditorClick?: () => void
   onExportClick?: () => void
@@ -31,14 +30,12 @@ const actions = [
   { id: "build", name: "Build APK", icon: Package },
   { id: "settings", name: "Configurações IA", icon: Settings },
   { id: "assets", name: "Gerenciador de Ativos", icon: Package },
-  { id: "login", name: "Login GitHub", icon: Github },
   { id: "blocks", name: "Ver Blocos da Tela", icon: Blocks }
 ]
 
 export function CommandPalette({ 
   onBuildClick, 
-  onSettingsClick, 
-  onLoginClick, 
+  onSettingsClick,
   onBlocksClick,
   onBlocksEditorClick,
   onExportClick,
@@ -84,9 +81,6 @@ export function CommandPalette({
       case "settings":
         onSettingsClick()
         break
-      case "login":
-        onLoginClick()
-        break
       case "blocks":
         onBlocksClick()
         break
@@ -94,7 +88,7 @@ export function CommandPalette({
         onAssetsClick?.()
         break
     }
-  }, [setActiveTab, onBuildClick, onSettingsClick, onLoginClick, onBlocksClick, onBlocksEditorClick, onExportClick, onTemplatesClick])
+  }, [setActiveTab, onBuildClick, onSettingsClick, onBlocksClick, onBlocksEditorClick, onExportClick, onTemplatesClick])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

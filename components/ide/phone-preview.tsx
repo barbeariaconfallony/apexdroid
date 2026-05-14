@@ -559,11 +559,7 @@ const ComponentRenderer = memo(({
 
 ComponentRenderer.displayName = "ComponentRenderer"
 
-interface PhonePreviewProps {
-  onLoginClick: () => void
-}
-
-export function PhonePreview({ onLoginClick }: PhonePreviewProps) {
+export function PhonePreview() {
   const { 
     currentProject, appMode, setAppMode, updateComponent, removeComponent, moveComponent,
     selectedComponent, setSelectedComponent, setShowProperties,
@@ -827,26 +823,14 @@ export function PhonePreview({ onLoginClick }: PhonePreviewProps) {
           </p>
 
           <div className="flex gap-5 justify-center">
-            {!ghToken && (
-              <div 
-                onClick={() => {
-                  onLoginClick()
-                }}
-                className="bg-secondary border border-border p-6 rounded-2xl max-w-[200px] cursor-pointer hover:-translate-y-1 hover:border-primary transition-all"
-              >
-                <Github className="w-8 h-8 text-primary mx-auto mb-3" />
-                <h3 className="font-semibold mb-1">Conectar GitHub</h3>
-                <p className="text-xs text-muted-foreground">
-                  Importe seus projetos existentes e comece a editar.
-                </p>
-              </div>
-            )}
-
-            <div className="bg-secondary border border-border p-6 rounded-2xl max-w-[200px] cursor-pointer hover:-translate-y-1 hover:border-primary transition-all">
+            <div 
+              onClick={() => setActiveTab("telas")}
+              className="bg-secondary border border-border p-6 rounded-2xl max-w-[200px] cursor-pointer hover:-translate-y-1 hover:border-primary transition-all"
+            >
               <PlusCircle className="w-8 h-8 text-primary mx-auto mb-3" />
-              <h3 className="font-semibold mb-1">Novo Projeto</h3>
+              <h3 className="font-semibold mb-1">Selecionar Tela</h3>
               <p className="text-xs text-muted-foreground">
-                Inicie do zero com um template limpo e moderno.
+                Selecione uma tela do projeto para editar.
               </p>
             </div>
           </div>
