@@ -669,54 +669,67 @@ export default function ProjectsPage() {
 
             {/* Actions */}
             <div className="flex items-center gap-3">
-              <Button 
-                onClick={() => setCreateModalOpen(true)}
-                className="shadow-lg shadow-primary/25"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Criar Projeto
-              </Button>
+              {activeTab === "projects" && (
+                <Button 
+                  onClick={() => setCreateModalOpen(true)}
+                  className="shadow-lg shadow-primary/25"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Criar Projeto
+                </Button>
+              )}
             </div>
           </div>
         </div>
 
         {/* Mobile tabs */}
-        <div className="md:hidden border-t border-border px-4 py-2 flex gap-2 overflow-x-auto">
-          <button
-            onClick={() => setActiveTab("projects")}
-            className={cn(
-              "px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all",
-              activeTab === "projects"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground bg-secondary"
-            )}
-          >
-            Projetos
-          </button>
-          <button
-            onClick={() => setActiveTab("community")}
-            className={cn(
-              "px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1.5",
-              activeTab === "community"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground bg-secondary"
-            )}
-          >
-            <Users className="w-3.5 h-3.5" />
-            Comunidade
-          </button>
-          <button
-            onClick={() => setActiveTab("store")}
-            className={cn(
-              "px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1.5",
-              activeTab === "store"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground bg-secondary"
-            )}
-          >
-            <ShoppingBag className="w-3.5 h-3.5" />
-            Loja
-          </button>
+        <div className="md:hidden border-t border-border px-4 py-2 flex gap-2 overflow-x-auto items-center justify-between">
+          <div className="flex gap-2 overflow-x-auto">
+            <button
+              onClick={() => setActiveTab("projects")}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all",
+                activeTab === "projects"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground bg-secondary"
+              )}
+            >
+              Projetos
+            </button>
+            <button
+              onClick={() => setActiveTab("community")}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1.5",
+                activeTab === "community"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground bg-secondary"
+              )}
+            >
+              <Users className="w-3.5 h-3.5" />
+              Comunidade
+            </button>
+            <button
+              onClick={() => setActiveTab("store")}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1.5",
+                activeTab === "store"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground bg-secondary"
+              )}
+            >
+              <ShoppingBag className="w-3.5 h-3.5" />
+              Loja
+            </button>
+          </div>
+          {activeTab === "projects" && (
+            <Button
+              size="sm"
+              onClick={() => setCreateModalOpen(true)}
+              className="shadow-lg shadow-primary/25 shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+            </Button>
+          )}
         </div>
       </header>
 
