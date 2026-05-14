@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { IDEHeader } from "@/components/ide/ide-header"
 import { Sidebar } from "@/components/ide/sidebar"
 import { PhonePreview } from "@/components/ide/phone-preview"
@@ -25,6 +26,7 @@ import { AssetsModal } from "@/components/ide/assets-modal"
 import { useIDEStore } from "@/lib/ide-store"
 
 export default function IDEPage() {
+  const router = useRouter()
   const [buildModalOpen, setBuildModalOpen] = useState(false)
   const [blocksModalOpen, setBlocksModalOpen] = useState(false)
   const [blocksEditorOpen, setBlocksEditorOpen] = useState(false)
@@ -91,6 +93,7 @@ export default function IDEPage() {
             onAIScreenClick={() => setAiScreenGeneratorOpen(true)}
             onAIDebugClick={() => setAiDebugAssistantOpen(true)}
             onAssetsClick={() => setAssetsModalOpen(true)}
+            onBackToProjects={() => router.push("/projects")}
           />
 
           <div className="flex flex-1 overflow-hidden">

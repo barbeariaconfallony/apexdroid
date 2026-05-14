@@ -5,7 +5,7 @@ import {
   Zap, GitBranch, Package, Settings, ChevronRight, 
   Smartphone, Save, MoreHorizontal,
   Play, Code2, Layers, Eye, AlertCircle, Layout, Wifi, CloudOff, RefreshCw,
-  ChevronDown, FolderGit2, Clock, Puzzle
+  ChevronDown, FolderGit2, Clock, Puzzle, ArrowLeft
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useIDEStore } from "@/lib/ide-store"
@@ -34,6 +34,7 @@ interface IDEHeaderProps {
   onAIScreenClick?: () => void
   onAIDebugClick?: () => void
   onAssetsClick?: () => void
+  onBackToProjects?: () => void
 }
 
 export function IDEHeader({ 
@@ -42,7 +43,8 @@ export function IDEHeader({
   onAIGeneratorClick,
   onAIScreenClick,
   onAIDebugClick,
-  onAssetsClick
+  onAssetsClick,
+  onBackToProjects
 }: IDEHeaderProps) {
   const { 
     ghToken, 
@@ -304,6 +306,15 @@ export function IDEHeader({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
+              {onBackToProjects && (
+                <>
+                  <DropdownMenuItem onClick={onBackToProjects}>
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Voltar para Projetos
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
               {onAIGeneratorClick && (
                 <>
                   <DropdownMenuItem onClick={onAIGeneratorClick}>
