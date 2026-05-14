@@ -19,12 +19,17 @@ import {
   AlertCircle,
   CheckCircle,
   FolderOpen,
-  RefreshCw
+  RefreshCw,
+  Key,
+  Eye,
+  EyeOff,
+  LogOut,
+  Settings
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
-import { fetchUserRepos } from "@/lib/github-service"
+import { fetchUserRepos, checkIsApexProject, validateGitHubToken } from "@/lib/github-service"
 import type { GitHubRepo } from "@/lib/ide-types"
 
 // Função para extrair AIA (arquivo ZIP do Kodular)
@@ -413,6 +418,147 @@ function ImportAIAModal({ isOpen, onClose, onImport, importing, importStatus }: 
   )
 }
 
+interface GitHubTokenModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onSave: (token: string) => void
+  currentUser?: string
+}
+
+function GitHubTokenModal({ isOpen, onClose, onSave, currentUser }: GitHubTokenModalProps) {
+  const [token, setToken] = useState("")
+  const [showToken, setShowToken] = useState(false)
+  const [validating, setValidating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  if (!isOpen) return null
+
+  const handleSave = async () => {
+    if (!token.trim()) {
+      setError("Insira o token")
+      return
+    }
+
+    setValidating(true)
+    setError(null)
+
+    const result = await validateGitHubToken(token.trim())
+    
+    if (result.valid) {
+      onSave(token.trim())
+      setToken("")
+      onClose()
+    } else {
+      setError(result.error || "Token inválido")
+    }
+    
+    setValidating(false)
+  }
+
+  return (
+    <div 
+      className="fixed inset-0 z-[2000] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="bg-card border border-border rounded-xl w-full max-w-md p-4 shadow-2xl animate-in zoom-in-95 duration-300">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+            <Key className="w-4 h-4 text-primary" />
+            Conectar GitHub
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {currentUser ? (
+          <div className="mb-4 p-3 bg-success/10 border border-success/20 rounded-lg">
+            <div className="flex items-center gap-2 text-success">
+              <CheckCircle className="w-4 h-4" />
+              <span className="text-sm font-medium">Conectado como @{currentUser}</span>
+            </div>
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground mb-4">
+            Insira seu Personal Access Token do GitHub para acessar seus repositórios.
+          </p>
+        )}
+
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-foreground">
+              {currentUser ? "Atualizar Token" : "Personal Access Token"}
+            </label>
+            <div className="relative">
+              <Input
+                type={showToken ? "text" : "password"}
+                placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                value={token}
+                onChange={(e) => { setToken(e.target.value); setError(null) }}
+                className="pr-10 h-9 text-sm font-mono"
+              />
+              <button
+                type="button"
+                onClick={() => setShowToken(!showToken)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            {error && (
+              <p className="text-xs text-destructive flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {error}
+              </p>
+            )}
+          </div>
+
+          <a
+            href="https://github.com/settings/tokens/new?description=APEX%20DROID%20IDE&scopes=repo"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-xs text-primary hover:underline"
+          >
+            <ExternalLink className="w-3 h-3" />
+            Criar novo Personal Access Token no GitHub
+          </a>
+
+          <div className="bg-secondary/50 rounded-lg p-2.5 space-y-1">
+            <p className="text-xs font-medium text-foreground">Permissões necessárias:</p>
+            <ul className="text-xs text-muted-foreground space-y-0.5">
+              <li>• repo (acesso total aos repositórios)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="flex gap-2 mt-4">
+          <Button variant="outline" onClick={onClose} size="sm" className="flex-1 text-xs h-8">
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleSave}
+            disabled={validating}
+            size="sm"
+            className="flex-1 text-xs h-8"
+          >
+            {validating ? (
+              <>
+                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                Validando...
+              </>
+            ) : (
+              "Conectar"
+            )}
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ProjectCard({ project, onClick }: { project: Project; onClick: () => void }) {
   return (
     <button
@@ -471,21 +617,45 @@ export default function ProjectsPage() {
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [githubModalOpen, setGithubModalOpen] = useState(false)
   const [aiaModalOpen, setAiaModalOpen] = useState(false)
+  const [tokenModalOpen, setTokenModalOpen] = useState(false)
   const [importing, setImporting] = useState(false)
   const [importStatus, setImportStatus] = useState<{ success: boolean; message: string } | null>(null)
 
-  // Mock token para demonstração (em produção, viria da autenticação)
-  const ghToken = typeof window !== "undefined" ? localStorage.getItem("gh_token") || "" : ""
+  // GitHub Token e usuário
+  const [ghToken, setGhToken] = useState<string>("")
+  const [ghUser, setGhUser] = useState<string | null>(null)
+  const [checkingProjects, setCheckingProjects] = useState(false)
+
+  // Carregar token do localStorage no cliente
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedToken = localStorage.getItem("gh_token")
+      const savedUser = localStorage.getItem("gh_user")
+      if (savedToken) {
+        setGhToken(savedToken)
+        setGhUser(savedUser)
+      }
+    }
+  }, [])
 
   const loadProjects = useCallback(async () => {
+    if (!ghToken) {
+      setProjects([])
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
+    setCheckingProjects(true)
+    
     try {
-      if (ghToken) {
-        const userRepos = await fetchUserRepos(ghToken)
-        setRepos(userRepos)
-        
-        // Converter para formato de projeto
-        const projectList: Project[] = userRepos.map(repo => ({
+      const userRepos = await fetchUserRepos(ghToken)
+      setRepos(userRepos)
+      
+      // Verificar cada repositório se é projeto APEX (em paralelo com limite)
+      const projectPromises = userRepos.map(async (repo): Promise<Project> => {
+        const isApex = await checkIsApexProject(ghToken, repo.owner.login, repo.name)
+        return {
           id: repo.id,
           name: repo.name,
           fullName: repo.full_name,
@@ -493,57 +663,53 @@ export default function ProjectsPage() {
           updatedAt: repo.updated_at,
           url: repo.html_url,
           description: repo.description || undefined,
-          isApexProject: repo.name.toLowerCase().includes("apex") || 
-                         repo.description?.toLowerCase().includes("apex droid") ||
-                         repo.topics?.includes("apex-droid") || false
-        }))
-        
-        setProjects(projectList)
-      } else {
-        // Projetos de demonstração quando não há token
-        setProjects([
-          {
-            id: 1,
-            name: "MeuApp",
-            fullName: "user/MeuApp",
-            createdAt: "2024-01-15T10:00:00Z",
-            updatedAt: "2024-01-20T15:30:00Z",
-            url: "https://github.com/user/MeuApp",
-            description: "Meu primeiro aplicativo APEX DROID",
-            isApexProject: true
-          },
-          {
-            id: 2,
-            name: "CalculadoraSimples",
-            fullName: "user/CalculadoraSimples",
-            createdAt: "2024-02-01T08:00:00Z",
-            updatedAt: "2024-02-05T12:00:00Z",
-            url: "https://github.com/user/CalculadoraSimples",
-            description: "Calculadora básica",
-            isApexProject: true
-          },
-          {
-            id: 3,
-            name: "ListaDeTarefas",
-            fullName: "user/ListaDeTarefas",
-            createdAt: "2024-03-10T14:00:00Z",
-            updatedAt: "2024-03-15T09:00:00Z",
-            url: "https://github.com/user/ListaDeTarefas",
-            description: "App de lista de tarefas",
-            isApexProject: true
-          }
-        ])
-      }
+          isApexProject: isApex
+        }
+      })
+      
+      const projectList = await Promise.all(projectPromises)
+      
+      // Filtrar apenas projetos APEX
+      const apexProjects = projectList.filter(p => p.isApexProject)
+      setProjects(apexProjects)
     } catch (error) {
       console.error("Erro ao carregar projetos:", error)
+      // Se o token for inválido, limpar
+      if (error instanceof Error && error.message.includes("401")) {
+        handleLogout()
+      }
     } finally {
       setLoading(false)
+      setCheckingProjects(false)
     }
   }, [ghToken])
 
   useEffect(() => {
     loadProjects()
   }, [loadProjects])
+
+  const handleSaveToken = async (token: string) => {
+    const result = await validateGitHubToken(token)
+    if (result.valid && result.user) {
+      setGhToken(token)
+      setGhUser(result.user)
+      if (typeof window !== "undefined") {
+        localStorage.setItem("gh_token", token)
+        localStorage.setItem("gh_user", result.user)
+      }
+    }
+  }
+
+  const handleLogout = () => {
+    setGhToken("")
+    setGhUser(null)
+    setProjects([])
+    setRepos([])
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("gh_token")
+      localStorage.removeItem("gh_user")
+    }
+  }
 
   const filteredProjects = projects.filter(project =>
     project.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -670,7 +836,7 @@ export default function ProjectsPage() {
 
             {/* Actions */}
             <div className="flex items-center gap-2">
-              {activeTab === "projects" && (
+              {activeTab === "projects" && ghToken && (
                 <Button 
                   size="sm"
                   onClick={() => setCreateModalOpen(true)}
@@ -678,6 +844,40 @@ export default function ProjectsPage() {
                 >
                   <Plus className="w-3 h-3 mr-1" />
                   Criar
+                </Button>
+              )}
+              
+              {ghUser ? (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-muted-foreground hidden sm:inline">@{ghUser}</span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setTokenModalOpen(true)}
+                    className="h-8 w-8 p-0"
+                    title="Configurações do GitHub"
+                  >
+                    <Settings className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={handleLogout}
+                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                    title="Desconectar"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              ) : (
+                <Button 
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setTokenModalOpen(true)}
+                  className="text-xs h-8"
+                >
+                  <Github className="w-3 h-3 mr-1" />
+                  Conectar
                 </Button>
               )}
             </div>
@@ -723,13 +923,23 @@ export default function ProjectsPage() {
               Loja
             </button>
           </div>
-          {activeTab === "projects" && (
+          {activeTab === "projects" && ghToken && (
             <Button
               size="sm"
               onClick={() => setCreateModalOpen(true)}
               className="shadow-lg shadow-primary/25 shrink-0 text-xs h-7"
             >
               <Plus className="w-3 h-3" />
+            </Button>
+          )}
+          {!ghToken && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setTokenModalOpen(true)}
+              className="shrink-0 text-xs h-7"
+            >
+              <Github className="w-3 h-3" />
             </Button>
           )}
         </div>
@@ -739,57 +949,98 @@ export default function ProjectsPage() {
       <main className="relative z-10 container mx-auto px-3 sm:px-4 py-4">
         {activeTab === "projects" && (
           <>
-            {/* Search */}
-            <div className="mb-5">
-              <div className="relative max-w-xs">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-9 bg-card border-border rounded-lg text-sm"
-                />
-              </div>
-            </div>
-
-            {/* Projects Grid */}
-            {loading ? (
-              <div className="flex items-center justify-center py-16">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              </div>
-            ) : filteredProjects.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
-                {filteredProjects.map(project => (
-                  <ProjectCard
-                    key={project.id}
-                    project={project}
-                    onClick={() => handleOpenProject(project)}
-                  />
-                ))}
+            {!ghToken ? (
+              // Tela de conexão quando não está autenticado
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                  <Github className="w-8 h-8 text-primary" />
+                </div>
+                <h3 className="text-base font-semibold text-foreground mb-2">
+                  Conecte sua conta GitHub
+                </h3>
+                <p className="text-xs text-muted-foreground mb-6 max-w-sm">
+                  Para gerenciar seus projetos APEX DROID, conecte sua conta do GitHub usando um Personal Access Token.
+                </p>
+                <Button 
+                  size="sm"
+                  onClick={() => setTokenModalOpen(true)}
+                  className="text-xs h-8"
+                >
+                  <Key className="w-3 h-3 mr-1.5" />
+                  Conectar com GitHub
+                </Button>
+                <a
+                  href="https://github.com/settings/tokens/new?description=APEX%20DROID%20IDE&scopes=repo"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary mt-4"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  Criar Personal Access Token
+                </a>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <FolderOpen className="w-12 h-12 text-muted-foreground/50 mb-4" />
-                <h3 className="text-sm font-semibold text-foreground mb-1">
-                  {searchQuery ? "Nenhum projeto encontrado" : "Sem projetos"}
-                </h3>
-                <p className="text-xs text-muted-foreground mb-4 max-w-xs">
-                  {searchQuery 
-                    ? "Tente buscar com outros termos"
-                    : "Comece criando seu primeiro projeto APEX DROID"
-                  }
-                </p>
-                {!searchQuery && (
-                  <Button 
-                    size="sm" 
-                    onClick={() => setCreateModalOpen(true)}
-                    className="text-xs h-8"
-                  >
-                    <Plus className="w-3 h-3 mr-1" />
-                    Criar Projeto
-                  </Button>
+              <>
+                {/* Search */}
+                <div className="mb-5 flex items-center gap-3">
+                  <div className="relative max-w-xs flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 h-9 bg-card border-border rounded-lg text-sm"
+                    />
+                  </div>
+                  {checkingProjects && (
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Verificando projetos...
+                    </span>
+                  )}
+                </div>
+
+                {/* Projects Grid */}
+                {loading ? (
+                  <div className="flex flex-col items-center justify-center py-16">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
+                    <p className="text-xs text-muted-foreground">Carregando projetos APEX DROID...</p>
+                  </div>
+                ) : filteredProjects.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
+                    {filteredProjects.map(project => (
+                      <ProjectCard
+                        key={project.id}
+                        project={project}
+                        onClick={() => handleOpenProject(project)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <FolderOpen className="w-12 h-12 text-muted-foreground/50 mb-4" />
+                    <h3 className="text-sm font-semibold text-foreground mb-1">
+                      {searchQuery ? "Nenhum projeto encontrado" : "Nenhum projeto APEX DROID"}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mb-4 max-w-xs">
+                      {searchQuery 
+                        ? "Tente buscar com outros termos"
+                        : "Crie um novo projeto ou importe um existente do GitHub"
+                      }
+                    </p>
+                    {!searchQuery && (
+                      <Button 
+                        size="sm" 
+                        onClick={() => setCreateModalOpen(true)}
+                        className="text-xs h-8"
+                      >
+                        <Plus className="w-3 h-3 mr-1" />
+                        Criar Projeto
+                      </Button>
+                    )}
+                  </div>
                 )}
-              </div>
+              </>
             )}
           </>
         )}
@@ -852,6 +1103,13 @@ export default function ProjectsPage() {
         onImport={handleImportAIA}
         importing={importing}
         importStatus={importStatus}
+      />
+
+      <GitHubTokenModal
+        isOpen={tokenModalOpen}
+        onClose={() => setTokenModalOpen(false)}
+        onSave={handleSaveToken}
+        currentUser={ghUser || undefined}
       />
     </div>
   )

@@ -194,3 +194,80 @@ export async function deleteFile(
     throw new Error(`GitHub API error: ${response.status}`)
   }
 }
+
+// Verificar se um repositório é um projeto APEX DROID
+export async function checkIsApexProject(
+  token: string,
+  owner: string,
+  repo: string
+): Promise<boolean> {
+  try {
+    // Verificar se existe arquivo de configuração APEX ou estrutura de projeto AIA
+    const apexIndicators = [
+      "apex-droid.json",
+      "youngandroidproject/project.properties",
+      "src/appinventor",
+      ".apex"
+    ]
+    
+    const tree = await fetchRepoTree(token, owner, repo).catch(() => [])
+    
+    if (tree.length === 0) return false
+    
+    const paths = tree.map(item => item.path.toLowerCase())
+    
+    // Verificar indicadores de projeto APEX
+    for (const indicator of apexIndicators) {
+      if (paths.some(p => p.includes(indicator.toLowerCase()))) {
+        return true
+      }
+    }
+    
+    // Verificar topics do repositório
+    const repoResponse = await fetch(
+      `${GITHUB_API}/repos/${owner}/${repo}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.github.v3+json"
+        }
+      }
+    )
+    
+    if (repoResponse.ok) {
+      const repoData = await repoResponse.json()
+      if (repoData.topics?.includes("apex-droid") || 
+          repoData.topics?.includes("app-inventor") ||
+          repoData.topics?.includes("kodular")) {
+        return true
+      }
+    }
+    
+    return false
+  } catch {
+    return false
+  }
+}
+
+// Validar token do GitHub
+export async function validateGitHubToken(token: string): Promise<{ valid: boolean; user?: string; error?: string }> {
+  try {
+    const response = await fetch(`${GITHUB_API}/user`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github.v3+json"
+      }
+    })
+    
+    if (response.ok) {
+      const data = await response.json()
+      return { valid: true, user: data.login }
+    } else if (response.status === 401) {
+      return { valid: false, error: "Token inválido ou expirado" }
+    } else {
+      return { valid: false, error: `Erro: ${response.status}` }
+    }
+  } catch {
+    return { valid: false, error: "Erro de conexão" }
+  }
+}
