@@ -1,0 +1,10 @@
+{
+  "name": "Start.io Cover Ad",
+  "type": "Start.ioCoverAd",
+  "properties": [
+    "Enable Consent",
+    "Set User Consent",
+    "Test Mode",
+    "Visible"
+  ]
+}

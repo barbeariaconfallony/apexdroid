@@ -1,0 +1,1 @@
+ preciso que ao modificar qualquer coisa no editor de blocos modificar no repositório com sincronização automática

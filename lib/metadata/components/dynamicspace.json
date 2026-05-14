@@ -1,0 +1,13 @@
+{
+  "name": "Dynamic Space",
+  "type": "DynamicSpace",
+  "properties": [
+    "Create Space",
+    "Delete Space",
+    "Get Height",
+    "Get Space By Id",
+    "Get Width",
+    "Set Height",
+    "Set Width"
+  ]
+}

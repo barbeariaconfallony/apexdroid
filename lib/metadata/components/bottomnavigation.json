@@ -1,0 +1,10 @@
+{
+  "name": "Bottom Navigation",
+  "type": "BottomNavigation",
+  "properties": [
+    "Background Color",
+    "Selected Color",
+    "Unselected Color",
+    "Visible"
+  ]
+}

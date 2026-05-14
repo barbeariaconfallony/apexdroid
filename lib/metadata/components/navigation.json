@@ -1,0 +1,16 @@
+{
+  "name": "Navigation",
+  "type": "Navigation",
+  "properties": [
+    "API Key",
+    "End Latitude",
+    "End Location",
+    "End Longitude",
+    "Language",
+    "Response Content",
+    "Start Latitude",
+    "Start Location",
+    "Start Longitude",
+    "Transportation Method"
+  ]
+}

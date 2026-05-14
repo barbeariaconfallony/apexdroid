@@ -1,0 +1,10 @@
+{
+  "name": "Unity Banner Ad",
+  "type": "UnityBannerAd",
+  "properties": [
+    "Ad Unit Id",
+    "Banner Size",
+    "Test Mode",
+    "Visible"
+  ]
+}

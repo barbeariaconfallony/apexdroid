@@ -1,0 +1,22 @@
+{
+  "name": "Canvas",
+  "type": "Canvas",
+  "properties": [
+    "Background Color",
+    "Background Image",
+    "Extend Moves Outside Canvas",
+    "Font Bold",
+    "Font Italic",
+    "Font Size",
+    "Font Typeface",
+    "Font Typeface Import",
+    "Height",
+    "Height Percent",
+    "Line Width",
+    "Paint Color",
+    "Text Alignment",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

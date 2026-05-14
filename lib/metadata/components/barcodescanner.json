@@ -1,0 +1,8 @@
+{
+  "name": "Barcode Scanner",
+  "type": "BarcodeScanner",
+  "properties": [
+    "Result",
+    "Use External Scanner"
+  ]
+}

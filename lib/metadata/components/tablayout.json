@@ -1,0 +1,16 @@
+{
+  "name": "Tab Layout",
+  "type": "TabLayout",
+  "properties": [
+    "Get Current Tab",
+    "Select Tab",
+    "Tabs Active Text Color",
+    "Tabs Background Color",
+    "Tabs Indicator Color",
+    "Tabs Mode",
+    "Tabs Text Color",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

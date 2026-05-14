@@ -1,0 +1,7 @@
+{
+  "name": "Image Utilities",
+  "type": "ImageUtilities",
+  "properties": [
+    "Load Image Async"
+  ]
+}

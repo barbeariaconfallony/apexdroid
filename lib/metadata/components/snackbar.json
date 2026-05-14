@@ -1,0 +1,10 @@
+{
+  "name": "Snackbar",
+  "type": "Snackbar",
+  "properties": [
+    "Background Color",
+    "Button Text Color",
+    "Duration",
+    "Text Color"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "Amazon Banner",
+  "type": "AmazonBanner",
+  "properties": [
+    "Publisher ID",
+    "Refresh Ad",
+    "Test Mode",
+    "Visible"
+  ]
+}

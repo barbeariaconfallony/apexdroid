@@ -1,0 +1,10 @@
+{
+  "name": "NXT Touch Sensor",
+  "type": "NXTTouchSensor",
+  "properties": [
+    "Bluetooth Client",
+    "Pressed Event Enabled",
+    "Released Event Enabled",
+    "Sensor Port"
+  ]
+}

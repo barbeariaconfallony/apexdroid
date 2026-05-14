@@ -1,0 +1,14 @@
+{
+  "name": "Feature Collection",
+  "type": "FeatureCollection",
+  "properties": [
+    "Features",
+    "Features From Geo JSON",
+    "Height",
+    "Height Percent",
+    "Source",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

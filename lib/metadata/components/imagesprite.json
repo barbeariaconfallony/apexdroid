@@ -1,0 +1,19 @@
+{
+  "name": "Image Sprite",
+  "type": "ImageSprite",
+  "properties": [
+    "Animated",
+    "Enabled",
+    "Heading",
+    "Height",
+    "Interval",
+    "Picture",
+    "Rotates",
+    "Speed",
+    "Visible",
+    "Width",
+    "X",
+    "Y",
+    "Z"
+  ]
+}

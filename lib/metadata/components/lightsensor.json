@@ -1,0 +1,9 @@
+{
+  "name": "Light Sensor",
+  "type": "LightSensor",
+  "properties": [
+    "Available",
+    "Enabled",
+    "Illuminance"
+  ]
+}

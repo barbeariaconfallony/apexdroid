@@ -1,0 +1,10 @@
+{
+  "name": "Google Ad Manager Banner",
+  "type": "GoogleAdManagerBanner",
+  "properties": [
+    "Ad Unit Id",
+    "Test Mode",
+    "Visible",
+    "eCPM Floor"
+  ]
+}

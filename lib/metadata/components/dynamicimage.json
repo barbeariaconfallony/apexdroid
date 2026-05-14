@@ -1,0 +1,16 @@
+{
+  "name": "Dynamic Image",
+  "type": "DynamicImage",
+  "properties": [
+    "Create Image",
+    "Delete Image",
+    "Get Height",
+    "Get Image By Id",
+    "Get Width",
+    "Rotation Angle",
+    "Scale Picture To Fit",
+    "Set Height",
+    "Set Width",
+    "Update Image"
+  ]
+}

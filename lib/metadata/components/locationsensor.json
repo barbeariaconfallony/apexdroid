@@ -1,0 +1,20 @@
+{
+  "name": "Location Sensor",
+  "type": "LocationSensor",
+  "properties": [
+    "Accuracy",
+    "Altitude",
+    "Available Providers",
+    "Current Address",
+    "Distance Interval",
+    "Enabled",
+    "Has Accuracy",
+    "Has Altitude",
+    "Has Longitude Latitude",
+    "Latitude",
+    "Longitude",
+    "Provider Locked",
+    "Provider Name",
+    "Time Interval"
+  ]
+}

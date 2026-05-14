@@ -1,0 +1,16 @@
+{
+  "name": "Download",
+  "type": "Download",
+  "properties": [
+    "Allow Over Roaming",
+    "Download URL",
+    "Is Download Manager Available",
+    "Require Charging",
+    "Require Device Idle",
+    "Save File As",
+    "Scan By Media Scanner",
+    "Show Notification",
+    "Suppress Warnings",
+    "Title"
+  ]
+}

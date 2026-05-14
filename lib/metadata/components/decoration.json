@@ -1,0 +1,9 @@
+{
+  "name": "Decoration",
+  "type": "Decoration",
+  "properties": [
+    "Set Margin",
+    "Set Padding",
+    "Set Shape"
+  ]
+}

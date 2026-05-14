@@ -1,0 +1,7 @@
+{
+  "name": "InApp Update",
+  "type": "InAppUpdate",
+  "properties": [
+    "Is Update Available"
+  ]
+}

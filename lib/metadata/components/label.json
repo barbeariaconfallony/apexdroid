@@ -1,0 +1,26 @@
+{
+  "name": "Label",
+  "type": "Label",
+  "properties": [
+    "Background Color",
+    "Clickable",
+    "Font Bold",
+    "Font Italic",
+    "Font Size",
+    "Font Typeface",
+    "Font Typeface Import",
+    "HTML Format",
+    "Has Margins",
+    "Height",
+    "Height Percent",
+    "Marquee",
+    "Max Lines",
+    "Rotation Angle",
+    "Text",
+    "Text Alignment",
+    "Text Color",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

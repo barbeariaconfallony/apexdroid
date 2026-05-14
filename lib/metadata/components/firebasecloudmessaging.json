@@ -1,0 +1,7 @@
+{
+  "name": "Firebase Cloud Messaging",
+  "type": "FirebaseCloudMessaging",
+  "properties": [
+    "Show Notification In Foreground"
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "name": "Button",
+  "type": "Button",
+  "properties": [
+    "Background Color",
+    "Border Shadow",
+    "Enabled",
+    "Font Bold",
+    "Font Italic",
+    "Font Size",
+    "Font Typeface",
+    "Font Typeface Import",
+    "HTML Format",
+    "Height",
+    "Height Percent",
+    "Image",
+    "Rotation Angle",
+    "Shape",
+    "Show Feedback",
+    "Text",
+    "Text Alignment",
+    "Text Color",
+    "Touch Color",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

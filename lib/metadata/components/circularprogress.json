@@ -1,0 +1,12 @@
+{
+  "name": "Circular Progress",
+  "type": "CircularProgress",
+  "properties": [
+    "Color",
+    "Height",
+    "Height Percent",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

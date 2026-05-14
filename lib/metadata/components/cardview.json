@@ -1,0 +1,24 @@
+{
+  "name": "Card View",
+  "type": "CardView",
+  "properties": [
+    "Align Horizontal",
+    "Align Vertical",
+    "Background Color",
+    "Content Padding Bottom",
+    "Content Padding Left",
+    "Content Padding Right",
+    "Content Padding Top",
+    "Corner Radius",
+    "Elevation",
+    "Full Clickable",
+    "Height",
+    "Height Percent",
+    "Stroke Color",
+    "Stroke Width",
+    "Touch Color",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

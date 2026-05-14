@@ -1,0 +1,7 @@
+{
+  "name": "Yandex Translate",
+  "type": "YandexTranslate",
+  "properties": [
+    "API Key"
+  ]
+}

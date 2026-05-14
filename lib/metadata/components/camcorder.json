@@ -1,0 +1,8 @@
+{
+  "name": "Camcorder",
+  "type": "Camcorder",
+  "properties": [
+    "After Recording",
+    "Record Video"
+  ]
+}

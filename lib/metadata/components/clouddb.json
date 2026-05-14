@@ -1,0 +1,12 @@
+{
+  "name": "CloudDB",
+  "type": "CloudDB",
+  "properties": [
+    "Default Redis Server",
+    "Project ID",
+    "Redis Port",
+    "Redis Server",
+    "Token",
+    "Use SSL"
+  ]
+}

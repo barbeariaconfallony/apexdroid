@@ -1,0 +1,11 @@
+{
+  "name": "Proximity Sensor",
+  "type": "ProximitySensor",
+  "properties": [
+    "Available",
+    "Distance",
+    "Enabled",
+    "Keep Running When On Pause",
+    "Maximum Range"
+  ]
+}

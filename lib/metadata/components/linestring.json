@@ -1,0 +1,16 @@
+{
+  "name": "Line String",
+  "type": "LineString",
+  "properties": [
+    "Draggable",
+    "Enable Infobox",
+    "Points",
+    "Points From String",
+    "Stroke Color",
+    "Stroke Opacity",
+    "Stroke Width",
+    "Title",
+    "Type",
+    "Visible"
+  ]
+}

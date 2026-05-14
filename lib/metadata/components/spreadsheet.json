@@ -1,0 +1,10 @@
+{
+  "name": "Spreadsheet",
+  "type": "Spreadsheet",
+  "properties": [
+    "API Key",
+    "Base ID",
+    "Table Name",
+    "View Name"
+  ]
+}

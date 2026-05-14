@@ -1,0 +1,29 @@
+{
+  "name": "Floating Action Button",
+  "type": "FloatingActionButton",
+  "properties": [
+    "Background Color",
+    "Call Fab Click Event When Label Clicked",
+    "Call Fab Long Click Event When Label Long Clicked",
+    "Elevation",
+    "Hide Label When Clicked",
+    "Hide Label When Long Clicked",
+    "Icon",
+    "Icon Color",
+    "Label Background Color",
+    "Label Corner Radius",
+    "Label Text",
+    "Label Text Color",
+    "Margin Bottom",
+    "Margin Right",
+    "Material Icon Name",
+    "Ripple Color",
+    "Rotate On Click",
+    "Rotation Duration (millisecond)",
+    "Rotation End Degrees",
+    "Rotation Start Degrees",
+    "Show Label On Left Side",
+    "Size",
+    "Visible"
+  ]
+}

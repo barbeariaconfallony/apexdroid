@@ -1,0 +1,11 @@
+{
+  "name": "Play Integrity",
+  "type": "PlayIntegrity",
+  "properties": [
+    "Error Occurred",
+    "Integrity Token Received",
+    "Is Provider Ready",
+    "Request Integrity Token",
+    "Retryable Error Occurred During Warmup"
+  ]
+}

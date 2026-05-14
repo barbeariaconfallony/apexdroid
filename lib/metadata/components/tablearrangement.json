@@ -1,0 +1,13 @@
+{
+  "name": "Table Arrangement",
+  "type": "TableArrangement",
+  "properties": [
+    "Columns",
+    "Height",
+    "Height Percent",
+    "Rows",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

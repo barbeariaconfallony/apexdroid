@@ -1,0 +1,17 @@
+{
+  "name": "Video Player",
+  "type": "VideoPlayer",
+  "properties": [
+    "Current Position",
+    "Full Screen",
+    "Height",
+    "Height Percent",
+    "Is Playing",
+    "Show Controls",
+    "Source",
+    "Visible",
+    "Volume",
+    "Width",
+    "Width Percent"
+  ]
+}

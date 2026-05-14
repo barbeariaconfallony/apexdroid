@@ -1,0 +1,16 @@
+{
+  "name": "Player",
+  "type": "Player",
+  "properties": [
+    "Current Position",
+    "Duration",
+    "Get TrackInfo",
+    "Is Playing",
+    "Left Volume",
+    "Loop",
+    "Play Only In Foreground",
+    "Right Volume",
+    "Source",
+    "Volume"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "Animation Utilities",
+  "type": "AnimationUtilities",
+  "properties": [
+    "Bounce Horizontal",
+    "Bounce Vertical",
+    "Error",
+    "Get Bottom Position",
+    "Get Left Position",
+    "Get Right Position",
+    "Get Top Position",
+    "Get X Position",
+    "Get Y Position",
+    "Overshoot Horizontal",
+    "Overshoot Vertical",
+    "Rotation",
+    "Zoom"
+  ]
+}
