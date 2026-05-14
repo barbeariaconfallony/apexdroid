@@ -816,48 +816,6 @@ export default function ProjectsPage() {
               Em breve! Encontre templates, componentes e extensões para seus projetos.
             </p>
           </div>
-                <h3 className="text-xl font-semibold text-foreground mb-2">
-                  {searchQuery ? "Nenhum projeto encontrado" : "Nenhum projeto ainda"}
-                </h3>
-                <p className="text-muted-foreground mb-6 max-w-md">
-                  {searchQuery 
-                    ? "Tente buscar com outros termos"
-                    : "Comece criando seu primeiro projeto APEX DROID"
-                  }
-                </p>
-                {!searchQuery && (
-                  <Button onClick={() => setCreateModalOpen(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Criar Primeiro Projeto
-                  </Button>
-                )}
-              </div>
-            )}
-          </>
-        )}
-
-        {activeTab === "community" && (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mb-6">
-              <Users className="w-10 h-10 text-muted-foreground" />
-            </div>
-            <h3 className="text-xl font-semibold text-foreground mb-2">Comunidade</h3>
-            <p className="text-muted-foreground max-w-md">
-              Em breve! Compartilhe seus projetos e descubra o que outros desenvolvedores estão criando.
-            </p>
-          </div>
-        )}
-
-        {activeTab === "store" && (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mb-6">
-              <ShoppingBag className="w-10 h-10 text-muted-foreground" />
-            </div>
-            <h3 className="text-xl font-semibold text-foreground mb-2">Loja de Aplicativos</h3>
-            <p className="text-muted-foreground max-w-md">
-              Em breve! Encontre templates, componentes e extensões para seus projetos.
-            </p>
-          </div>
         )}
       </main>
 
