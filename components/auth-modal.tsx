@@ -1,10 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { X } from "lucide-react"
+import { X, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
 
 interface AuthModalProps {
@@ -35,19 +32,17 @@ function GitHubIcon() {
 
 export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProps) {
   const router = useRouter()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [name, setName] = useState("")
 
   if (!isOpen) return null
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    router.push("/ide")
+  const handleEnter = () => {
+    onClose()
+    router.push("/projects")
   }
 
   const handleSocialLogin = () => {
-    router.push("/ide")
+    onClose()
+    router.push("/projects")
   }
 
   return (
@@ -68,88 +63,95 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          <Button
-            variant="outline"
-            className="gap-2"
-            onClick={handleSocialLogin}
-          >
-            <GoogleIcon />
-            Google
-          </Button>
-          <Button
-            variant="outline"
-            className="gap-2"
-            onClick={handleSocialLogin}
-          >
-            <GitHubIcon />
-            GitHub
-          </Button>
-        </div>
+        {mode === "login" ? (
+          <>
+            <p className="text-muted-foreground mb-6">
+              Acesse sua conta para gerenciar seus projetos APEX DROID.
+            </p>
 
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-border" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-4 text-muted-foreground tracking-widest">
-              {mode === "login" ? "ou entre com e-mail" : "ou crie com seu e-mail"}
-            </span>
-          </div>
-        </div>
+            <Button 
+              onClick={handleEnter} 
+              className="w-full shadow-lg shadow-primary/25 h-12 text-base"
+            >
+              Entrar
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {mode === "register" && (
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-sm text-muted-foreground">
-                Nome Completo
-              </Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Seu Nome"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                className="bg-input border-border"
-              />
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-4 text-muted-foreground tracking-widest">
+                  ou entre com
+                </span>
+              </div>
             </div>
-          )}
-          
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm text-muted-foreground">
-              E-mail
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="seu@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="bg-input border-border"
-            />
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-sm text-muted-foreground">
-              Senha
-            </Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="bg-input border-border"
-            />
-          </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={handleSocialLogin}
+              >
+                <GoogleIcon />
+                Google
+              </Button>
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={handleSocialLogin}
+              >
+                <GitHubIcon />
+                GitHub
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="text-muted-foreground mb-6">
+              Crie sua conta para começar a desenvolver aplicativos Android.
+            </p>
 
-          <Button type="submit" className="w-full shadow-lg shadow-primary/25">
-            {mode === "login" ? "Entrar" : "Criar Conta"}
-          </Button>
-        </form>
+            <Button 
+              onClick={handleEnter} 
+              className="w-full shadow-lg shadow-primary/25 h-12 text-base"
+            >
+              Criar Conta
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-4 text-muted-foreground tracking-widest">
+                  ou cadastre-se com
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={handleSocialLogin}
+              >
+                <GoogleIcon />
+                Google
+              </Button>
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={handleSocialLogin}
+              >
+                <GitHubIcon />
+                GitHub
+              </Button>
+            </div>
+          </>
+        )}
 
         <p className="text-center text-sm text-muted-foreground mt-6">
           {mode === "login" ? "Não tem uma conta? " : "Já tem uma conta? "}

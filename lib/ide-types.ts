@@ -101,7 +101,9 @@ export interface GitHubRepo {
   private: boolean
   html_url: string
   default_branch: string
+  created_at: string
   updated_at: string
+  topics?: string[]
   owner: {
     login: string
     avatar_url: string
