@@ -619,8 +619,8 @@ export default function ProjectsPage() {
       {/* Header */}
       <header className="relative z-10 border-b border-border bg-background/50 backdrop-blur-xl">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="hidden md:grid grid-cols-3 items-center h-16">
-            {/* Logo — coluna esquerda */}
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
                 <Smartphone className="w-5 h-5 text-primary-foreground" />
@@ -628,8 +628,8 @@ export default function ProjectsPage() {
               <span className="font-bold text-lg text-foreground">APEX DROID</span>
             </div>
 
-            {/* Tabs — coluna central */}
-            <nav className="flex items-center justify-center gap-1 bg-secondary/50 rounded-xl p-1 w-fit mx-auto">
+            {/* Tabs */}
+            <nav className="hidden md:flex items-center gap-1 bg-secondary/50 rounded-xl p-1">
               <button
                 onClick={() => setActiveTab("projects")}
                 className={cn(
@@ -667,37 +667,16 @@ export default function ProjectsPage() {
               </button>
             </nav>
 
-            {/* Ações — coluna direita */}
-            <div className="flex items-center justify-end">
-              {activeTab === "projects" && (
-                <Button
-                  onClick={() => setCreateModalOpen(true)}
-                  className="shadow-lg shadow-primary/25"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Criar Projeto
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Mobile header */}
-          <div className="md:hidden flex items-center justify-between h-16">
+            {/* Actions */}
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-                <Smartphone className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <span className="font-bold text-lg text-foreground">APEX DROID</span>
-            </div>
-            {activeTab === "projects" && (
-              <Button
-                size="sm"
+              <Button 
                 onClick={() => setCreateModalOpen(true)}
                 className="shadow-lg shadow-primary/25"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 mr-2" />
+                Criar Projeto
               </Button>
-            )}
+            </div>
           </div>
         </div>
 
