@@ -215,6 +215,19 @@ export function IDEHeader({
               <Puzzle className="w-3 h-3" />
               <span className="hidden sm:inline">Blocos</span>
             </button>
+
+            <button
+              onClick={() => setAppMode("code")}
+              className={cn(
+                "flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold transition-all duration-200",
+                appMode === "code" 
+                  ? "bg-card text-primary shadow-sm" 
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Code2 className="w-3 h-3" />
+              <span className="hidden sm:inline">Código</span>
+            </button>
           </div>
         </div>
 
