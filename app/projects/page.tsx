@@ -667,16 +667,7 @@ export default function ProjectsPage() {
               </button>
             </nav>
 
-            {/* Actions */}
-            <div className="flex items-center gap-3">
-              <Button 
-                onClick={() => setCreateModalOpen(true)}
-                className="shadow-lg shadow-primary/25"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Criar Projeto
-              </Button>
-            </div>
+
           </div>
         </div>
 
@@ -724,9 +715,9 @@ export default function ProjectsPage() {
       <main className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === "projects" && (
           <>
-            {/* Search */}
-            <div className="mb-8">
-              <div className="relative max-w-md">
+            {/* Search + Criar Projeto */}
+            <div className="mb-8 flex items-center gap-3">
+              <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   placeholder="Buscar projetos..."
@@ -735,6 +726,13 @@ export default function ProjectsPage() {
                   className="pl-12 h-12 bg-card border-border rounded-xl"
                 />
               </div>
+              <Button
+                onClick={() => setCreateModalOpen(true)}
+                className="shadow-lg shadow-primary/25 h-12 px-5 shrink-0"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Criar Projeto
+              </Button>
             </div>
 
             {/* Projects Grid */}
