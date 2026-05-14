@@ -149,14 +149,9 @@ export function IDEHeader({
                         <span className={cn("text-xs font-semibold truncate flex-1", selectedRepo?.id === repo.id && "text-primary")}>
                           {repo.name}
                         </span>
-                        {repo.private ? (
-                          <span className="text-[9px] bg-secondary px-1.5 py-0.5 rounded text-muted-foreground border border-border">Privado</span>
-                        ) : (
-                          <span className="text-[9px] bg-primary/10 px-1.5 py-0.5 rounded text-primary border border-primary/20">Público</span>
-                        )}
                       </div>
                       {repo.description && (
-                        <p className="text-[10px] text-muted-foreground line-clamp-1 pl-6">
+                        <p className="text-[9px] text-muted-foreground pl-6">
                           {repo.description}
                         </p>
                       )}
@@ -178,8 +173,8 @@ export function IDEHeader({
           </nav>
         </div>
 
-        {/* Center Section - Mode Toggle */}
-        <div className="flex items-center gap-1 shrink-0">
+        {/* Center Section - Mode Toggle Badge */}
+        <div className="flex items-center justify-center gap-1 flex-1 shrink-0">
           {/* Mode Toggle */}
           <div className="flex items-center bg-secondary/50 backdrop-blur-md rounded-lg p-0.5 border border-white/5">
             <button
