@@ -1,5 +1,13 @@
 Para ENVIAR diretamente para a branch main, você pode seguir estes passos simplificados:
 
+git remote add origin https://github.com/barbeariaconfallony/apexdroid.git
+
+git push -u origin main
+
+git merge --abort
+
+git push -f origin main
+
 1- Primeiro, garanta que você está na branch main:
 git switch main
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
+import { X } from "lucide-react"
 import { IDEHeader } from "@/components/ide/ide-header"
 import { Sidebar } from "@/components/ide/sidebar"
 import { PhonePreview } from "@/components/ide/phone-preview"
@@ -22,6 +23,7 @@ import { AIDebugAssistant } from "@/components/ide/ai-debug-assistant"
 import { AIScreenGenerator } from "@/components/ide/ai-screen-generator"
 import { BuildMonitor } from "@/components/ide/build-monitor"
 import { AssetsModal } from "@/components/ide/assets-modal"
+import { CodeEditor } from "@/components/ide/code-editor"
 import { useIDEStore } from "@/lib/ide-store"
 import { useProjectManager } from "@/lib/hooks/use-project-manager"
 import { fetchUserRepos } from "@/lib/github-service"
@@ -48,9 +50,9 @@ export default function IDEPage() {
     undo,
     redo,
     setGhToken,
-    ghToken,
-    selectedRepo,
-    setGhRepos
+    setGhRepos,
+    isCodeEditorOpen,
+    setIsCodeEditorOpen
   } = useIDEStore()
 
   const { selectProject } = useProjectManager()
@@ -157,6 +159,29 @@ export default function IDEPage() {
               <PropertiesPanel onShowBlocks={() => setBlocksModalOpen(true)} />
             </ErrorBoundary>
           </div>
+
+          {/* Monaco Code Editor Overlay */}
+          {isCodeEditorOpen && (
+            <div className="fixed inset-0 z-[60] flex flex-col bg-background/80 backdrop-blur-sm animate-in fade-in zoom-in duration-300">
+              <div className="flex items-center justify-between px-4 py-2 bg-secondary/50 border-b border-white/5">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                  <h3 className="text-sm font-semibold tracking-tight uppercase">Editor de Código SCM</h3>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 hover:bg-destructive/20 hover:text-destructive rounded-full transition-colors"
+                  onClick={() => setIsCodeEditorOpen(false)}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <CodeEditor className="h-full" />
+              </div>
+            </div>
+          )}
 
         {/* Modals */}
         <BuildModal 

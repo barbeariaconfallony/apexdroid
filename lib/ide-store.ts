@@ -65,6 +65,8 @@ interface IDEState {
   setShowProperties: (show: boolean) => void
   showWelcome: boolean
   setShowWelcome: (show: boolean) => void
+  isCodeEditorOpen: boolean
+  setIsCodeEditorOpen: (open: boolean) => void
   appMode: "edit" | "run" | "blocks"
   setAppMode: (mode: "edit" | "run" | "blocks") => void
   isSidebarCompact: boolean
@@ -199,6 +201,8 @@ export const useIDEStore = create<IDEState>()(
       setShowProperties: (show) => set({ showProperties: show }),
       showWelcome: true,
       setShowWelcome: (show) => set({ showWelcome: show }),
+      isCodeEditorOpen: false,
+      setIsCodeEditorOpen: (open) => set({ isCodeEditorOpen: open }),
       appMode: "edit",
       setAppMode: (mode) => set({ appMode: mode }),
       isSidebarCompact: false,

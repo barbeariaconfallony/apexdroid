@@ -5,12 +5,13 @@ import {
   Zap, GitBranch, Package, Settings, ChevronRight, 
   Smartphone, Save, MoreHorizontal,
   Play, Code2, Layers, Eye, AlertCircle, Layout, Wifi, CloudOff, RefreshCw,
-  ChevronDown, FolderGit2, Clock, Puzzle, ArrowLeft
+  ChevronDown, FolderGit2, Clock, Puzzle
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useIDEStore } from "@/lib/ide-store"
 import { cn } from "@/lib/utils"
 import { useProjectManager } from "@/lib/hooks/use-project-manager"
+import { syncService } from "@/lib/sync/sync-service"
 import { useToast } from "@/components/ui/use-toast"
 import {
   DropdownMenu,
@@ -34,7 +35,6 @@ interface IDEHeaderProps {
   onAIScreenClick?: () => void
   onAIDebugClick?: () => void
   onAssetsClick?: () => void
-  onBackToProjects?: () => void
 }
 
 export function IDEHeader({ 
@@ -43,8 +43,7 @@ export function IDEHeader({
   onAIGeneratorClick,
   onAIScreenClick,
   onAIDebugClick,
-  onAssetsClick,
-  onBackToProjects
+  onAssetsClick
 }: IDEHeaderProps) {
   const { 
     ghToken, 
@@ -96,9 +95,9 @@ export function IDEHeader({
 
   return (
     <TooltipProvider delayDuration={300}>
-      <header className="h-12 glass sticky top-0 z-50 flex items-center justify-between px-3 shrink-0 border-b border-white/5 shadow-lg">
+      <header className="h-12 glass sticky top-0 z-50 flex items-center px-3 shrink-0 border-b border-white/5 shadow-lg relative">
         {/* Left Section - Logo + Breadcrumb */}
-        <div className="flex items-center gap-3 flex-1 min-w-0">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
           {/* Logo Icon Only */}
           <Tooltip>
             <TooltipTrigger asChild>
@@ -149,9 +148,14 @@ export function IDEHeader({
                         <span className={cn("text-xs font-semibold truncate flex-1", selectedRepo?.id === repo.id && "text-primary")}>
                           {repo.name}
                         </span>
+                        {repo.private ? (
+                          <span className="text-[9px] bg-secondary px-1.5 py-0.5 rounded text-muted-foreground border border-border">Privado</span>
+                        ) : (
+                          <span className="text-[9px] bg-primary/10 px-1.5 py-0.5 rounded text-primary border border-primary/20">Público</span>
+                        )}
                       </div>
                       {repo.description && (
-                        <p className="text-[9px] text-muted-foreground pl-6">
+                        <p className="text-[10px] text-muted-foreground line-clamp-1 pl-6">
                           {repo.description}
                         </p>
                       )}
@@ -173,10 +177,10 @@ export function IDEHeader({
           </nav>
         </div>
 
-        {/* Center Section - Mode Toggle Badge */}
-        <div className="flex items-center justify-center gap-1 flex-1 shrink-0">
+        {/* Center Section - Mode Toggle (Absolute Centered) */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center">
           {/* Mode Toggle */}
-          <div className="flex items-center bg-secondary/50 backdrop-blur-md rounded-lg p-0.5 border border-white/5">
+          <div className="flex items-center bg-secondary/50 backdrop-blur-md rounded-lg p-0.5 border border-white/5 shadow-lg">
             <button
               onClick={() => setAppMode("edit")}
               className={cn(
@@ -215,24 +219,63 @@ export function IDEHeader({
               <Puzzle className="w-3 h-3" />
               <span className="hidden sm:inline">Blocos</span>
             </button>
+
+            <button
+              onClick={() => setAppMode("code")}
+              className={cn(
+                "flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold transition-all duration-200",
+                appMode === "code" 
+                  ? "bg-card text-primary shadow-sm" 
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Code2 className="w-3 h-3" />
+              <span className="hidden sm:inline">Código</span>
+            </button>
           </div>
         </div>
 
         {/* Right Section - Compact Actions */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          {/* Sync Status - Icon only with tooltip */}
+        <div className="flex items-center gap-1.5 shrink-0 flex-1 justify-end">
+          {/* Sync Status - Clicável para forçar sync */}
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center justify-center w-7 h-7 rounded-md bg-secondary/50 border border-border/50 cursor-default">
+              <button 
+                onClick={() => {
+                  if (syncStatus === "error" || syncStatus === "synced") {
+                    syncService.forceSync()
+                  }
+                }}
+                disabled={syncStatus === "syncing" || syncStatus === "offline"}
+                className={cn(
+                  "flex items-center justify-center w-7 h-7 rounded-md border transition-all",
+                  syncStatus === "synced" && "bg-success/10 border-success/30 hover:bg-success/20 cursor-pointer",
+                  syncStatus === "syncing" && "bg-primary/10 border-primary/30 cursor-wait",
+                  syncStatus === "error" && "bg-destructive/10 border-destructive/30 hover:bg-destructive/20 cursor-pointer",
+                  syncStatus === "offline" && "bg-secondary/50 border-border/50 cursor-not-allowed opacity-50"
+                )}
+              >
                 {syncStatus === "synced" && <Wifi className="w-3.5 h-3.5 text-success" />}
                 {syncStatus === "syncing" && <RefreshCw className="w-3.5 h-3.5 text-primary animate-spin" />}
+                {syncStatus === "error" && <AlertCircle className="w-3.5 h-3.5 text-destructive" />}
                 {syncStatus === "offline" && <CloudOff className="w-3.5 h-3.5 text-muted-foreground" />}
-              </div>
+              </button>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs">
-              {syncStatus === "synced" && "Sincronizado com a nuvem"}
-              {syncStatus === "syncing" && "Sincronizando..."}
-              {syncStatus === "offline" && "Modo offline"}
+            <TooltipContent side="bottom" className="text-xs max-w-[200px]">
+              {syncStatus === "synced" && (
+                <div className="space-y-1">
+                  <div className="font-medium text-success">Auto-sync Ativo</div>
+                  <div className="text-muted-foreground">Clique para forçar sincronização</div>
+                </div>
+              )}
+              {syncStatus === "syncing" && "Sincronizando alterações..."}
+              {syncStatus === "error" && (
+                <div className="space-y-1">
+                  <div className="font-medium text-destructive">Erro na sincronização</div>
+                  <div className="text-muted-foreground">Clique para tentar novamente</div>
+                </div>
+              )}
+              {syncStatus === "offline" && "Conecte ao GitHub para sincronizar"}
             </TooltipContent>
           </Tooltip>
 
@@ -301,15 +344,6 @@ export function IDEHeader({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              {onBackToProjects && (
-                <>
-                  <DropdownMenuItem onClick={onBackToProjects}>
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Voltar para Projetos
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                </>
-              )}
               {onAIGeneratorClick && (
                 <>
                   <DropdownMenuItem onClick={onAIGeneratorClick}>
@@ -339,7 +373,7 @@ export function IDEHeader({
                   Gerenciador de Ativos
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem onClick={() => useIDEStore.getState().setIsCodeEditorOpen(true)}>
+              <DropdownMenuItem>
                 <Code2 className="w-4 h-4 mr-2" />
                 Ver Codigo
               </DropdownMenuItem>
