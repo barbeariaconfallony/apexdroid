@@ -362,7 +362,8 @@ export function CodeEditor({ className }: CodeEditorProps) {
     try {
       console.log("[v0] Enviando pedido de modificacao AI...", { 
         instruction: aiPrompt,
-        codeLength: code.length
+        codeLength: code.length,
+        tab: activeTab
       })
 
       const response = await fetch("/api/ai/modify-code", {
@@ -395,13 +396,18 @@ export function CodeEditor({ className }: CodeEditorProps) {
       setAiPrompt("")
       
       toast.success("Codigo modificado pela IA! Revise e salve.")
+      
+      // Formatar o código modificado após um pequeno delay
+      setTimeout(() => {
+        formatCode()
+      }, 200)
     } catch (error) {
       console.error("[v0] Erro AI:", error)
       toast.error(error instanceof Error ? error.message : "Erro ao processar com IA")
     } finally {
       setIsAIProcessing(false)
     }
-  }, [code, aiPrompt, aiSettings])
+  }, [code, aiPrompt, aiSettings, activeTab, formatCode])
 
   if (!currentProject) {
     return (
@@ -787,7 +793,9 @@ export function CodeEditor({ className }: CodeEditorProps) {
                 Modificar Codigo com IA
               </DialogTitle>
               <DialogDescription>
-                Descreva as alteracoes que deseja fazer no codigo e a IA ira aplica-las automaticamente.
+                {activeTab === "frontend" 
+                  ? "Descreva as alteracoes que deseja fazer no layout (JSON/SCM) e a IA ira aplica-las automaticamente."
+                  : "Descreva a lógica ou os blocos que deseja modificar no Backend (XML/BKY) e a IA tentará atualizar o código."}
               </DialogDescription>
             </DialogHeader>
 

@@ -9,35 +9,35 @@ export async function fetchUserRepos(token: string): Promise<GitHubRepo[]> {
       Accept: "application/vnd.github.v3+json"
     }
   })
-  
+
   if (!response.ok) {
     throw new Error(`GitHub API error: ${response.status}`)
   }
-  
+
   return response.json()
 }
 
 export async function fetchRepoContents(
-  token: string, 
-  owner: string, 
-  repo: string, 
+  token: string,
+  owner: string,
+  repo: string,
   path: string = ""
 ): Promise<GitHubContent[]> {
-  const url = path 
+  const url = path
     ? `${GITHUB_API}/repos/${owner}/${repo}/contents/${path}`
     : `${GITHUB_API}/repos/${owner}/${repo}/contents`
-    
+
   const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: "application/vnd.github.v3+json"
     }
   })
-  
+
   if (!response.ok) {
     throw new Error(`GitHub API error: ${response.status}`)
   }
-  
+
   const data = await response.json()
   return Array.isArray(data) ? data : [data]
 }
@@ -57,11 +57,11 @@ export async function fetchRepoTree(
       }
     }
   )
-  
+
   if (!response.ok) {
     throw new Error(`GitHub API error: ${response.status}`)
   }
-  
+
   const data = await response.json()
   return data.tree || []
 }
@@ -81,14 +81,14 @@ export async function fetchFileContent(
       }
     }
   )
-  
+
   if (!response.ok) {
     throw new Error(`GitHub API error: ${response.status}`)
   }
-  
+
   const data = await response.json()
   const content = atob(data.content.replace(/\n/g, ""))
-  
+
   return {
     content,
     sha: data.sha
@@ -122,11 +122,11 @@ export async function updateFileContent(
       })
     }
   )
-  
+
   if (!response.ok) {
     throw new Error(`GitHub API error: ${response.status}`)
   }
-  
+
   const data = await response.json()
   return { sha: data.content.sha }
 }
@@ -156,11 +156,11 @@ export async function createFile(
       })
     }
   )
-  
+
   if (!response.ok) {
     throw new Error(`GitHub API error: ${response.status}`)
   }
-  
+
   const data = await response.json()
   return { sha: data.content.sha }
 }
@@ -189,7 +189,7 @@ export async function deleteFile(
       })
     }
   )
-  
+
   if (!response.ok) {
     throw new Error(`GitHub API error: ${response.status}`)
   }
@@ -211,14 +211,14 @@ export async function checkIsApexProject(
         }
       }
     )
-    
+
     if (response.ok) {
       const text = await response.text()
-      if (text.includes("#projeto#apexdroid#")) {
+      if (text.includes("#projeto")) {
         return true
       }
     }
-    
+
     return false
   } catch {
     return false
@@ -234,7 +234,7 @@ export async function validateGitHubToken(token: string): Promise<{ valid: boole
         Accept: "application/vnd.github.v3+json"
       }
     })
-    
+
     if (response.ok) {
       const data = await response.json()
       return { valid: true, user: data.login }

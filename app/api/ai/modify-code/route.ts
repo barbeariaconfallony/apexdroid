@@ -40,7 +40,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const systemPrompt = `Você é um especialista em arquivos SCM do Kodular/MIT App Inventor. 
+    // Detectar formato do código (JSON vs XML/BKY)
+    const isJson = code.trim().startsWith('{') || code.trim().startsWith('[')
+
+    const systemPrompt = isJson 
+      ? `Você é um especialista em arquivos SCM do Kodular/MIT App Inventor. 
 Arquivos SCM são representações JSON de telas e componentes.
 
 Sua tarefa é modificar o JSON fornecido seguindo as instruções do usuário.
@@ -52,8 +56,18 @@ Regras:
 5. Se a instrução pedir para mudar cores, use o formato &HAARRGGBB (ex: &HFFFF0000 para vermelho).
 6. Se a instrução pedir para mudar dimensões, use -1 para Automático e -2 para Fill Parent.
 7. Garanta que o JSON resultante seja válido e possa ser parseado.`
+      : `Você é um especialista em arquivos BKY (Blockly XML) do Kodular/MIT App Inventor.
+Arquivos BKY são representações XML da lógica de blocos.
 
-    const prompt = `JSON ATUAL:
+Sua tarefa é modificar o XML fornecido seguindo as instruções do usuário.
+Regras:
+1. Retorne APENAS o XML modificado.
+2. Não inclua blocos de código markdown (\`\`\`xml ... \`\`\`).
+3. Não inclua nenhuma explicação antes ou depois do XML.
+4. Mantenha a estrutura válida do BKY (Blockly).
+5. Garanta que o XML resultante seja válido e bem formatado.`
+
+    const prompt = `${isJson ? 'JSON' : 'XML'} ATUAL:
 ${code}
 
 INSTRUÇÃO:
@@ -65,39 +79,62 @@ ${instruction}`
       model: aiModel,
       system: systemPrompt,
       prompt,
-      temperature: 0.2, // Baixa temperatura para manter a estrutura do JSON
+      temperature: 0.2,
     })
 
-    // Extração robusta de JSON do retorno da IA
+    // Extração robusta de código do retorno da IA
     let modifiedCode = text.trim()
     
-    // Se a IA envolver o código em blocos markdown, extrair apenas o conteúdo do bloco
-    const jsonMatch = modifiedCode.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
-    if (jsonMatch) {
-      modifiedCode = jsonMatch[1].trim()
+    // 1. Remover blocos de raciocínio (comum em modelos como DeepSeek R1)
+    modifiedCode = modifiedCode.replace(/<think>[\s\S]*?<\/think>/g, '').trim()
+
+    // 2. Tentar extrair de blocos markdown
+    const codeMatch = modifiedCode.match(/```(?:json|xml|html|plain)?\s*([\s\S]*?)\s*```/)
+    if (codeMatch) {
+      modifiedCode = codeMatch[1].trim()
     } else {
-      // Caso não tenha blocos markdown, tentar encontrar o primeiro { e o último }
-      const firstBrace = modifiedCode.indexOf('{')
-      const lastBrace = modifiedCode.lastIndexOf('}')
-      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-        modifiedCode = modifiedCode.substring(firstBrace, lastBrace + 1)
+      // 3. Heurística de extração baseada no formato esperado
+      if (isJson) {
+        const firstBrace = modifiedCode.indexOf('{')
+        const lastBrace = modifiedCode.lastIndexOf('}')
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+          modifiedCode = modifiedCode.substring(firstBrace, lastBrace + 1)
+        }
+      } else {
+        const firstTag = modifiedCode.indexOf('<')
+        const lastTag = modifiedCode.lastIndexOf('>')
+        if (firstTag !== -1 && lastTag !== -1 && lastTag > firstTag) {
+          modifiedCode = modifiedCode.substring(firstTag, lastTag + 1)
+        }
       }
     }
 
-    // Validar se é um JSON válido antes de retornar
-    try {
-      JSON.parse(modifiedCode)
-    } catch (e) {
-      console.error('AI generated invalid JSON:', modifiedCode)
-      return NextResponse.json(
-        { error: 'A IA gerou um código inválido. Tente novamente com uma instrução mais clara.' },
-        { status: 500 }
-      )
+    // Validar o resultado
+    if (isJson) {
+      try {
+        JSON.parse(modifiedCode)
+      } catch (e) {
+        console.error('AI generated invalid JSON:', modifiedCode)
+        return NextResponse.json(
+          { error: 'A IA gerou um JSON inválido. Tente novamente com uma instrução mais clara ou outro modelo.' },
+          { status: 500 }
+        )
+      }
+    } else {
+      // Validação básica de XML (pelo menos deve começar com < e terminar com >)
+      if (!modifiedCode.startsWith('<') || !modifiedCode.endsWith('>')) {
+        console.error('AI generated invalid XML/BKY:', modifiedCode)
+        return NextResponse.json(
+          { error: 'A IA gerou um XML inválido para os blocos. Tente novamente.' },
+          { status: 500 }
+        )
+      }
     }
 
     return NextResponse.json({
       success: true,
-      modifiedCode
+      modifiedCode,
+      format: isJson ? 'json' : 'xml'
     })
   } catch (error) {
     console.error('Modify code error:', error)
@@ -109,3 +146,4 @@ ${instruction}`
     )
   }
 }
+
