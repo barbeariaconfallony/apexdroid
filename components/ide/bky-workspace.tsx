@@ -227,6 +227,17 @@ export function BkyWorkspace() {
 
       // Listener para Auto-Save Inteligente (Debounced)
       ws.addChangeListener((event: any) => {
+        // Ignore events during drag operations to prevent the "Block not present" error
+        if (event.type === Blockly.Events.BLOCK_DRAG) {
+          return // Skip drag events entirely
+        }
+        
+        // Skip if block is being dragged (check for active gesture)
+        const gesture = ws.getGesture()
+        if (gesture) {
+          return // Don't save while dragging
+        }
+        
         if (event.type === Blockly.Events.BLOCK_MOVE || 
             event.type === Blockly.Events.BLOCK_CHANGE || 
             event.type === Blockly.Events.BLOCK_CREATE || 
@@ -238,7 +249,13 @@ export function BkyWorkspace() {
           
           // Auto-save apos 1.5 segundos de inatividade
           saveTimeout.current = setTimeout(() => {
-            saveBlocksToScreen(ws)
+            // Double-check no active gesture before saving
+            const currentGesture = ws.getGesture()
+            if (!currentGesture) {
+              saveBlocksToScreen(ws)
+            } else {
+              setIsSaving(false)
+            }
           }, 1500)
         }
       })
@@ -257,7 +274,23 @@ export function BkyWorkspace() {
       return () => {
         if (saveTimeout.current) clearTimeout(saveTimeout.current)
         if (syncTimeout.current) clearTimeout(syncTimeout.current)
-        ws.dispose()
+        try {
+          // Cancel any active gestures/drags before disposing
+          const gesture = ws.getGesture()
+          if (gesture) {
+            gesture.cancel()
+          }
+          // Small delay to ensure all pending operations complete
+          setTimeout(() => {
+            try {
+              ws.dispose()
+            } catch (disposeErr) {
+              // Ignore dispose errors - workspace is being cleaned up anyway
+            }
+          }, 0)
+        } catch (err) {
+          // Ignore cleanup errors
+        }
       }
     } catch (err) {
       console.error("Erro ao injetar Blockly:", err)
@@ -279,31 +312,48 @@ export function BkyWorkspace() {
       const screenData = screens[currentScreenName]?.data || currentProject
       
       try {
-        Blockly.Events.disable()
-        workspace.clear()
-        
-        if (screenBky) {
-          console.log(`[v0] Carregando blocos para ${currentScreenName} (${screenBky.length} bytes)`)
-          loadBlocksContent(screenBky, workspace)
-        } else if (screenData) {
-          // Se nao tem blocos salvos, tenta gerar a partir da logica do arquivo SCM (Linguagem do Designer)
-          console.log(`[v0] Gerando blocos a partir do SCM para: ${currentScreenName}`)
-          try {
-            const generated = convertScmToBlocks(screenData)
-            if (generated.blocks.blocks && generated.blocks.blocks.length > 0) {
-              Blockly.serialization.workspaces.load(generated, workspace)
-              // Salvar no store para persistencia
-              const state = Blockly.serialization.workspaces.save(workspace)
-              setCurrentBkyContent(JSON.stringify(state))
-            }
-          } catch (e) {
-            console.error("Erro ao gerar blocos do SCM:", e)
-          }
+        // Cancel any active gestures before clearing
+        const gesture = workspace.getGesture()
+        if (gesture) {
+          gesture.cancel()
         }
-      } finally {
+        
+        Blockly.Events.disable()
+        
+        // Use setTimeout to ensure gesture is fully cancelled before clearing
         setTimeout(() => {
-          Blockly.Events.enable()
-        }, 200)
+          try {
+            workspace.clear()
+            
+            if (screenBky) {
+              console.log(`[v0] Carregando blocos para ${currentScreenName} (${screenBky.length} bytes)`)
+              loadBlocksContent(screenBky, workspace)
+            } else if (screenData) {
+              // Se nao tem blocos salvos, tenta gerar a partir da logica do arquivo SCM (Linguagem do Designer)
+              console.log(`[v0] Gerando blocos a partir do SCM para: ${currentScreenName}`)
+              try {
+                const generated = convertScmToBlocks(screenData)
+                if (generated.blocks.blocks && generated.blocks.blocks.length > 0) {
+                  Blockly.serialization.workspaces.load(generated, workspace)
+                  // Salvar no store para persistencia
+                  const state = Blockly.serialization.workspaces.save(workspace)
+                  setCurrentBkyContent(JSON.stringify(state))
+                }
+              } catch (e) {
+                console.error("Erro ao gerar blocos do SCM:", e)
+              }
+            }
+          } catch (clearErr) {
+            console.error("Erro ao limpar workspace:", clearErr)
+          } finally {
+            setTimeout(() => {
+              Blockly.Events.enable()
+            }, 200)
+          }
+        }, 50)
+      } catch (err) {
+        console.error("Erro ao preparar carregamento de blocos:", err)
+        Blockly.Events.enable()
       }
     }
   }, [currentScreenName, workspace, loadBlocksContent, screens])
