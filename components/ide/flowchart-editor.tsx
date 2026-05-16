@@ -5,7 +5,7 @@ import {
   Workflow, Plus, Save, Trash2, ZoomIn, ZoomOut, 
   RefreshCw, MousePointer2, Hand, GitMerge, Square, 
   Circle, Diamond, Database, Terminal, Layers, Settings2,
-  ChevronRight, Smartphone
+  ChevronRight, Smartphone, Loader2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -59,62 +59,85 @@ export function FlowchartEditor() {
   const [edges, setEdges] = useState<Edge[]>([])
 
   const [selectedNode, setSelectedNode] = useState<string | null>(null)
-  const [isDragging, setIsDragging] = useState(false)
+  const [isDraggingNode, setIsDraggingNode] = useState(false)
+  const [isPanning, setIsPanning] = useState(false)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState({ x: 0, y: 0 })
-  const [tool, setTool] = useState<"select" | "hand" | "add">("select")
   const [connecting, setConnecting] = useState<{ source: string; x: number; y: number } | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   
   const containerRef = useRef<HTMLDivElement>(null)
   const saveTimeout = useRef<NodeJS.Timeout | null>(null)
+  const lastBkyRef = useRef<string | null>(null)
 
-  // Carregar estado inicial
+  // Carregar estado inicial a partir do bky da tela atual (igual ao editor de blocos)
   useEffect(() => {
-    // Pegar conteúdo bky da screen atual
+    // Pegar conteudo bky da screen atual - priorizar screens store igual ao BkyWorkspace
     const screenBky = screens[currentScreenName || ""]?.bkyContent || currentBkyContent
-
+    
+    // Se o bky nao mudou, nao recarregar
+    if (screenBky === lastBkyRef.current && nodes.length > 0) {
+      return
+    }
+    
+    setIsLoading(true)
+    
+    // Se temos bky, converter para flow (isso gera os nos reais do arquivo)
+    if (screenBky && screenBky.trim().startsWith('<xml')) {
+      lastBkyRef.current = screenBky
+      const { nodes: convertedNodes, edges: convertedEdges } = convertBkyToFlow(screenBky)
+      
+      if (convertedNodes.length > 0) {
+        setNodes(convertedNodes)
+        setEdges(convertedEdges)
+        // Nao salvamos automaticamente no store para evitar loop - apenas quando usuario edita
+      } else {
+        // bky existe mas nao tem blocos validos - limpar
+        setNodes([])
+        setEdges([])
+      }
+      setIsLoading(false)
+      return
+    }
+    
+    // Se nao tem bky, verificar se tem flowchart salvo (fallback)
     if (currentFlowchartContent) {
       try {
         const saved = JSON.parse(currentFlowchartContent)
         if (saved.nodes && saved.nodes.length > 0) {
           setNodes(saved.nodes || [])
           setEdges(saved.edges || [])
+          setIsLoading(false)
           return
         }
       } catch (e) {
         console.error("Erro ao carregar fluxograma:", e)
       }
-    } 
-    
-    if (screenBky) {
-      // Se não tem fluxograma salvo mas tem blocos, tentar converter
-      console.log("[v0] Convertendo blocos para fluxograma para:", currentScreenName)
-      const { nodes: convertedNodes, edges: convertedEdges } = convertBkyToFlow(screenBky)
-      if (convertedNodes.length > 0) {
-        setNodes(convertedNodes)
-        setEdges(convertedEdges)
-        // Salvar localmente no store para persistência temporária
-        setCurrentFlowchartContent(JSON.stringify({ nodes: convertedNodes, edges: convertedEdges }))
-      }
     }
-  }, [currentFlowchartContent, currentBkyContent, currentScreenName, screens])
-
-  // Gerar código JavaScript a partir do fluxo
-  const generateJS = useCallback((nodes: Node[], edges: Edge[]) => {
-    let code = "/** Código Gerado via Fluxograma **/\n\n"
     
-    // Encontrar nós que são eventos (arrastados como componentes)
+    // Nenhum dado - tela vazia
+    setNodes([])
+    setEdges([])
+    lastBkyRef.current = null
+    setIsLoading(false)
+  }, [currentBkyContent, currentScreenName, screens])
+
+  // Gerar codigo JavaScript a partir do fluxo
+  const generateJS = useCallback((nodes: Node[], edges: Edge[]) => {
+    let code = "/** Codigo Gerado via Fluxograma **/\n\n"
+    
+    // Encontrar nos que sao eventos (arrastados como componentes)
     const eventNodes = nodes.filter(n => n.metadata?.componentName)
     
     eventNodes.forEach(node => {
       const compName = node.metadata?.componentName
-      const eventName = "Click" // Por padrão para botões, pode ser dinâmico depois
+      const eventName = "Click" // Por padrao para botoes, pode ser dinamico depois
       
       code += `__runtime.on('${compName}', '${eventName}', function() {\n`
       
-      // Seguir as conexões para encontrar as ações
+      // Seguir as conexoes para encontrar as acoes
       let currentEdge = edges.find(e => e.source === node.id)
       while (currentEdge) {
         const targetNode = nodes.find(n => n.id === currentEdge!.target)
@@ -126,7 +149,7 @@ export function FlowchartEditor() {
           code += `  __runtime.call('Notifier', 'ShowAlert', ['${targetNode.label} disparado!']);\n`
         }
         
-        // Continuar para o próximo nó se houver
+        // Continuar para o proximo no se houver
         currentEdge = edges.find(e => e.source === targetNode.id)
       }
       
@@ -136,44 +159,34 @@ export function FlowchartEditor() {
     return code
   }, [])
 
-  // Auto-save e Sincronização
-  useEffect(() => {
-    // Permitir salvar estado vazio para refletir deleções total
-    if (nodes.length === 0 && edges.length === 0 && !currentFlowchartContent) return
-
+  // Auto-save e Sincronizacao - apenas quando usuario edita (nao no load inicial)
+  const saveFlowState = useCallback((newNodes: Node[], newEdges: Edge[]) => {
     if (saveTimeout.current) clearTimeout(saveTimeout.current)
     
     saveTimeout.current = setTimeout(async () => {
       setIsSaving(true)
-      const content = JSON.stringify({ nodes, edges })
+      const content = JSON.stringify({ nodes: newNodes, edges: newEdges })
       setCurrentFlowchartContent(content)
 
-      // Sincronizar com os blocos (.bky) se houver mudança estrutural
-      const generatedBky = convertFlowToBky(nodes, edges)
-      if (generatedBky !== currentBkyContent && nodes.length > 0) {
-        setCurrentBkyContent(generatedBky)
+      // Sincronizar com os blocos (.bky) se houver mudanca estrutural
+      if (newNodes.length > 0) {
+        const generatedBky = convertFlowToBky(newNodes, newEdges)
+        if (generatedBky !== currentBkyContent) {
+          setCurrentBkyContent(generatedBky)
+          lastBkyRef.current = generatedBky
+        }
       }
 
-      // Gerar e sincronizar código para Live Preview
-      const generatedCode = generateJS(nodes, edges)
+      // Gerar e sincronizar codigo para Live Preview
+      const generatedCode = generateJS(newNodes, newEdges)
       if (typeof window !== 'undefined' && currentScreenName) {
         (window as any).__apexGeneratedCode = (window as any).__apexGeneratedCode || {}
         ;(window as any).__apexGeneratedCode[currentScreenName] = generatedCode
       }
-
-      // Push para GitHub se configurado
-      if (ghToken && selectedRepo && currentFile && currentProject) {
-        // Lógica de push idêntica ao BkyWorkspace/Sidebar
-        // Para simplificar, vamos assumir que o sistema de auto-sync global pega as mudanças no store
-      }
       
       setIsSaving(false)
     }, 1500)
-
-    return () => {
-      if (saveTimeout.current) clearTimeout(saveTimeout.current)
-    }
-  }, [nodes, edges, setCurrentFlowchartContent, generateJS, currentScreenName, ghToken, selectedRepo, currentFile, currentProject])
+  }, [setCurrentFlowchartContent, generateJS, currentScreenName, currentBkyContent, setCurrentBkyContent])
 
   // Atalhos de teclado
   useEffect(() => {
@@ -184,46 +197,38 @@ export function FlowchartEditor() {
         setNodes(newNodes)
         setEdges(newEdges)
         setSelectedNode(null)
-        setCurrentFlowchartContent(JSON.stringify({ nodes: newNodes, edges: newEdges }))
+        saveFlowState(newNodes, newEdges)
         toast.success("Elemento removido")
       }
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [selectedNode, nodes, edges, setCurrentFlowchartContent])
+  }, [selectedNode, nodes, edges, saveFlowState])
 
-  const handleMouseDown = (e: React.MouseEvent, nodeId?: string) => {
-    if (tool === "hand") {
-      setIsDragging(true)
-      setDragOffset({ x: e.clientX - pan.x, y: e.clientY - pan.y })
-      return
+  // Handler para clique em no (seleciona o no)
+  const handleNodeMouseDown = (e: React.MouseEvent, nodeId: string) => {
+    e.stopPropagation()
+    setSelectedNode(nodeId)
+    setIsDraggingNode(true)
+    const node = nodes.find(n => n.id === nodeId)
+    if (node) {
+      const rect = containerRef.current?.getBoundingClientRect()
+      if (rect) {
+        setDragOffset({ 
+          x: (e.clientX - rect.left - pan.x) / zoom - node.x, 
+          y: (e.clientY - rect.top - pan.y) / zoom - node.y 
+        })
+      }
     }
+  }
 
-    if (nodeId) {
-      setSelectedNode(nodeId)
-      setIsDragging(true)
-      const node = nodes.find(n => n.id === nodeId)
-      if (node) {
-        setDragOffset({ x: e.clientX / zoom - node.x, y: e.clientY / zoom - node.y })
-      }
-    } else {
+  // Handler para clique no canvas (inicia pan)
+  const handleCanvasMouseDown = (e: React.MouseEvent) => {
+    // Se clicou no canvas (nao em um no), iniciar pan
+    if (e.target === e.currentTarget || (e.target as Element).tagName === 'svg' || (e.target as Element).tagName === 'rect') {
       setSelectedNode(null)
-      if (tool === "add") {
-        const rect = containerRef.current?.getBoundingClientRect()
-        if (rect) {
-          const newNode: Node = {
-            id: Date.now().toString(),
-            type: "process",
-            label: "Novo Processo",
-            x: (e.clientX - rect.left - pan.x) / zoom - 75,
-            y: (e.clientY - rect.top - pan.y) / zoom - 30,
-            width: 150,
-            height: 60
-          }
-          setNodes([...nodes, newNode])
-          setTool("select")
-        }
-      }
+      setIsPanning(true)
+      setDragOffset({ x: e.clientX - pan.x, y: e.clientY - pan.y })
     }
   }
 
@@ -240,9 +245,8 @@ export function FlowchartEditor() {
       return
     }
 
-    if (!isDragging) return
-
-    if (tool === "hand") {
+    // Pan (arrastar canvas)
+    if (isPanning) {
       setPan({
         x: e.clientX - dragOffset.x,
         y: e.clientY - dragOffset.y
@@ -250,12 +254,18 @@ export function FlowchartEditor() {
       return
     }
 
-    if (selectedNode) {
-      setNodes(prev => prev.map(n => 
-        n.id === selectedNode 
-          ? { ...n, x: e.clientX / zoom - dragOffset.x, y: e.clientY / zoom - dragOffset.y }
-          : n
-      ))
+    // Arrastar no
+    if (isDraggingNode && selectedNode) {
+      const rect = containerRef.current?.getBoundingClientRect()
+      if (rect) {
+        const newX = (e.clientX - rect.left - pan.x) / zoom - dragOffset.x
+        const newY = (e.clientY - rect.top - pan.y) / zoom - dragOffset.y
+        setNodes(prev => prev.map(n => 
+          n.id === selectedNode 
+            ? { ...n, x: newX, y: newY }
+            : n
+        ))
+      }
     }
   }
 
@@ -285,12 +295,19 @@ export function FlowchartEditor() {
           componentType: compType || undefined
         }
       }
-      setNodes([...nodes, newNode])
+      const newNodes = [...nodes, newNode]
+      setNodes(newNodes)
+      saveFlowState(newNodes, edges)
     }
   }
 
   const handleMouseUp = () => {
-    setIsDragging(false)
+    if (isDraggingNode && selectedNode) {
+      // Salvar posicao apos arrastar no
+      saveFlowState(nodes, edges)
+    }
+    setIsDraggingNode(false)
+    setIsPanning(false)
     setConnecting(null)
   }
 
@@ -313,11 +330,13 @@ export function FlowchartEditor() {
     if (connecting && connecting.source !== targetId) {
       // Check if edge already exists
       if (!edges.find(e => e.source === connecting.source && e.target === targetId)) {
-        setEdges([...edges, {
+        const newEdges = [...edges, {
           id: `e${connecting.source}-${targetId}`,
           source: connecting.source,
           target: targetId
-        }])
+        }]
+        setEdges(newEdges)
+        saveFlowState(nodes, newEdges)
       }
     }
     setConnecting(null)
@@ -343,7 +362,7 @@ export function FlowchartEditor() {
       <g 
         key={node.id} 
         transform={`translate(${node.x},${node.y})`}
-        onMouseDown={(e) => { e.stopPropagation(); handleMouseDown(e, node.id) }}
+        onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
         className={cn(
           "cursor-move transition-shadow duration-300",
           isSelected ? "filter drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" : "filter drop-shadow-[0_4px_6px_rgba(0,0,0,0.3)]"
@@ -448,37 +467,45 @@ export function FlowchartEditor() {
     )
   }
 
+  // Adicionar no via click no botao de elementos
+  const addNodeAtCenter = (type: Node["type"], label: string) => {
+    const newNode: Node = {
+      id: Date.now().toString(),
+      type: type,
+      label: label,
+      x: (-pan.x / zoom) + 300,
+      y: (-pan.y / zoom) + 200,
+      width: type === 'decision' ? 100 : 140,
+      height: type === 'decision' ? 100 : 50
+    }
+    const newNodes = [...nodes, newNode]
+    setNodes(newNodes)
+    saveFlowState(newNodes, edges)
+  }
+
   return (
     <div className="flex-1 flex flex-col bg-[#0a0a0a] overflow-hidden select-none relative animate-in fade-in duration-500">
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className="absolute inset-0 z-50 bg-black/50 flex items-center justify-center">
+          <div className="flex items-center gap-2 text-white">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            <span className="text-sm">Carregando fluxo...</span>
+          </div>
+        </div>
+      )}
+
       {/* Toolbar */}
       <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
         <div className="bg-black/60 backdrop-blur-md p-1 rounded-xl border border-white/5 flex flex-col gap-1 shadow-2xl">
           <Button 
             variant="ghost" 
             size="icon" 
-            className={cn("h-9 w-9 rounded-lg", tool === "select" && "bg-primary/20 text-primary")}
-            onClick={() => setTool("select")}
-            title="Selecionar"
-          >
-            <MousePointer2 className="w-4 h-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className={cn("h-9 w-9 rounded-lg", tool === "hand" && "bg-primary/20 text-primary")}
-            onClick={() => setTool("hand")}
-            title="Mover Camera"
+            className="h-9 w-9 rounded-lg text-muted-foreground"
+            title="Arrastar canvas para navegar"
+            disabled
           >
             <Hand className="w-4 h-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className={cn("h-9 w-9 rounded-lg", tool === "add" && "bg-primary/20 text-primary")}
-            onClick={() => setTool("add")}
-            title="Adicionar Nó"
-          >
-            <Plus className="w-4 h-4" />
           </Button>
           <div className="h-px bg-white/5 mx-2 my-1" />
           <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:text-primary transition-colors">
@@ -523,9 +550,11 @@ export function FlowchartEditor() {
           )} />
           <div className="flex flex-col">
             <span className="text-[10px] font-bold text-white uppercase tracking-wider">
-              {isSaving ? "Salvando..." : "Modo Fluxograma"}
+              {isSaving ? "Salvando..." : nodes.length === 0 ? "Sem blocos" : "Modo Fluxograma"}
             </span>
-            <span className="text-[9px] text-muted-foreground font-mono">Zoom: {Math.round(zoom * 100)}%</span>
+            <span className="text-[9px] text-muted-foreground font-mono">
+              Zoom: {Math.round(zoom * 100)}% | {nodes.length} nos
+            </span>
           </div>
         </div>
       </div>
@@ -538,27 +567,16 @@ export function FlowchartEditor() {
             Elementos
           </div>
           {[
-            { type: 'start', icon: Circle, label: 'Início/Fim' },
-            { type: 'process', icon: Square, label: 'Processo' },
-            { type: 'decision', icon: Diamond, label: 'Decisão' },
-            { type: 'database', icon: Database, label: 'Banco' },
-            { type: 'terminal', icon: Terminal, label: 'E/S' },
+            { type: 'start' as const, icon: Circle, label: 'Inicio/Fim' },
+            { type: 'process' as const, icon: Square, label: 'Processo' },
+            { type: 'decision' as const, icon: Diamond, label: 'Decisao' },
+            { type: 'database' as const, icon: Database, label: 'Banco' },
+            { type: 'action' as const, icon: Terminal, label: 'E/S' },
           ].map(item => (
             <button
               key={item.type}
               className="group relative flex flex-col items-center p-2 rounded-xl hover:bg-white/5 transition-all"
-              onClick={() => {
-                const newNode: Node = {
-                  id: Date.now().toString(),
-                  type: item.type as any,
-                  label: item.label,
-                  x: 300,
-                  y: 300,
-                  width: item.type === 'decision' ? 100 : 140,
-                  height: item.type === 'decision' ? 100 : 50
-                }
-                setNodes([...nodes, newNode])
-              }}
+              onClick={() => addNodeAtCenter(item.type, item.label)}
             >
               <item.icon className="w-4 h-4 text-white/60 group-hover:text-primary transition-colors" />
               <span className="absolute -top-8 bg-black border border-white/10 px-2 py-1 rounded text-[8px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
@@ -569,14 +587,14 @@ export function FlowchartEditor() {
         </div>
       </div>
 
-      {/* Editor Canvas */}
+      {/* Editor Canvas - arrastar no canvas automaticamente faz pan */}
       <div 
         ref={containerRef}
         className={cn(
-          "flex-1 relative cursor-default overflow-hidden bg-grid-pattern",
-          tool === "hand" && (isDragging ? "cursor-grabbing" : "cursor-grab")
+          "flex-1 relative overflow-hidden bg-grid-pattern",
+          isPanning ? "cursor-grabbing" : "cursor-grab"
         )}
-        onMouseDown={(e) => handleMouseDown(e)}
+        onMouseDown={handleCanvasMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}

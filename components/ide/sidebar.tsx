@@ -12,7 +12,7 @@ import {
   Share2, Settings, Wifi, Bluetooth, ChevronDown, ChevronRight,
   Box, Layers, CreditCard, TextCursorInput, Sparkles, Send,
   Smartphone, GitPullRequest, HardDrive, Network, Search, X, Star,
-  ChevronLeft, Trash2, Eye, EyeOff, Workflow, MousePointer2
+  ChevronLeft, Trash2, Eye, EyeOff
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -34,7 +34,6 @@ const tabs = [
   { id: "cloud", label: "Cloud", icon: Cloud, title: "APEX CLOUD" },
   { id: "arvore", label: "Arvore", icon: Network, title: "ARVORE DE COMPONENTES" },
   { id: "chat", label: "Chat", icon: Sparkles, title: "APEX DROID AI" },
-  { id: "fluxo", label: "Fluxo", icon: Workflow, title: "LÓGICA DE FLUXOGRAMA" },
 ]
 
 // Kodular component categories with all components
@@ -195,7 +194,6 @@ export function Sidebar() {
   })
   const [saving, setSaving] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
-  const [flowSubTab, setFlowSubTab] = useState<"comandos" | "componentes">("comandos")
   const [chatInput, setChatInput] = useState("")
   const [dragOverInfo, setDragOverInfo] = useState<{ 
     name: string | null, 
@@ -445,11 +443,9 @@ export function Sidebar() {
     }
   }, [ghToken, selectedRepo, currentFile, currentProject, currentScreenName, updateFileContent, setCurrentFile])
 
-  // Auto-switch tab when appMode changes to flowchart
+  // Auto-switch tab when appMode changes back to edit
   useEffect(() => {
-    if (appMode === "flowchart") {
-      setActiveTab("fluxo")
-    } else if (appMode === "edit") {
+    if (appMode === "edit") {
       setActiveTab("componentes")
     }
   }, [appMode, setActiveTab])
@@ -1476,127 +1472,6 @@ export function Sidebar() {
               )}
             </div>
           </ScrollArea>
-        )}
-
-        {/* Flowchart Tab */}
-        {activeTab === "fluxo" && (
-          <div className="flex-1 flex flex-col overflow-hidden p-4 gap-4 animate-in fade-in slide-in-from-left-2 duration-300">
-            <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 flex flex-col gap-2">
-              <div className="flex items-center gap-2 text-primary">
-                <Workflow className="w-4 h-4" />
-                <span className="text-xs font-bold uppercase tracking-wider">Editor Ativo</span>
-              </div>
-              <p className="text-[10px] text-muted-foreground leading-relaxed">
-                Você está editando o fluxograma de lógica da tela <span className="text-foreground font-semibold">{currentScreenName}</span>.
-              </p>
-            </div>
-
-            <div className="flex bg-black/40 p-1 rounded-lg border border-white/5">
-              <button 
-                onClick={() => setFlowSubTab("comandos")}
-                className={cn(
-                  "flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all",
-                  flowSubTab === "comandos" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                LÓGICA
-              </button>
-              <button 
-                onClick={() => setFlowSubTab("componentes")}
-                className={cn(
-                  "flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all",
-                  flowSubTab === "componentes" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                COMPONENTES
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-hidden -mx-2 px-2">
-              <ScrollArea className="h-full pr-4">
-                {flowSubTab === "comandos" ? (
-                  <div className="space-y-4 pb-4">
-                    <div className="space-y-2">
-                      <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest px-1">Eventos & Ações</span>
-                      <div className="grid grid-cols-1 gap-2">
-                        {[
-                          { label: "Abrir Tela", icon: Smartphone, action: "Navegar para outra tela", type: "action" },
-                          { label: "Se / Então", icon: GitBranch, action: "Condicional lógica", type: "logic" },
-                          { label: "Notificar", icon: Bell, action: "Exibir alerta/aviso", type: "action" },
-                          { label: "Variável", icon: Database, action: "Definir valor global", type: "logic" },
-                        ].map((item, i) => (
-                          <div 
-                            key={i} 
-                            draggable 
-                            onDragStart={(e) => {
-                              e.dataTransfer.setData("nodeType", item.type);
-                              e.dataTransfer.setData("nodeLabel", item.label);
-                            }}
-                            className="flex items-center gap-3 p-2.5 rounded-lg border border-white/5 bg-secondary/30 hover:bg-secondary/50 hover:border-primary/30 transition-all text-left group cursor-grab active:cursor-grabbing"
-                          >
-                            <div className="w-8 h-8 rounded-md bg-black/40 flex items-center justify-center group-hover:text-primary transition-colors">
-                              <item.icon className="w-4 h-4" />
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-[11px] font-semibold">{item.label}</span>
-                              <span className="text-[9px] text-muted-foreground">{item.action}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4 pb-4">
-                    <div className="space-y-2">
-                      <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest px-1">Componentes da Tela</span>
-                      {!currentProject ? (
-                        <p className="text-[10px] text-muted-foreground px-2 italic">Nenhum projeto carregado.</p>
-                      ) : (
-                        <div className="space-y-1">
-                          {(() => {
-                            const flatComps: any[] = [];
-                            const flatten = (c: any) => {
-                              flatComps.push(c);
-                              c.$Components?.forEach(flatten);
-                            };
-                            flatten(currentProject.Properties);
-                            
-                            return flatComps.map(comp => (
-                              <div 
-                                key={comp.$Name}
-                                draggable
-                                onDragStart={(e) => {
-                                  e.dataTransfer.setData("nodeType", "component");
-                                  e.dataTransfer.setData("nodeLabel", comp.$Name);
-                                  e.dataTransfer.setData("compType", comp.$Type.split('.').pop());
-                                }}
-                                className="flex items-center gap-2 p-2 rounded-md hover:bg-secondary/50 border border-transparent hover:border-white/5 transition-all cursor-grab active:cursor-grabbing group"
-                              >
-                                <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center text-primary">
-                                  <Box className="w-3.5 h-3.5" />
-                                </div>
-                                <div className="flex flex-col min-w-0">
-                                  <span className="text-[11px] font-medium truncate">{comp.$Name}</span>
-                                  <span className="text-[8px] text-muted-foreground uppercase">{comp.$Type.split('.').pop()}</span>
-                                </div>
-                                <MousePointer2 className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-40 transition-opacity" />
-                              </div>
-                            ));
-                          })()}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </ScrollArea>
-            </div>
-
-            <div className="mt-auto p-4 bg-secondary/20 rounded-xl border border-dashed border-white/10 text-center">
-              <Sparkles className="w-5 h-5 text-primary mx-auto mb-2 opacity-50" />
-              <p className="text-[10px] text-muted-foreground">Dica: Use a IA para gerar fluxogramas complexos a partir de descrições em texto.</p>
-            </div>
-          </div>
         )}
 
         {/* Chat Tab */}

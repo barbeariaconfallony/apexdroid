@@ -225,6 +225,24 @@ export function BkyWorkspace() {
         grid: { spacing: 25, length: 3, colour: '#222', snap: true }
       })
 
+      // Monkeypatch para suprimir erro conhecido do Blockly 12.x durante drag
+      // "Block not present in workspace's list of top-most blocks"
+      const originalRemoveTopBlock = ws.removeTopBlock?.bind(ws)
+      if (originalRemoveTopBlock) {
+        ws.removeTopBlock = function(block: any) {
+          try {
+            originalRemoveTopBlock(block)
+          } catch (err: any) {
+            // Ignorar erro especifico de insertion marker durante drag
+            if (err?.message?.includes("Block not present in workspace")) {
+              // Silenciar - e esperado durante operacoes de drag
+              return
+            }
+            throw err
+          }
+        }
+      }
+
       // Listener para Auto-Save Inteligente (Debounced)
       ws.addChangeListener((event: any) => {
         // Ignore events during drag operations to prevent the "Block not present" error
