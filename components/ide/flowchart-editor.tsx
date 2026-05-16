@@ -16,7 +16,6 @@ import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import { convertBkyToFlow } from "@/lib/bky-to-flow"
 import { convertFlowToBky } from "@/lib/flow-to-bky"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { 
   getBlocksCatalogForComponent, 
   getEventsForComponent, 
@@ -799,9 +798,9 @@ export function FlowchartEditor() {
 
       {/* Configuration Modal */}
       {configModalOpen && selectedNodeData && (
-        <div className="absolute top-4 right-4 bottom-4 w-80 bg-black/90 backdrop-blur-xl border border-white/10 rounded-2xl z-40 flex flex-col shadow-2xl animate-in slide-in-from-right-4 duration-300">
+        <div className="absolute top-4 right-4 bottom-4 w-80 bg-black/90 backdrop-blur-xl border border-white/10 rounded-2xl z-40 flex flex-col shadow-2xl animate-in slide-in-from-right-4 duration-300 overflow-hidden">
           {/* Header */}
-          <div className="p-4 border-b border-white/5 flex items-center justify-between">
+          <div className="flex-shrink-0 p-4 border-b border-white/5 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Settings2 className="w-4 h-4 text-primary" />
               <span className="text-[10px] font-bold uppercase tracking-widest text-white">Configuracao</span>
@@ -811,7 +810,7 @@ export function FlowchartEditor() {
             </Button>
           </div>
 
-          <ScrollArea className="flex-1">
+          <div className="flex-1 overflow-y-auto min-h-0">
             <div className="p-4 space-y-6">
               {/* Label Edit */}
               <div className="space-y-2">
@@ -999,10 +998,10 @@ export function FlowchartEditor() {
                 </div>
               )}
             </div>
-          </ScrollArea>
+          </div>
 
           {/* Footer Actions */}
-          <div className="p-4 border-t border-white/5 bg-white/5 space-y-2">
+          <div className="flex-shrink-0 p-4 border-t border-white/5 bg-white/5 space-y-2">
             <Button 
               className="w-full h-9 text-[10px] font-bold uppercase shine" 
               onClick={() => {
