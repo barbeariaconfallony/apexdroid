@@ -11,11 +11,11 @@ import { javascriptGenerator, Order } from 'blockly/javascript'
 export function registerCodeGenerators() {
   // ===== CONTROLE =====
   
-  javascriptGenerator.forBlock['controls_if_else'] = function(block: any) {
-    const condition = javascriptGenerator.valueToCode(block, 'IF', Order.NONE) || 'false'
-    const doCode = javascriptGenerator.statementToCode(block, 'DO')
-    const elseCode = javascriptGenerator.statementToCode(block, 'ELSE')
-    return `if (${condition}) {\n${doCode}} else {\n${elseCode}}\n`
+  javascriptGenerator.forBlock['controls_if_then_else'] = function(block: any) {
+    const condition = javascriptGenerator.valueToCode(block, 'CONDITION', Order.NONE) || 'false'
+    const thenCode = javascriptGenerator.valueToCode(block, 'THEN', Order.NONE) || 'null'
+    const elseCode = javascriptGenerator.valueToCode(block, 'ELSE', Order.NONE) || 'null'
+    return [`(${condition} ? ${thenCode} : ${elseCode})`, Order.CONDITIONAL]
   }
 
   javascriptGenerator.forBlock['controls_for_each'] = function(block: any) {
@@ -81,15 +81,15 @@ export function registerCodeGenerators() {
     return `__runtime.closeScreenWithPlainText(${text});\n`
   }
 
-  javascriptGenerator.forBlock['controls_do_then_return'] = function(block: any) {
-    const statements = javascriptGenerator.statementToCode(block, 'STM')
-    const returnValue = javascriptGenerator.valueToCode(block, 'VALUE', Order.NONE) || 'null'
+  javascriptGenerator.forBlock['controls_do'] = function(block: any) {
+    const statements = javascriptGenerator.statementToCode(block, 'DO')
+    const returnValue = javascriptGenerator.valueToCode(block, 'RESULT', Order.NONE) || 'null'
     return [`(function() {\n${statements}return ${returnValue};\n})()`, Order.FUNCTION_CALL]
   }
 
-  javascriptGenerator.forBlock['controls_eval'] = function(block: any) {
-    const expression = javascriptGenerator.valueToCode(block, 'EXPRESSION', Order.NONE) || '""'
-    return [`eval(${expression})`, Order.FUNCTION_CALL]
+  javascriptGenerator.forBlock['controls_evaluate_but_ignore'] = function(block: any) {
+    const expression = javascriptGenerator.valueToCode(block, 'VALUE', Order.NONE) || '""'
+    return `${expression};\n`
   }
 
   // ===== LOGICA =====

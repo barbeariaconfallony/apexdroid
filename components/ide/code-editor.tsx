@@ -146,14 +146,34 @@ export function CodeEditor({ className }: CodeEditorProps) {
       setScmCode(jsonContent)
       
       const bkyContent = currentBkyContent || ""
-      setBkyCode(bkyContent)
+      
+      // Formatar BKY (pode ser JSON ou XML)
+      let formattedBky = bkyContent
+      if (bkyContent.trim().startsWith("{")) {
+        try {
+          formattedBky = JSON.stringify(JSON.parse(bkyContent), null, 2)
+        } catch (e) {}
+      } else if (bkyContent.trim().startsWith("<")) {
+        // Formatação simples de XML
+        let formatted = ""
+        let indent = ""
+        const tab = "  "
+        bkyContent.replace(/>\s*</g, "><").split(/>(?=<)/).forEach((node) => {
+          if (node.match(/^\/\w/)) indent = indent.substring(tab.length)
+          formatted += indent + node + ">\n"
+          if (node.match(/^<?\w[^>]*[^\/]$/)) indent += tab
+        })
+        formattedBky = formatted.trim()
+      }
+      
+      setBkyCode(formattedBky)
 
-      const activeCode = activeTab === "frontend" ? jsonContent : bkyContent
+      const activeCode = activeTab === "frontend" ? jsonContent : formattedBky
       setCode(activeCode)
       setOriginalCode(activeCode)
       setHasChanges(false)
       setJsonErrors([])
-      setIsValidJson(activeTab === "frontend" ? true : true) // XML nao validado por enquanto
+      setIsValidJson(true)
     }
   }, [currentProject, currentBkyContent, activeTab])
 
@@ -754,7 +774,7 @@ export function CodeEditor({ className }: CodeEditorProps) {
         {/* Status bar */}
         <div className="flex items-center justify-between px-3 py-1 border-t border-white/5 bg-[#0f0f0f] text-[10px] text-muted-foreground">
           <div className="flex items-center gap-3">
-            <span>JSON</span>
+            <span className="font-bold text-primary">{activeTab === "frontend" ? "JSON" : "XML"}</span>
             <span>UTF-8</span>
             <span>Espacos: 2</span>
             {jsonErrors.length > 0 && (

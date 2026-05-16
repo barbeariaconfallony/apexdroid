@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, memo, useRef, useEffect } from "react"
-import { Zap, PlusCircle, Github, Smartphone, Tablet, RotateCcw, Maximize2, Minimize2, Crown, UserX, VolumeX, X, ChevronRight, Monitor, Play, Workflow } from "lucide-react"
+import { Zap, PlusCircle, Github, Smartphone, Tablet, RotateCcw, Maximize2, Minimize2, Crown, UserX, VolumeX, X, ChevronRight, Monitor, Play, Workflow, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BkyWorkspace } from "./bky-workspace"
@@ -38,8 +38,8 @@ const devicePresets = {
 }
 
 // Kodular color converter
-function convertColor(k?: string): string {
-  if (!k || k === "None" || k === "0") return "transparent"
+function convertColor(k?: any): string {
+  if (typeof k !== 'string' || !k || k === "None" || k === "0") return "transparent"
   if (k.startsWith("&H")) {
     const hex = k.substring(2)
     if (hex.length === 8) {
@@ -54,11 +54,15 @@ function convertColor(k?: string): string {
   return k
 }
 
-function convertSize(v?: string | number): string {
+function convertSize(v?: any): string {
   if (v === "-1" || v === -1) return "auto"
   if (v === "-2" || v === -2) return "100%"
   if (typeof v === "number" && v > 0) return `${v}px`
-  if (typeof v === "string" && parseInt(v) > 0) return `${v}px`
+  if (typeof v === "string") {
+    if (v.endsWith("%")) return v
+    const val = parseInt(v)
+    if (!isNaN(val) && val > 0) return `${val}px`
+  }
   return "auto"
 }
 
@@ -94,6 +98,7 @@ interface ComponentRendererProps {
   parentName?: string
   index?: number
   onTriggerEvent?: (component: string, event: string) => void
+  showHiddenComponents?: boolean
 }
 
 // Resolve asset URL from asset name
@@ -107,8 +112,9 @@ function resolveAssetUrl(assetName: string | undefined, assets: ProjectAsset[]):
 const ComponentRenderer = memo(({ 
   component, onSelect, selectedName, appMode, assets = [], 
   moveComponent, dragOverInfo, setDragOverInfo,
-  parentName, index, onTriggerEvent
+  parentName, index, onTriggerEvent, showHiddenComponents
 }: ComponentRendererProps) => {
+  if (!component || !component.$Type || !component.$Name) return null
   const { $Type, $Name, $Components } = component
   
   // Handler para disparar eventos no modo run
@@ -123,9 +129,17 @@ const ComponentRenderer = memo(({
     "Clock", "Sound", "Notifier", "TinyDB", "Web", "Firebase", "Cloudinary",
     "FirebaseDB", "TinyWebDB", "BluetoothClient", "BluetoothServer",
     "ActivityStarter", "TextToSpeech", "SpeechRecognizer", "Sharing",
-    "PhoneCall", "Texting", "Twitter", "ProbeNetwork", "Network"
+    "PhoneCall", "Texting", "Twitter", "ProbeNetwork", "Network",
+    "BarcodeScanner", "Spotlight", "Shortcut", "SideMenuLayout", "Device",
+    "Shell", "File", "Camera", "Metadata", "Accelerometer", "Gyroscope",
+    "LocationSensor", "OrientationSensor", "ProximitySensor", "Battery"
   ]
-  if (nonVisibleTypes.some(t => $Type.includes(t))) {
+  
+  const isNonVisibleType = nonVisibleTypes.some(t => $Type && $Type.includes(t))
+  
+  const isVisible = component.Visible !== "False" && component.Visible !== false
+  
+  if ((!isVisible || isNonVisibleType) && !showHiddenComponents) {
     return null
   }
 
@@ -183,7 +197,9 @@ const ComponentRenderer = memo(({
   const baseStyle: React.CSSProperties = {
     width: convertSize(component.Width),
     height: convertSize(component.Height),
-    backgroundColor: convertColor(component.BackgroundColor || "&H00FFFFFF")
+    backgroundColor: convertColor(component.BackgroundColor || "&H00FFFFFF"),
+    opacity: (isVisible && !isNonVisibleType) ? 1 : 0.4,
+    border: (!isVisible || isNonVisibleType) && showHiddenComponents ? "1px dashed #999" : undefined
   }
 
   const handleClick = (e: React.MouseEvent) => {
@@ -416,7 +432,7 @@ const ComponentRenderer = memo(({
         disabled={appMode !== "edit"}
       >
         <div onClick={handleClick} className="absolute inset-0 z-[-1]" />
-        {$Components?.map((child, idx) => (
+        {$Components?.filter(c => c !== null && c !== undefined).map((child, idx) => (
           <ComponentRenderer
             key={child.$Name}
             component={child}
@@ -430,6 +446,7 @@ const ComponentRenderer = memo(({
             parentName={$Name}
             index={idx}
             onTriggerEvent={onTriggerEvent}
+            showHiddenComponents={showHiddenComponents}
           />
         ))}
         {(!$Components || $Components.length === 0) && appMode === "edit" && (
@@ -443,7 +460,20 @@ const ComponentRenderer = memo(({
     )
   }
 
-  if ($Type === "CardView") {
+  if ($Type.includes("Space")) {
+    return renderWithDragIndicators(
+      <div
+        onClick={handleClick}
+        className={cn(
+          "transition-all",
+          isSelected && "ring-2 ring-blue-500 ring-offset-1 rounded bg-blue-50/20"
+        )}
+        style={baseStyle}
+      />
+    )
+  }
+
+  if ($Type.includes("CardView")) {
     return (
       <DroppableZone
         id={`drop-${$Name}`}
@@ -456,7 +486,7 @@ const ComponentRenderer = memo(({
         disabled={appMode !== "edit"}
       >
         <div onClick={handleClick} className="absolute inset-0 z-[-1]" />
-        {$Components?.map((child, idx) => (
+        {$Components?.filter(c => c !== null && c !== undefined).map((child, idx) => (
           <ComponentRenderer
             key={child.$Name}
             component={child}
@@ -470,6 +500,7 @@ const ComponentRenderer = memo(({
             parentName={$Name}
             index={idx}
             onTriggerEvent={onTriggerEvent}
+            showHiddenComponents={showHiddenComponents}
           />
         ))}
         {(!$Components || $Components.length === 0) && appMode === "edit" && (
@@ -548,13 +579,19 @@ const ComponentRenderer = memo(({
     <div
       onClick={handleClick}
       className={cn(
-        "cursor-pointer transition-all p-2 rounded bg-gray-100",
-        isSelected && "ring-2 ring-blue-500 ring-offset-1"
+        "cursor-pointer transition-all p-2 rounded bg-gray-100/50 border border-dashed border-gray-300",
+        isSelected ? "ring-2 ring-blue-500 ring-offset-1" : "hover:bg-gray-100"
       )}
       style={baseStyle}
     >
-      <span className="text-xs text-gray-500">[{$Type}] {$Name}</span>
-      {component.Text && <div className="text-sm mt-1">{component.Text}</div>}
+      {(showHiddenComponents || isSelected) ? (
+        <>
+          <span className="text-[10px] text-gray-500 font-mono">[{$Type}] {$Name}</span>
+          {component.Text && <div className="text-xs mt-1 font-medium">{component.Text}</div>}
+        </>
+      ) : (
+        <div className="w-full h-full min-h-[20px]" />
+      )}
     </div>
   )
 })
@@ -566,7 +603,7 @@ export function PhonePreview() {
     currentProject, appMode, setAppMode, updateComponent, removeComponent, moveComponent,
     selectedComponent, setSelectedComponent, setShowProperties,
     selectedRepo, currentScreenName, setActiveTab,
-    projectAssets, ghToken, isThinking
+    projectAssets, ghToken, isThinking, switchScreen
   } = useIDEStore()
 
   // Device state
@@ -607,8 +644,11 @@ export function PhonePreview() {
       // Criar contexto de componentes
       const componentProps: Record<string, any> = {}
       const collectComponents = (comp: KodularComponent) => {
+        if (!comp || !comp.$Name) return
         componentProps[comp.$Name] = { ...comp }
-        comp.$Components?.forEach(collectComponents)
+        comp.$Components?.forEach(c => {
+          if (c) collectComponents(c)
+        })
       }
       if (currentProject?.Properties) {
         collectComponents(currentProject.Properties)
@@ -640,7 +680,10 @@ export function PhonePreview() {
             console.log(`[Runtime] ${component}.${method}(${args.join(', ')})`)
           }
         },
-        openScreen: (name: string) => toast.info(`Abrindo tela: ${name}`),
+        openScreen: (name: string) => {
+          console.log(`[Runtime] Abrindo tela: ${name}`)
+          switchScreen(name)
+        },
         closeScreen: () => toast.info('Fechando tela'),
         getStartValue: () => null,
         setAny: (comp: any, prop: string, val: any) => runtime.set(typeof comp === 'string' ? comp : comp?.$Name, prop, val),
@@ -651,15 +694,37 @@ export function PhonePreview() {
 
       // Expor runtime globalmente
       if (typeof window !== 'undefined') {
+        const trigger = (component: string, event: string, ...args: any[]) => {
+          const handlers = eventHandlers[component]?.[event] || []
+          handlers.forEach(h => {
+            try { h(...args) } catch(e) { console.error('Erro no handler:', e) }
+          })
+        }
+
         (window as any).__apexBlocksRuntime = {
-          triggerEvent: (component: string, event: string, ...args: any[]) => {
-            const handlers = eventHandlers[component]?.[event] || []
-            handlers.forEach(h => {
-              try { h(...args) } catch(e) { console.error('Erro no handler:', e) }
-            })
-          },
+          triggerEvent: trigger,
           getEventHandlers: () => eventHandlers
         }
+
+        // Configurar timers para componentes Clock
+        const clocks = Object.values(componentProps).filter(c => c.$Type === "Clock")
+        clocks.forEach(clock => {
+          const enabled = clock.TimerEnabled === "True" || clock.TimerEnabled === true
+          const interval = parseInt(clock.TimerInterval) || 1000
+          
+          if (enabled) {
+            console.log(`[Runtime] Iniciando Timer para: ${clock.$Name} (${interval}ms)`)
+            const timerId = setInterval(() => {
+              if (getBlocksRuntime()) {
+                trigger(clock.$Name, "Timer")
+              }
+            }, interval);
+
+            // Armazenar ID do timer para limpeza posterior
+            if (!(window as any).__apexTimers) (window as any).__apexTimers = []
+            ;(window as any).__apexTimers.push(timerId)
+          }
+        })
       }
 
       // Executar codigo gerado
@@ -699,10 +764,23 @@ export function PhonePreview() {
     if (appMode !== "run") {
       setRuntimeInitialized(false)
       if (typeof window !== 'undefined') {
+        // Limpar timers
+        if ((window as any).__apexTimers) {
+          (window as any).__apexTimers.forEach((id: any) => clearInterval(id))
+          delete (window as any).__apexTimers
+        }
         delete (window as any).__apexBlocksRuntime
       }
     }
-  }, [appMode])
+    
+    // Limpar timers ao trocar de tela ou desmontar
+    return () => {
+      if (typeof window !== 'undefined' && (window as any).__apexTimers) {
+        (window as any).__apexTimers.forEach((id: any) => clearInterval(id))
+        delete (window as any).__apexTimers
+      }
+    }
+  }, [appMode, currentScreenName])
   
   // Fictitious connected users (all, shown 3 inline + rest in modal)
   const allUsers = [
@@ -877,6 +955,14 @@ export function PhonePreview() {
     )
   }
 
+  if (!currentProject || !currentProject.Properties) {
+    return (
+      <main className="flex-1 bg-background flex flex-col items-center justify-center">
+        <p className="text-muted-foreground">Dados do projeto inválidos ou corrompidos.</p>
+      </main>
+    )
+  }
+
   const props = currentProject.Properties
 
   return (
@@ -895,6 +981,18 @@ export function PhonePreview() {
       {/* Top Controls Bar - Compact & Responsive (Only for Design/Live) */}
       {(appMode === "edit" || appMode === "run") && (
         <div className="flex items-center justify-center gap-2 px-2 py-1 border-b border-border/50 bg-card/80 backdrop-blur-sm z-10 flex-wrap">
+          {/* Hidden Components Toggle */}
+          <Button
+            variant={showHiddenComponents ? "default" : "outline"}
+            size="sm"
+            className="h-6 gap-1.5 px-2 text-[10px]"
+            onClick={() => setShowHiddenComponents(!showHiddenComponents)}
+            title={showHiddenComponents ? "Ocultar componentes invisíveis" : "Mostrar componentes invisíveis"}
+          >
+            {showHiddenComponents ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+            {showHiddenComponents ? "Visíveis: ON" : "Visíveis: OFF"}
+          </Button>
+
           {/* Device Type Tabs */}
           <div className="bg-secondary rounded-md p-0.5 flex gap-0.5">
             <Button
@@ -1094,7 +1192,7 @@ export function PhonePreview() {
                     }
                   }}
                 />
-                {currentProject.Properties.$Components?.map((comp, idx) => (
+                {currentProject.Properties.$Components?.filter(c => c !== null && c !== undefined).map((comp, idx) => (
               <ComponentRenderer 
                 key={comp.$Name} 
                 component={comp} 
@@ -1108,6 +1206,7 @@ export function PhonePreview() {
                 parentName={currentProject.Properties.$Name}
                 index={idx}
                 onTriggerEvent={handleTriggerEvent}
+                showHiddenComponents={showHiddenComponents}
               />
             ))}
                 
@@ -1127,7 +1226,7 @@ export function PhonePreview() {
                 <div className="bg-gray-100 border-t border-gray-200 px-3 py-2 flex gap-2 overflow-x-auto shrink-0">
                   <span className="text-[10px] text-gray-400 opacity-50 shrink-0">NAO VISIVEIS</span>
                   {props.$Components
-                    .filter(c => ["Clock", "Sound", "Notifier", "TinyDB", "Web", "Firebase", "Cloudinary"].includes(c.$Type))
+                    ?.filter(c => c && ["Clock", "Sound", "Notifier", "TinyDB", "Web", "Firebase", "Cloudinary"].includes(c.$Type))
                     .map(c => (
                       <div 
                         key={c.$Name}

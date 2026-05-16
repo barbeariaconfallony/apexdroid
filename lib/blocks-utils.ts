@@ -43,7 +43,7 @@ export function generateDynamicToolbox(root: KodularComponent): string {
         <block type="controls_if">
           <mutation elseif="1" else="1"></mutation>
         </block>
-        <block type="kodular_if_then_else"></block>
+        <block type="controls_if_then_else"></block>
         <block type="controls_repeat_ext">
           <value name="TIMES">
             <shadow type="math_number"><field name="NUM">10</field></shadow>
@@ -56,19 +56,27 @@ export function generateDynamicToolbox(root: KodularComponent): string {
           <value name="BY"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
         </block>
         <block type="controls_forEach"></block>
-        <block type="kodular_for_each_dict"></block>
+        <block type="controls_for_each_dict"></block>
         <block type="controls_flow_statements"></block>
-        <block type="kodular_break"></block>
-        <block type="kodular_open_screen"></block>
-        <block type="kodular_open_screen_with_value"></block>
-        <block type="kodular_get_start_value"></block>
-        <block type="kodular_get_plain_start_text"></block>
-        <block type="kodular_close_screen"></block>
-        <block type="kodular_close_screen_with_value"></block>
-        <block type="kodular_close_screen_with_plain_text"></block>
-        <block type="kodular_close_application"></block>
-        <block type="kodular_do"></block>
-        <block type="kodular_evaluate_but_ignore"></block>
+        <block type="controls_break"></block>
+        <block type="controls_open_screen">
+          <value name="SCREEN_NAME">
+            <shadow type="text"><field name="TEXT">Screen1</field></shadow>
+          </value>
+        </block>
+        <block type="controls_open_screen_with_value">
+          <value name="SCREEN_NAME">
+            <shadow type="text"><field name="TEXT">Screen1</field></shadow>
+          </value>
+        </block>
+        <block type="controls_get_start_value"></block>
+        <block type="controls_get_plain_start_text"></block>
+        <block type="controls_close_screen"></block>
+        <block type="controls_close_screen_with_value"></block>
+        <block type="controls_close_screen_with_plain_text"></block>
+        <block type="controls_close_app"></block>
+        <block type="controls_do"></block>
+        <block type="controls_evaluate_but_ignore"></block>
       </category>
 
       <!-- LOGIC -->
@@ -78,8 +86,8 @@ export function generateDynamicToolbox(root: KodularComponent): string {
         <block type="logic_negate"></block>
         <block type="logic_boolean"></block>
         <block type="logic_null"></block>
-        <block type="kodular_true"></block>
-        <block type="kodular_false"></block>
+        <block type="logic_true"></block>
+        <block type="logic_false"></block>
       </category>
 
       <!-- MATH -->
@@ -89,7 +97,7 @@ export function generateDynamicToolbox(root: KodularComponent): string {
           <value name="A"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
           <value name="B"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
         </block>
-        <block type="kodular_math_compare"></block>
+        <block type="math_compare"></block>
         <block type="math_single"></block>
         <block type="math_trig"></block>
         <block type="math_constant"></block>
@@ -110,14 +118,14 @@ export function generateDynamicToolbox(root: KodularComponent): string {
           <value name="TO"><shadow type="math_number"><field name="NUM">100</field></shadow></value>
         </block>
         <block type="math_random_float"></block>
-        <block type="kodular_random_set_seed"></block>
-        <block type="kodular_math_convert_number"></block>
-        <block type="kodular_math_convert_deg_rad"></block>
-        <block type="kodular_math_format_decimal"></block>
-        <block type="kodular_math_is_number"></block>
-        <block type="kodular_math_bitwise_and"></block>
-        <block type="kodular_math_bitwise_or"></block>
-        <block type="kodular_math_bitwise_xor"></block>
+        <block type="math_random_set_seed"></block>
+        <block type="math_convert_number"></block>
+        <block type="math_convert_deg_rad"></block>
+        <block type="math_format_decimal"></block>
+        <block type="math_is_number"></block>
+        <block type="math_bitwise_and"></block>
+        <block type="math_bitwise_or"></block>
+        <block type="math_bitwise_xor"></block>
       </category>
 
       <!-- TEXT -->
@@ -133,7 +141,7 @@ export function generateDynamicToolbox(root: KodularComponent): string {
         <block type="text_isEmpty">
           <value name="VALUE"><shadow type="text"><field name="TEXT"></field></shadow></value>
         </block>
-        <block type="kodular_text_is_string"></block>
+        <block type="text_is_string"></block>
         <block type="text_indexOf">
           <value name="VALUE"><shadow type="text"><field name="TEXT">abc</field></shadow></value>
           <value name="FIND"><shadow type="text"><field name="TEXT">b</field></shadow></value>
@@ -150,16 +158,16 @@ export function generateDynamicToolbox(root: KodularComponent): string {
         <block type="text_trim">
           <value name="TEXT"><shadow type="text"><field name="TEXT">abc</field></shadow></value>
         </block>
-        <block type="kodular_text_compare"></block>
-        <block type="kodular_text_contains"></block>
-        <block type="kodular_text_split"></block>
-        <block type="kodular_text_split_at_any"></block>
-        <block type="kodular_text_split_at_first"></block>
-        <block type="kodular_text_split_at_first_of_any"></block>
-        <block type="kodular_text_split_at_spaces"></block>
-        <block type="kodular_text_segment"></block>
-        <block type="kodular_text_replace_all"></block>
-        <block type="kodular_text_obfuscated"></block>
+        <block type="text_compare"></block>
+        <block type="text_contains"></block>
+        <block type="text_split"></block>
+        <block type="text_split_at_any"></block>
+        <block type="text_split_at_first"></block>
+        <block type="text_split_at_first_of_any"></block>
+        <block type="text_split_at_spaces"></block>
+        <block type="text_segment"></block>
+        <block type="text_replace_all"></block>
+        <block type="text_obfuscated"></block>
       </category>
 
       <!-- LISTS -->
@@ -178,65 +186,65 @@ export function generateDynamicToolbox(root: KodularComponent): string {
         </block>
         <block type="lists_getIndex"></block>
         <block type="lists_setIndex"></block>
-        <block type="kodular_list_add_items"></block>
-        <block type="kodular_list_append"></block>
-        <block type="kodular_list_copy"></block>
-        <block type="kodular_list_is_list"></block>
-        <block type="kodular_list_is_in_list"></block>
-        <block type="kodular_list_pick_random"></block>
-        <block type="kodular_list_remove_item"></block>
-        <block type="kodular_list_insert_item"></block>
-        <block type="kodular_list_replace_item"></block>
-        <block type="kodular_list_reverse"></block>
-        <block type="kodular_list_join_with_separator"></block>
-        <block type="kodular_list_from_csv_row"></block>
-        <block type="kodular_list_from_csv_table"></block>
-        <block type="kodular_list_to_csv_row"></block>
-        <block type="kodular_list_to_csv_table"></block>
-        <block type="kodular_list_lookup_pairs"></block>
+        <block type="lists_add_item"></block>
+        <block type="lists_append"></block>
+        <block type="lists_copy"></block>
+        <block type="lists_is_list"></block>
+        <block type="lists_is_in_list"></block>
+        <block type="lists_pick_random"></block>
+        <block type="lists_remove_item"></block>
+        <block type="lists_insert_item"></block>
+        <block type="lists_replace_item"></block>
+        <block type="lists_reverse"></block>
+        <block type="lists_join_with_separator"></block>
+        <block type="lists_from_csv_row"></block>
+        <block type="lists_from_csv_table"></block>
+        <block type="lists_to_csv_row"></block>
+        <block type="lists_to_csv_table"></block>
+        <block type="lists_lookup_pairs"></block>
       </category>
 
       <!-- DICTIONARIES -->
       <category name="Dicionarios" colour="${KODULAR_COLORS.dictionaries}">
-        <block type="kodular_dict_create_empty"></block>
-        <block type="kodular_dict_make"></block>
-        <block type="kodular_dict_pair"></block>
-        <block type="kodular_dict_get_value"></block>
-        <block type="kodular_dict_set_value"></block>
-        <block type="kodular_dict_delete_entry"></block>
-        <block type="kodular_dict_get_keys"></block>
-        <block type="kodular_dict_get_values"></block>
-        <block type="kodular_dict_is_dict"></block>
-        <block type="kodular_dict_is_key_in"></block>
-        <block type="kodular_dict_size"></block>
-        <block type="kodular_dict_to_list"></block>
-        <block type="kodular_dict_from_list"></block>
-        <block type="kodular_dict_copy"></block>
-        <block type="kodular_dict_merge"></block>
-        <block type="kodular_dict_get_value_at_key_path"></block>
-        <block type="kodular_dict_set_value_for_key_path"></block>
-        <block type="kodular_dict_list_by_walking_key_path"></block>
-        <block type="kodular_dict_walk_all_at_level"></block>
+        <block type="dictionaries_create_empty"></block>
+        <block type="dictionaries_create_with"></block>
+        <block type="dictionaries_pair"></block>
+        <block type="dictionaries_get_value"></block>
+        <block type="dictionaries_set_value"></block>
+        <block type="dictionaries_delete_pair"></block>
+        <block type="dictionaries_get_keys"></block>
+        <block type="dictionaries_get_values"></block>
+        <block type="dictionaries_is_dict"></block>
+        <block type="dictionaries_is_key_in"></block>
+        <block type="dictionaries_length"></block>
+        <block type="dictionaries_to_list"></block>
+        <block type="dictionaries_from_list"></block>
+        <block type="dictionaries_copy"></block>
+        <block type="dictionaries_merge"></block>
+        <block type="dictionaries_get_value_at_key_path"></block>
+        <block type="dictionaries_set_value_for_key_path"></block>
+        <block type="dictionaries_list_by_walking_key_path"></block>
+        <block type="dictionaries_walk_all_at_level"></block>
       </category>
 
       <!-- COLORS -->
       <category name="Cores" colour="${KODULAR_COLORS.colors}">
         <block type="colour_picker"></block>
-        <block type="kodular_color_black"></block>
-        <block type="kodular_color_white"></block>
-        <block type="kodular_color_red"></block>
-        <block type="kodular_color_pink"></block>
-        <block type="kodular_color_orange"></block>
-        <block type="kodular_color_yellow"></block>
-        <block type="kodular_color_green"></block>
-        <block type="kodular_color_cyan"></block>
-        <block type="kodular_color_blue"></block>
-        <block type="kodular_color_magenta"></block>
-        <block type="kodular_color_light_gray"></block>
-        <block type="kodular_color_gray"></block>
-        <block type="kodular_color_dark_gray"></block>
-        <block type="kodular_make_color"></block>
-        <block type="kodular_split_color"></block>
+        <block type="color_black"></block>
+        <block type="color_white"></block>
+        <block type="color_red"></block>
+        <block type="color_pink"></block>
+        <block type="color_orange"></block>
+        <block type="color_yellow"></block>
+        <block type="color_green"></block>
+        <block type="color_cyan"></block>
+        <block type="color_blue"></block>
+        <block type="color_magenta"></block>
+        <block type="color_light_gray"></block>
+        <block type="color_gray"></block>
+        <block type="color_dark_gray"></block>
+        <block type="color_make_color"></block>
+        <block type="color_split"></block>
       </category>
 
       <sep></sep>
@@ -261,23 +269,23 @@ export function generateDynamicToolbox(root: KodularComponent): string {
     
     toolboxXml += `
       <category name="${name}" colour="${KODULAR_COLORS.components}">
-        <block type="kodular_event">
+        <block type="component_event">
           <field name="COMPONENT">${name}</field>
           <field name="EVENT">Click</field>
         </block>
-        <block type="kodular_event">
+        <block type="component_event">
           <field name="COMPONENT">${name}</field>
           <field name="EVENT">LongClick</field>
         </block>
-        <block type="kodular_set_property">
+        <block type="component_set">
           <field name="COMPONENT">${name}</field>
           <field name="PROPERTY">Text</field>
         </block>
-        <block type="kodular_get_property">
+        <block type="component_get">
           <field name="COMPONENT">${name}</field>
           <field name="PROPERTY">Text</field>
         </block>
-        <block type="kodular_call_method">
+        <block type="component_method">
           <field name="COMPONENT">${name}</field>
           <field name="METHOD">ToString</field>
         </block>
@@ -288,10 +296,10 @@ export function generateDynamicToolbox(root: KodularComponent): string {
   toolboxXml += `
       <!-- ANY COMPONENT -->
       <category name="Qualquer Componente" colour="#607D8B">
-        <block type="kodular_any_component_event"></block>
-        <block type="kodular_any_component_set_property"></block>
-        <block type="kodular_any_component_get_property"></block>
-        <block type="kodular_any_component_call_method"></block>
+        <block type="any_component_event"></block>
+        <block type="any_component_set_property"></block>
+        <block type="any_component_get_property"></block>
+        <block type="any_component_call_method"></block>
       </category>
     </xml>`
     
@@ -305,7 +313,7 @@ export function registerKodularBlocks(Blockly: any) {
   
   // ==================== CONTROL BLOCKS ====================
   
-  Blockly.Blocks['kodular_if_then_else'] = {
+  Blockly.Blocks['controls_if_then_else'] = {
     init: function() {
       this.appendValueInput("CONDITION").setCheck("Boolean").appendField("se");
       this.appendValueInput("THEN").appendField("entao");
@@ -316,7 +324,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_break'] = {
+  Blockly.Blocks['controls_break'] = {
     init: function() {
       this.appendDummyInput().appendField("quebrar");
       this.setPreviousStatement(true, null);
@@ -325,9 +333,9 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_open_screen'] = {
+  Blockly.Blocks['controls_open_screen'] = {
     init: function() {
-      this.appendValueInput("SCREEN").setCheck("String").appendField("abrir outra tela");
+      this.appendValueInput("SCREEN_NAME").setCheck("String").appendField("abrir outra tela");
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(KODULAR_COLORS.control);
@@ -335,10 +343,10 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_open_screen_with_value'] = {
+  Blockly.Blocks['controls_open_screen_with_value'] = {
     init: function() {
-      this.appendValueInput("SCREEN").setCheck("String").appendField("abrir outra tela");
-      this.appendValueInput("VALUE").appendField("com valor inicial");
+      this.appendValueInput("SCREEN_NAME").setCheck("String").appendField("abrir outra tela");
+      this.appendValueInput("START_VALUE").appendField("com valor inicial");
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(KODULAR_COLORS.control);
@@ -346,7 +354,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_get_start_value'] = {
+  Blockly.Blocks['controls_get_start_value'] = {
     init: function() {
       this.appendDummyInput().appendField("obter valor inicial");
       this.setOutput(true, null);
@@ -355,7 +363,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_get_plain_start_text'] = {
+  Blockly.Blocks['controls_get_plain_start_text'] = {
     init: function() {
       this.appendDummyInput().appendField("obter texto inicial simples");
       this.setOutput(true, "String");
@@ -364,7 +372,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_close_screen'] = {
+  Blockly.Blocks['controls_close_screen'] = {
     init: function() {
       this.appendDummyInput().appendField("fechar tela");
       this.setPreviousStatement(true, null);
@@ -373,7 +381,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_close_screen_with_value'] = {
+  Blockly.Blocks['controls_close_screen_with_value'] = {
     init: function() {
       this.appendValueInput("VALUE").appendField("fechar tela com valor");
       this.setPreviousStatement(true, null);
@@ -382,7 +390,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_close_screen_with_plain_text'] = {
+  Blockly.Blocks['controls_close_screen_with_plain_text'] = {
     init: function() {
       this.appendValueInput("TEXT").setCheck("String").appendField("fechar tela com texto simples");
       this.setPreviousStatement(true, null);
@@ -391,7 +399,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_close_application'] = {
+  Blockly.Blocks['controls_close_app'] = {
     init: function() {
       this.appendDummyInput().appendField("fechar aplicativo");
       this.setPreviousStatement(true, null);
@@ -400,7 +408,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_do'] = {
+  Blockly.Blocks['controls_do'] = {
     init: function() {
       this.appendStatementInput("DO").appendField("fazer");
       this.appendValueInput("RESULT").appendField("resultado");
@@ -410,7 +418,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_evaluate_but_ignore'] = {
+  Blockly.Blocks['controls_evaluate_but_ignore'] = {
     init: function() {
       this.appendValueInput("VALUE").appendField("avaliar mas ignorar resultado");
       this.setPreviousStatement(true, null);
@@ -420,7 +428,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_for_each_dict'] = {
+  Blockly.Blocks['controls_for_each_dict'] = {
     init: function() {
       this.appendValueInput("DICT").appendField("para cada chave").appendField(new Blockly.FieldVariable("chave"), "KEY").appendField("com valor").appendField(new Blockly.FieldVariable("valor"), "VALUE").appendField("no dicionario");
       this.appendStatementInput("DO").appendField("fazer");
@@ -433,7 +441,7 @@ export function registerKodularBlocks(Blockly: any) {
 
   // ==================== LOGIC BLOCKS ====================
   
-  Blockly.Blocks['kodular_true'] = {
+  Blockly.Blocks['logic_true'] = {
     init: function() {
       this.appendDummyInput().appendField("verdadeiro");
       this.setOutput(true, "Boolean");
@@ -441,7 +449,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_false'] = {
+  Blockly.Blocks['logic_false'] = {
     init: function() {
       this.appendDummyInput().appendField("falso");
       this.setOutput(true, "Boolean");
@@ -489,7 +497,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_math_format_decimal'] = {
+  Blockly.Blocks['math_format_decimal'] = {
     init: function() {
       this.appendValueInput("NUM").setCheck("Number").appendField("formatar como decimal");
       this.appendValueInput("PLACES").setCheck("Number").appendField("casas");
@@ -498,7 +506,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_math_is_number'] = {
+  Blockly.Blocks['math_is_number'] = {
     init: function() {
       this.appendValueInput("VALUE").appendField("e um numero?");
       this.setOutput(true, "Boolean");
@@ -538,7 +546,7 @@ export function registerKodularBlocks(Blockly: any) {
 
   // ==================== TEXT BLOCKS ====================
   
-  Blockly.Blocks['kodular_text_is_string'] = {
+  Blockly.Blocks['text_is_string'] = {
     init: function() {
       this.appendValueInput("VALUE").appendField("e texto?");
       this.setOutput(true, "Boolean");
@@ -546,7 +554,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_text_compare'] = {
+  Blockly.Blocks['text_compare'] = {
     init: function() {
       this.appendValueInput("TEXT1").setCheck("String").appendField("comparar textos");
       this.appendDummyInput().appendField(new Blockly.FieldDropdown([["<","LT"],["=","EQ"],[">","GT"]]), "OP");
@@ -557,7 +565,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_text_contains'] = {
+  Blockly.Blocks['text_contains'] = {
     init: function() {
       this.appendValueInput("TEXT").setCheck("String").appendField("texto");
       this.appendValueInput("PIECE").setCheck("String").appendField("contem");
@@ -567,7 +575,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_text_split'] = {
+  Blockly.Blocks['text_split'] = {
     init: function() {
       this.appendValueInput("TEXT").setCheck("String").appendField("dividir texto");
       this.appendValueInput("AT").setCheck("String").appendField("em");
@@ -587,7 +595,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_text_split_at_first'] = {
+  Blockly.Blocks['text_split_at_first'] = {
     init: function() {
       this.appendValueInput("TEXT").setCheck("String").appendField("dividir no primeiro");
       this.appendValueInput("AT").setCheck("String").appendField("em");
@@ -615,7 +623,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_text_segment'] = {
+  Blockly.Blocks['text_segment'] = {
     init: function() {
       this.appendValueInput("TEXT").setCheck("String").appendField("segmento de texto");
       this.appendValueInput("START").setCheck("Number").appendField("inicio");
@@ -626,7 +634,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_text_replace_all'] = {
+  Blockly.Blocks['text_replace_all'] = {
     init: function() {
       this.appendValueInput("TEXT").setCheck("String").appendField("substituir tudo");
       this.appendValueInput("FROM").setCheck("String").appendField("de");
@@ -648,7 +656,7 @@ export function registerKodularBlocks(Blockly: any) {
 
   // ==================== LIST BLOCKS ====================
   
-  Blockly.Blocks['kodular_list_add_items'] = {
+  Blockly.Blocks['lists_add_item'] = {
     init: function() {
       this.appendValueInput("LIST").setCheck("Array").appendField("adicionar itens a lista");
       this.appendValueInput("ITEM").appendField("item");
@@ -795,7 +803,7 @@ export function registerKodularBlocks(Blockly: any) {
 
   // ==================== DICTIONARY BLOCKS ====================
   
-  Blockly.Blocks['kodular_dict_create_empty'] = {
+  Blockly.Blocks['dictionaries_create_empty'] = {
     init: function() {
       this.appendDummyInput().appendField("criar dicionario vazio");
       this.setOutput(true, "Dictionary");
@@ -803,7 +811,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_dict_make'] = {
+  Blockly.Blocks['dictionaries_create_with'] = {
     init: function() {
       this.appendDummyInput().appendField("criar dicionario");
       this.appendValueInput("PAIRS").setCheck("Array");
@@ -812,7 +820,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_dict_pair'] = {
+  Blockly.Blocks['dictionaries_pair'] = {
     init: function() {
       this.appendValueInput("KEY").appendField("par chave");
       this.appendValueInput("VALUE").appendField("valor");
@@ -822,17 +830,17 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_dict_get_value'] = {
+  Blockly.Blocks['dictionaries_get_value'] = {
     init: function() {
       this.appendValueInput("DICT").setCheck("Dictionary").appendField("obter valor para chave");
       this.appendValueInput("KEY");
-      this.appendValueInput("DEFAULT").appendField("ou se nao encontrado");
+      this.appendValueInput("NOTFOUND").appendField("ou se nao encontrado");
       this.setOutput(true, null);
       this.setColour(KODULAR_COLORS.dictionaries);
     }
   };
 
-  Blockly.Blocks['kodular_dict_set_value'] = {
+  Blockly.Blocks['dictionaries_set_value'] = {
     init: function() {
       this.appendValueInput("DICT").setCheck("Dictionary").appendField("definir valor no dicionario");
       this.appendValueInput("KEY").appendField("para chave");
@@ -843,7 +851,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_dict_delete_entry'] = {
+  Blockly.Blocks['dictionaries_delete_pair'] = {
     init: function() {
       this.appendValueInput("DICT").setCheck("Dictionary").appendField("deletar entrada");
       this.appendValueInput("KEY").appendField("chave");
@@ -853,7 +861,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_dict_get_keys'] = {
+  Blockly.Blocks['dictionaries_get_keys'] = {
     init: function() {
       this.appendValueInput("DICT").setCheck("Dictionary").appendField("obter chaves");
       this.setOutput(true, "Array");
@@ -861,7 +869,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_dict_get_values'] = {
+  Blockly.Blocks['dictionaries_get_values'] = {
     init: function() {
       this.appendValueInput("DICT").setCheck("Dictionary").appendField("obter valores");
       this.setOutput(true, "Array");
@@ -869,7 +877,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_dict_is_dict'] = {
+  Blockly.Blocks['dictionaries_is_dict'] = {
     init: function() {
       this.appendValueInput("VALUE").appendField("e um dicionario?");
       this.setOutput(true, "Boolean");
@@ -877,7 +885,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_dict_is_key_in'] = {
+  Blockly.Blocks['dictionaries_is_key_in'] = {
     init: function() {
       this.appendValueInput("KEY").appendField("chave");
       this.appendValueInput("DICT").setCheck("Dictionary").appendField("esta no dicionario?");
@@ -887,7 +895,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_dict_size'] = {
+  Blockly.Blocks['dictionaries_length'] = {
     init: function() {
       this.appendValueInput("DICT").setCheck("Dictionary").appendField("tamanho do dicionario");
       this.setOutput(true, "Number");
@@ -986,7 +994,7 @@ export function registerKodularBlocks(Blockly: any) {
   ];
 
   colorBlocks.forEach(({ name, label, color }) => {
-    Blockly.Blocks[`kodular_color_${name}`] = {
+    Blockly.Blocks[`color_${name}`] = {
       init: function() {
         this.appendDummyInput().appendField(label).appendField(new Blockly.FieldColour(color), "COLOR");
         this.setOutput(true, "Colour");
@@ -995,18 +1003,18 @@ export function registerKodularBlocks(Blockly: any) {
     };
   });
 
-  Blockly.Blocks['kodular_make_color'] = {
+  Blockly.Blocks['color_make_color'] = {
     init: function() {
-      this.appendValueInput("R").setCheck("Number").appendField("criar cor R");
-      this.appendValueInput("G").setCheck("Number").appendField("G");
-      this.appendValueInput("B").setCheck("Number").appendField("B");
+      this.appendValueInput("RED").setCheck("Number").appendField("criar cor R");
+      this.appendValueInput("GREEN").setCheck("Number").appendField("G");
+      this.appendValueInput("BLUE").setCheck("Number").appendField("B");
       this.setInputsInline(true);
       this.setOutput(true, "Colour");
       this.setColour(KODULAR_COLORS.colors);
     }
   };
 
-  Blockly.Blocks['kodular_split_color'] = {
+  Blockly.Blocks['color_split'] = {
     init: function() {
       this.appendValueInput("COLOR").setCheck("Colour").appendField("dividir cor");
       this.setOutput(true, "Array");
@@ -1017,11 +1025,11 @@ export function registerKodularBlocks(Blockly: any) {
 
   // ==================== COMPONENT BLOCKS ====================
   
-  Blockly.Blocks['kodular_event'] = {
+  Blockly.Blocks['component_event'] = {
     init: function() {
       this.appendDummyInput()
-          .appendField("quando")
-          .appendField(new Blockly.FieldLabelSerializable(""), "COMPONENT")
+          .appendField("quando ")
+          .appendField(new Blockly.FieldLabel(""), "COMPONENT")
           .appendField(".")
           .appendField(new Blockly.FieldDropdown([
             ["Clique","Click"], 
@@ -1031,17 +1039,20 @@ export function registerKodularBlocks(Blockly: any) {
             ["Arrastado","Dragged"]
           ]), "EVENT");
       this.appendStatementInput("DO").setCheck(null).appendField("fazer");
-      this.setColour(20);
+      this.setColour(KODULAR_COLORS.components);
       this.setTooltip("Executa blocos quando um evento ocorre");
     }
   };
 
-  Blockly.Blocks['kodular_set_property'] = {
+  // Aliases para compatibilidade legada
+  Blockly.Blocks['kodular_component_event'] = Blockly.Blocks['component_event'];
+
+  Blockly.Blocks['component_set'] = {
     init: function() {
       this.appendValueInput("VALUE")
           .setCheck(null)
           .appendField("ajustar")
-          .appendField(new Blockly.FieldLabelSerializable(""), "COMPONENT")
+          .appendField(new Blockly.FieldLabel(""), "COMPONENT")
           .appendField(".")
           .appendField(new Blockly.FieldDropdown([
             ["Texto","Text"], 
@@ -1059,14 +1070,16 @@ export function registerKodularBlocks(Blockly: any) {
           .appendField("para");
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
-      this.setColour(160);
+      this.setColour(KODULAR_COLORS.components);
     }
   };
 
-  Blockly.Blocks['kodular_get_property'] = {
+  Blockly.Blocks['kodular_component_set'] = Blockly.Blocks['component_set'];
+
+  Blockly.Blocks['component_get'] = {
     init: function() {
       this.appendDummyInput()
-          .appendField(new Blockly.FieldLabelSerializable(""), "COMPONENT")
+          .appendField(new Blockly.FieldLabel(""), "COMPONENT")
           .appendField(".")
           .appendField(new Blockly.FieldDropdown([
             ["Texto","Text"], 
@@ -1082,15 +1095,17 @@ export function registerKodularBlocks(Blockly: any) {
             ["Imagem","Image"]
           ]), "PROPERTY");
       this.setOutput(true, null);
-      this.setColour(160);
+      this.setColour(KODULAR_COLORS.components);
     }
   };
 
-  Blockly.Blocks['kodular_call_method'] = {
+  Blockly.Blocks['kodular_component_get'] = Blockly.Blocks['component_get'];
+
+  Blockly.Blocks['component_method'] = {
     init: function() {
       this.appendDummyInput()
           .appendField("chamar")
-          .appendField(new Blockly.FieldLabelSerializable(""), "COMPONENT")
+          .appendField(new Blockly.FieldLabel(""), "COMPONENT")
           .appendField(".")
           .appendField(new Blockly.FieldDropdown([
             ["ToString","ToString"],
@@ -1099,13 +1114,24 @@ export function registerKodularBlocks(Blockly: any) {
           ]), "METHOD");
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
-      this.setColour(260);
+      this.setColour(KODULAR_COLORS.components);
     }
   };
 
+  Blockly.Blocks['kodular_component_method'] = Blockly.Blocks['component_method'];
+
+  // Aliases de Controle e Logica
+  Blockly.Blocks['kodular_if_then_else'] = Blockly.Blocks['controls_if_then_else'];
+  Blockly.Blocks['kodular_for_each_dict'] = Blockly.Blocks['controls_for_each_dict'];
+  Blockly.Blocks['kodular_break'] = Blockly.Blocks['controls_break'];
+  Blockly.Blocks['kodular_do'] = Blockly.Blocks['controls_do'];
+  Blockly.Blocks['kodular_evaluate_but_ignore'] = Blockly.Blocks['controls_evaluate_but_ignore'];
+  Blockly.Blocks['kodular_true'] = Blockly.Blocks['logic_true'];
+  Blockly.Blocks['kodular_false'] = Blockly.Blocks['logic_false'];
+
   // ==================== ANY COMPONENT BLOCKS ====================
   
-  Blockly.Blocks['kodular_any_component_event'] = {
+  Blockly.Blocks['any_component_event'] = {
     init: function() {
       this.appendDummyInput()
           .appendField("quando qualquer")
@@ -1125,7 +1151,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_any_component_set_property'] = {
+  Blockly.Blocks['any_component_set_property'] = {
     init: function() {
       this.appendValueInput("COMPONENT").appendField("de qualquer");
       this.appendValueInput("VALUE")
@@ -1142,7 +1168,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_any_component_get_property'] = {
+  Blockly.Blocks['any_component_get_property'] = {
     init: function() {
       this.appendValueInput("COMPONENT").appendField("de qualquer");
       this.appendDummyInput()
@@ -1157,7 +1183,7 @@ export function registerKodularBlocks(Blockly: any) {
     }
   };
 
-  Blockly.Blocks['kodular_any_component_call_method'] = {
+  Blockly.Blocks['any_component_call_method'] = {
     init: function() {
       this.appendValueInput("COMPONENT").appendField("de qualquer");
       this.appendDummyInput()

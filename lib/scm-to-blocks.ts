@@ -70,7 +70,7 @@ export function convertScmToBlocks(project: ProjectData): any {
  */
 function createEventBlock(component: string, event: string, statementBlock: any, x: number, y: number) {
   return {
-    type: "kodular_event",
+    type: "component_event",
     x: x,
     y: y,
     fields: {
@@ -90,9 +90,9 @@ function createEventBlock(component: string, event: string, statementBlock: any,
  */
 function createOpenScreenBlock(screenName: string) {
   return {
-    type: "kodular_open_screen",
+    type: "controls_open_screen",
     inputs: {
-      SCREEN: {
+      SCREEN_NAME: {
         block: {
           type: "text",
           fields: {
