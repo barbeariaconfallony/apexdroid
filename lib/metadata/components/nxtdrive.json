@@ -1,0 +1,10 @@
+{
+  "name": "NXT Drive",
+  "type": "NXTDrive",
+  "properties": [
+    "Bluetooth Client",
+    "Drive Motors",
+    "Stop Before Disconnect",
+    "Wheel Diameter"
+  ]
+}

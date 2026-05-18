@@ -1,0 +1,11 @@
+{
+  "name": "Space",
+  "type": "Space",
+  "properties": [
+    "Height",
+    "Height Percent",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

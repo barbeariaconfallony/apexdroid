@@ -1,0 +1,31 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+  <block type="component_event" id="n`tGh^+i[r6^u$0Xmc!l" x="-790" y="-110">
+    <mutation component_type="Form" is_generic="false" instance_name="Screen1" event_name="Initialize"></mutation>
+    <field name="COMPONENT_SELECTOR">Screen1</field>
+    <statement name="DO">
+      <block type="component_method" id="nEh?AGyV]Xl_%*$tXtR(">
+        <mutation component_type="Form" method_name="AskForPermission" is_generic="false" instance_name="Screen1"></mutation>
+        <field name="COMPONENT_SELECTOR">Screen1</field>
+        <value name="ARG0">
+          <block type="text" id="Nq-6Z.SnCl|=L-5/dG:*">
+            <field name="TEXT">android.permission.POST_NOTIFICATIONS</field>
+          </block>
+        </value>
+      </block>
+    </statement>
+  </block>
+  <block type="component_event" id="gF)`#4Sppmsm,s#^]|:E" x="-790" y="10">
+    <mutation component_type="Clock" is_generic="false" instance_name="Temporizador1" event_name="Timer"></mutation>
+    <field name="COMPONENT_SELECTOR">Temporizador1</field>
+    <statement name="DO">
+      <block type="controls_openAnotherScreen" id="nlH,pxs/G|.VMzY4[}LH">
+        <value name="SCREEN">
+          <block type="helpers_screen_names" id="F/6[cTujEL]!F$_8TB^Z">
+            <field name="SCREEN">Screen2</field>
+          </block>
+        </value>
+      </block>
+    </statement>
+  </block>
+  <yacodeblocks ya-version="246" language-version="34"></yacodeblocks>
+</xml>

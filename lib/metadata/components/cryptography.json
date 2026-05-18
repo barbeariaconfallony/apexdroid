@@ -1,0 +1,13 @@
+{
+  "name": "Cryptography",
+  "type": "Cryptography",
+  "properties": [
+    "AES-128 Key",
+    "AES-256 Key",
+    "BCrypt Salt Size",
+    "PBKDF2 Hash Byte Size",
+    "PBKDF2 Iterations Number",
+    "PBKDF2 Salt Byte Size",
+    "TripleDES Key"
+  ]
+}

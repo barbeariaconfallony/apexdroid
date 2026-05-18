@@ -1,0 +1,14 @@
+{
+  "name": "NXT Light Sensor",
+  "type": "NXTLightSensor",
+  "properties": [
+    "Above Range Event Enabled",
+    "Below Range Event Enabled",
+    "Bluetooth Client",
+    "Bottom Of Range",
+    "Generate Light",
+    "Sensor Port",
+    "Top Of Range",
+    "Within Range Event Enabled"
+  ]
+}

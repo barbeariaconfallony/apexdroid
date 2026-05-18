@@ -1,0 +1,8 @@
+{
+  "name": "Google Account Picker",
+  "type": "GoogleAccountPicker",
+  "properties": [
+    "Pick",
+    "Picked"
+  ]
+}

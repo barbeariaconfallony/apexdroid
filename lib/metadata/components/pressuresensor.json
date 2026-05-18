@@ -1,0 +1,12 @@
+{
+  "name": "Pressure Sensor",
+  "type": "PressureSensor",
+  "properties": [
+    "Altitude",
+    "Available",
+    "Enabled",
+    "Keep Running When On Pause",
+    "Maximum Range",
+    "Pressure"
+  ]
+}

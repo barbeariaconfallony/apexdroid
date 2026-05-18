@@ -1,0 +1,10 @@
+{
+  "name": "EV3 Touch Sensor",
+  "type": "EV3TouchSensor",
+  "properties": [
+    "Bluetooth Client",
+    "Pressed Event Enabled",
+    "Released Event Enabled",
+    "Sensor Port"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "Dynamic Text Box",
+  "type": "DynamicTextBox",
+  "properties": [
+    "Create Text Box",
+    "Delete Text Box",
+    "Get Enabled",
+    "Get Font Size",
+    "Get Height",
+    "Get Text",
+    "Get Text Box By Id",
+    "Get Width",
+    "On Text Changed",
+    "Set Alignment",
+    "Set Background Color",
+    "Set Enabled",
+    "Set Font",
+    "Set Font Size",
+    "Set Height",
+    "Set Text",
+    "Set Text Color",
+    "Set Width"
+  ]
+}

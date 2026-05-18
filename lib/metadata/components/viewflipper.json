@@ -1,0 +1,15 @@
+{
+  "name": "View Flipper",
+  "type": "ViewFlipper",
+  "properties": [
+    "Add Images From String",
+    "Background Color",
+    "Flip Interval",
+    "Height",
+    "Height Percent",
+    "Swipeable",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

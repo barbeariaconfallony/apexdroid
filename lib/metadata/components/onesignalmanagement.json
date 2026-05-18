@@ -1,0 +1,7 @@
+{
+  "name": "OneSignal Management",
+  "type": "OneSignalManagement",
+  "properties": [
+    "Language"
+  ]
+}

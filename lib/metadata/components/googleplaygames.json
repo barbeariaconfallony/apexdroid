@@ -1,0 +1,7 @@
+{
+  "name": "Google Play Games",
+  "type": "GooglePlayGames",
+  "properties": [
+    "Google Play Games App ID"
+  ]
+}

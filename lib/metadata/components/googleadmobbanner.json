@@ -1,0 +1,10 @@
+{
+  "name": "Google AdMob Banner",
+  "type": "GoogleAdMobBanner",
+  "properties": [
+    "Ad Enabled",
+    "Ad Unit Id",
+    "Test Mode",
+    "Visible"
+  ]
+}

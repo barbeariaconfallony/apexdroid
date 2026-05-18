@@ -1,0 +1,16 @@
+{
+  "name": "Rating Bar",
+  "type": "RatingBar",
+  "properties": [
+    "Background Color",
+    "Get Number Of Stars",
+    "Get Rating",
+    "Get Step Size",
+    "Is Indicator",
+    "Set Number Of Stars",
+    "Set Rating",
+    "Set Step Size",
+    "Star Color",
+    "Visible"
+  ]
+}

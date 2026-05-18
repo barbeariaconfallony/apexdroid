@@ -1,0 +1,11 @@
+{
+  "name": "Google Ad Manager App Open",
+  "type": "GoogleAdManagerAppOpen",
+  "properties": [
+    "Ad Unit Id",
+    "Auto Load On Initialize",
+    "Is Ad Available",
+    "Test Mode",
+    "eCPM Floor"
+  ]
+}

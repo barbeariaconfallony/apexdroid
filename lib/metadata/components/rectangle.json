@@ -1,0 +1,20 @@
+{
+  "name": "Rectangle",
+  "type": "Rectangle",
+  "properties": [
+    "Draggable",
+    "East Longitude",
+    "Enable Infobox",
+    "Fill Color",
+    "Fill Opacity",
+    "North Latitude",
+    "South Latitude",
+    "Stroke Color",
+    "Stroke Opacity",
+    "Stroke Width",
+    "Title",
+    "Type",
+    "Visible",
+    "West Longitude"
+  ]
+}

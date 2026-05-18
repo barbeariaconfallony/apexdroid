@@ -1,0 +1,8 @@
+{
+  "name": "Sound",
+  "type": "Sound",
+  "properties": [
+    "Minimum Interval (ms)",
+    "Source"
+  ]
+}

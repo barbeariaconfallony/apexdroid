@@ -1,0 +1,8 @@
+{
+  "name": "Unity Rewarded Ad",
+  "type": "UnityRewardedAd",
+  "properties": [
+    "Ad Unit Id",
+    "Test Mode"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "Circle",
+  "type": "Circle",
+  "properties": [
+    "Draggable",
+    "Enable Infobox",
+    "Fill Color",
+    "Fill Opacity",
+    "Latitude",
+    "Longitude",
+    "Radius",
+    "Stroke Color",
+    "Stroke Opacity",
+    "Stroke Width",
+    "Title",
+    "Type",
+    "Visible"
+  ]
+}

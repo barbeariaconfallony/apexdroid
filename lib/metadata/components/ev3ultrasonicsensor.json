@@ -1,0 +1,14 @@
+{
+  "name": "EV3 Ultrasonic Sensor",
+  "type": "EV3UltrasonicSensor",
+  "properties": [
+    "Above Range Event Enabled",
+    "Below Range Event Enabled",
+    "Bluetooth Client",
+    "Bottom Of Range",
+    "Sensor Port",
+    "Top Of Range",
+    "Unit",
+    "Within Range Event Enabled"
+  ]
+}

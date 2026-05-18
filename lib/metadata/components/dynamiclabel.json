@@ -1,0 +1,9 @@
+{
+  "name": "Dynamic Label",
+  "type": "DynamicLabel",
+  "properties": [
+    "Alignment Center",
+    "Alignment Left",
+    "Alignment Right"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Text To Speech",
+  "type": "TextToSpeech",
+  "properties": [
+    "Available Countries",
+    "Available Languages",
+    "Country",
+    "Language",
+    "Pitch",
+    "Result",
+    "Speech Rate"
+  ]
+}

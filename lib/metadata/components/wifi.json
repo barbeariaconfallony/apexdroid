@@ -1,0 +1,18 @@
+{
+  "name": "WiFi",
+  "type": "WiFi",
+  "properties": [
+    "BSSID",
+    "Disable",
+    "Enable",
+    "Is 5GHz Supported",
+    "Is Enabled",
+    "Is WiFi Direct Supported",
+    "Link Speed",
+    "Local IP",
+    "Mac Address",
+    "SSID",
+    "Signal Strength",
+    "Toggle"
+  ]
+}

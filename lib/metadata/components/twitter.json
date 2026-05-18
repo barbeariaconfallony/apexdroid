@@ -1,0 +1,15 @@
+{
+  "name": "Twitter",
+  "type": "Twitter",
+  "properties": [
+    "Consumer Key",
+    "Consumer Secret",
+    "Direct Messages",
+    "Followers",
+    "Friend Time line",
+    "Mentions",
+    "Search Results",
+    "TwitPic_API_Key",
+    "Username"
+  ]
+}

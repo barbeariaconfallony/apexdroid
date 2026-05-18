@@ -1,0 +1,15 @@
+{
+  "name": "Linear Progressbar",
+  "type": "LinearProgressbar",
+  "properties": [
+    "Indeterminate",
+    "Indeterminate Color",
+    "Maximum",
+    "Minimum",
+    "Progress",
+    "Progress Color",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

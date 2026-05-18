@@ -1,0 +1,24 @@
+{
+  "name": "Switch",
+  "type": "Switch",
+  "properties": [
+    "Checked",
+    "Enabled",
+    "Font Bold",
+    "Font Italic",
+    "Font Size",
+    "Font Typeface",
+    "Font Typeface Import",
+    "Height",
+    "Height Percent",
+    "Text Color",
+    "Text Off",
+    "Text On",
+    "Thumb Color",
+    "Track Color",
+    "Visible",
+    "Width",
+    "Width Percent",
+    "is Checked"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "NXT Ultrasonic Sensor",
+  "type": "NXTUltrasonicSensor",
+  "properties": [
+    "Above Range Event Enabled",
+    "Below Range Event Enabled",
+    "Bluetooth Client",
+    "Bottom Of Range",
+    "Sensor Port",
+    "Top Of Range",
+    "Within Range Event Enabled"
+  ]
+}

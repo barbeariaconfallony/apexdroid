@@ -1,0 +1,9 @@
+{
+  "name": "Google AdMob Rewarded Interstitial",
+  "type": "GoogleAdMobRewardedInterstitial",
+  "properties": [
+    "Ad Enabled",
+    "Ad Unit Id",
+    "Test Mode"
+  ]
+}

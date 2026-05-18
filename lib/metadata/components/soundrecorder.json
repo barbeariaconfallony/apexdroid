@@ -1,0 +1,7 @@
+{
+  "name": "Sound Recorder",
+  "type": "SoundRecorder",
+  "properties": [
+    "Saved Recording"
+  ]
+}

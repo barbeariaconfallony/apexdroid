@@ -1,0 +1,7 @@
+{
+  "name": "EV3 Commands",
+  "type": "EV3Commands",
+  "properties": [
+    "Bluetooth Client"
+  ]
+}

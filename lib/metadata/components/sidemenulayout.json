@@ -1,0 +1,15 @@
+{
+  "name": "Side Menu Layout",
+  "type": "SideMenuLayout",
+  "properties": [
+    "Background Color",
+    "Circle Header Picture",
+    "Disabled Color",
+    "Enabled Color",
+    "Header Background Image",
+    "Header Picture",
+    "Header Subtitle",
+    "Header Title",
+    "Selected Color"
+  ]
+}

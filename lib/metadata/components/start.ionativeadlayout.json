@@ -1,0 +1,21 @@
+{
+  "name": "Start.io Native Ad Layout",
+  "type": "Start.ioNativeAdLayout",
+  "properties": [
+    "Ad Enabled",
+    "Ads Number",
+    "Body Label",
+    "Call To Action Button",
+    "Enable Consent",
+    "Headline Label",
+    "Height",
+    "Height Percent",
+    "Icon Image",
+    "Primary Image Size",
+    "Set User Consent",
+    "Test Mode",
+    "Visible",
+    "Width",
+    "Width Percent"
+  ]
+}

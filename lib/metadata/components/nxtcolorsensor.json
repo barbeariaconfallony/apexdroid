@@ -1,0 +1,16 @@
+{
+  "name": "NXT Color Sensor",
+  "type": "NXTColorSensor",
+  "properties": [
+    "Above Range Event Enabled",
+    "Below Range Event Enabled",
+    "Bluetooth Client",
+    "Bottom Of Range",
+    "Color Changed Event Enabled",
+    "Detect Color",
+    "Generate Color",
+    "Sensor Port",
+    "Top Of Range",
+    "Within Range Event Enabled"
+  ]
+}

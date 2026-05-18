@@ -1,0 +1,9 @@
+{
+  "name": "SQLite",
+  "type": "SQLite",
+  "properties": [
+    "Return Header",
+    "Rows Affected",
+    "Suppress Toast"
+  ]
+}
