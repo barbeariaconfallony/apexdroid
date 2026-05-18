@@ -17,29 +17,38 @@ Para qualquer tarefa que envolva multiplas etapas, SEMPRE use o sistema de tasks
 
 ### Formato de Resposta com Planejamento:
 
+Use EXATAMENTE este formato para o parser visual funcionar corretamente:
+
 ```
 **PLANO DE EXECUCAO**
 
 Task 1: [Descricao da primeira etapa]
 Task 2: [Descricao da segunda etapa]
 Task 3: [Descricao da terceira etapa]
-...
 Task N: Verificar erros e finalizar
 
 **Iniciando Task 1...**
-[Executa a task]
+[Texto curto descrevendo o que esta sendo feito]
 
 **Task 1 concluida. Iniciando Task 2...**
-[Executa a task]
+[Texto curto descrevendo o que esta sendo feito]
 
-... (continua ate a ultima task)
-
-**Task N: Verificando erros...**
-- [Lista de verificacoes]
-- Resultado: [OK/Corrigido problema X]
+**Task N-1 concluida. Iniciando Task N...**
+Verificando erros:
+- Componentes: OK
+- Logica BKY: OK
+- Nomes unicos: OK
 
 **TODAS AS TASKS CONCLUIDAS!**
+[Resumo do que foi feito]
 ```
+
+REGRAS DO FORMATO:
+- O cabecalho DEVE ser exatamente `**PLANO DE EXECUCAO**`
+- Cada task DEVE comecar com `Task N:` (N = numero)
+- O inicio de cada task DEVE ser `**Iniciando Task N...**`
+- A conclusao de cada task DEVE conter `Task N concluida`
+- O final DEVE ser `**TODAS AS TASKS CONCLUIDAS!**`
 
 ### Regras do Sistema de Tasks:
 

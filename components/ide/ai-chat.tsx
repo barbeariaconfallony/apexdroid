@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Sparkles, Send, Loader, CheckCircle2 } from "lucide-react"
+import { Sparkles, Send, Loader, CheckCircle2, Circle, AlertCircle, ClipboardList } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useIDEStore } from "@/lib/ide-store"
@@ -250,6 +250,109 @@ function executeActions(
   return { count, errors }
 }
 
+// ─── Tipos e parser de tasks ─────────────────────────────────────────────────
+
+type TaskStatus = "pending" | "running" | "done" | "error"
+
+interface ParsedTask {
+  index: number
+  label: string
+  status: TaskStatus
+}
+
+function parseTasks(content: string): ParsedTask[] | null {
+  // Verifica se ha um plano de execucao
+  if (!/\*\*PLANO DE EXECUCAO\*\*/i.test(content)) return null
+
+  // Extrai todas as declaracoes de task do plano (Task 1: ..., Task 2: ..., etc)
+  const planSection = content.match(/\*\*PLANO DE EXECUCAO\*\*([\s\S]*?)(?:\*\*Iniciando|$)/i)
+  if (!planSection) return null
+
+  const taskDeclarations = [...planSection[1].matchAll(/Task\s*(\d+)[:\s]+(.+)/gi)]
+  if (taskDeclarations.length === 0) return null
+
+  return taskDeclarations.map((match) => {
+    const index = parseInt(match[1])
+    const label = match[2].trim()
+
+    // Verifica se a task foi concluida (aparece "Task N concluida" no texto)
+    const donePattern = new RegExp(`Task\\s*${index}[^\\n]*conclu[ií]d`, "i")
+    // Verifica se a task esta em andamento ("Iniciando Task N")
+    const runningPattern = new RegExp(`Iniciando Task\\s*${index}`, "i")
+    // Verifica se e a ultima task e tem "TODAS AS TASKS CONCLUIDAS"
+    const allDone = /TODAS AS TASKS CONCLU[IÍ]DAS/i.test(content)
+
+    let status: TaskStatus = "pending"
+    if (allDone || donePattern.test(content)) {
+      status = "done"
+    } else if (runningPattern.test(content)) {
+      // Task esta rodando se foi iniciada mas ainda nao concluida
+      status = "running"
+    }
+
+    return { index, label, status }
+  })
+}
+
+// ─── Card de Tasks ────────────────────────────────────────────────────────────
+
+function TasksCard({ tasks, allDone }: { tasks: ParsedTask[]; allDone: boolean }) {
+  return (
+    <div className="self-start w-full max-w-[90%] mt-1 mb-0.5 rounded-xl border border-border bg-secondary/50 overflow-hidden">
+      {/* Cabecalho */}
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-border/60 bg-secondary/80">
+        <ClipboardList className="w-3.5 h-3.5 text-primary shrink-0" />
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-foreground/80">
+          Plano de Execucao
+        </span>
+        {allDone && (
+          <span className="ml-auto text-[10px] text-emerald-400 font-medium flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3" />
+            Concluido
+          </span>
+        )}
+      </div>
+      {/* Lista de tasks */}
+      <div className="px-3 py-2 flex flex-col gap-1.5">
+        {tasks.map((task) => (
+          <div key={task.index} className="flex items-start gap-2">
+            {/* Bolinha de status */}
+            <span className="mt-px shrink-0">
+              {task.status === "done" && (
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              )}
+              {task.status === "running" && (
+                <Loader className="w-3.5 h-3.5 text-primary animate-spin" />
+              )}
+              {task.status === "pending" && (
+                <Circle className="w-3.5 h-3.5 text-muted-foreground/50" />
+              )}
+              {task.status === "error" && (
+                <AlertCircle className="w-3.5 h-3.5 text-destructive" />
+              )}
+            </span>
+            {/* Numero + label */}
+            <span
+              className={cn(
+                "text-[11px] leading-relaxed",
+                task.status === "done" && "text-foreground/60 line-through",
+                task.status === "running" && "text-foreground font-medium",
+                task.status === "pending" && "text-foreground/50",
+                task.status === "error" && "text-destructive"
+              )}
+            >
+              <span className="text-muted-foreground mr-1 not-italic">
+                {task.index}.
+              </span>
+              {task.label}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function AIChat() {
   const [input, setInput] = useState("")
   const [collapsed, setCollapsed] = useState(false)
@@ -277,7 +380,7 @@ export function AIChat() {
   }, [chatMessages])
 
   const sendMessage = async () => {
-    if (!input.trim() || isLoading) return
+    if (!input.trim() || store.isThinking) return
 
     const userMessage = {
       id: Date.now().toString(),
@@ -410,8 +513,15 @@ export function AIChat() {
   // Texto exibido na mensagem: oculta blocos técnicos e de pensamento
   const renderContent = (content: string) =>
     content
-      .replace(/<thought>[\s\S]*?<\/thought>/g, "") // Remove blocos de pensamento do DeepSeek
-      .replace(/```actions[\s\S]*?```/g, "") // Remove blocos de acao
+      .replace(/<thought>[\s\S]*?<\/thought>/g, "")  // Remove blocos de pensamento
+      .replace(/```actions[\s\S]*?```/g, "")          // Remove blocos de acao
+      // Remove cabecalho do plano e marcadores de task (ficam no card)
+      .replace(/\*\*PLANO DE EXECUCAO\*\*/gi, "")
+      .replace(/^Task\s*\d+[:\s]+.+$/gm, "")
+      .replace(/\*\*Iniciando Task\s*\d+\.\.\.\*\*/gi, "")
+      .replace(/\*\*Task\s*\d+[^*]*\*\*/gi, "")
+      .replace(/\*\*TODAS AS TASKS CONCLU[IÍ]DAS!?\*\*/gi, "")
+      .replace(/\n{3,}/g, "\n\n")   // Colapsa multiplas linhas em branco
       .trim()
 
   return (
@@ -440,22 +550,37 @@ export function AIChat() {
           >
             {chatMessages.map((msg) => {
               const display = renderContent(msg.content)
-              // Verifica se houve acoes nessa mensagem
               const hasActions = msg.role === "assistant" && /```actions/.test(msg.content)
+              const isAssistant = msg.role === "assistant"
+
+              // Parseia tasks para mensagens do assistente
+              const tasks = isAssistant ? parseTasks(msg.content) : null
+              const allTasksDone = isAssistant && /TODAS AS TASKS CONCLU[IÍ]DAS/i.test(msg.content)
+
               return (
                 <div key={msg.id} className="flex flex-col gap-1">
-                  <div
-                    className={cn(
-                      "max-w-[90%] px-3 py-2 rounded-xl text-sm leading-relaxed break-words whitespace-pre-wrap",
-                      msg.role === "user"
-                        ? "bg-primary text-primary-foreground self-end rounded-br-sm"
-                        : "bg-secondary text-secondary-foreground self-start rounded-bl-sm border border-border"
-                    )}
-                  >
-                    {display || (store.isThinking && msg.role === "assistant" ? "Pensando..." : "")}
-                  </div>
+                  {/* Card de tasks (aparece acima do balao de texto) */}
+                  {tasks && tasks.length > 0 && (
+                    <TasksCard tasks={tasks} allDone={allTasksDone} />
+                  )}
+
+                  {/* Balao de mensagem (omite se so restou texto vazio apos remover marcadores) */}
+                  {(display || (!tasks && isAssistant)) && (
+                    <div
+                      className={cn(
+                        "max-w-[90%] px-3 py-2 rounded-xl text-[12px] leading-relaxed break-words whitespace-pre-wrap",
+                        msg.role === "user"
+                          ? "bg-primary text-primary-foreground self-end rounded-br-sm"
+                          : "bg-secondary text-secondary-foreground self-start rounded-bl-sm border border-border"
+                      )}
+                    >
+                      {display || (store.isThinking && isAssistant ? "Pensando..." : "")}
+                    </div>
+                  )}
+
+                  {/* Badge de alteracoes aplicadas */}
                   {hasActions && (
-                    <div className="self-start flex items-center gap-1 text-[11px] text-success ml-1">
+                    <div className="self-start flex items-center gap-1 text-[11px] text-emerald-400 ml-1">
                       <CheckCircle2 className="w-3 h-3" />
                       <span>Alteracoes aplicadas no projeto</span>
                     </div>
