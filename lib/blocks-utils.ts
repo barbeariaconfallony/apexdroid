@@ -1,4 +1,5 @@
 import { KodularComponent } from "./ide-types"
+import { KODULAR_BLOCKS_CATALOG } from "./kodular-blocks-catalog"
 
 /**
  * Cores estilo Kodular para as categorias
@@ -14,6 +15,18 @@ const KODULAR_COLORS = {
   variables: "#FF8C1A",
   procedures: "#FF661A",
   components: "#8E24AA"
+}
+
+/**
+ * Escapa caracteres XML para evitar problemas de parsing
+ */
+function escapeXml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;')
 }
 
 /**
@@ -265,29 +278,72 @@ export function generateDynamicToolbox(root: KodularComponent): string {
   components.forEach(comp => {
     const type = comp.$Type.split(".").pop() || comp.$Type
     const name = comp.$Name
+    const escapedName = escapeXml(name)
+    const escapedType = escapeXml(type)
+    
+    // Buscar eventos, metodos e propriedades do catalogo
+    const catalog = KODULAR_BLOCKS_CATALOG[type] || { events: [], methods: [], properties: [] }
+    
+    // Eventos padrao caso nao encontre no catalogo
+    const defaultEvents = [
+      { name: "Click", label: "Quando clicado" },
+      { name: "LongClick", label: "Quando pressionado longo" }
+    ]
+    const events = catalog.events.length > 0 ? catalog.events : defaultEvents
+    
+    // Propriedades padrao caso nao encontre no catalogo
+    const defaultProperties = [
+      { type: "property_get", name: "Text" },
+      { type: "property_set", name: "Text" },
+      { type: "property_get", name: "Visible" },
+      { type: "property_set", name: "Visible" },
+      { type: "property_get", name: "Enabled" },
+      { type: "property_set", name: "Enabled" }
+    ]
+    const properties = catalog.properties.length > 0 ? catalog.properties : defaultProperties
     
     toolboxXml += `
-      <category name="${name}" colour="${KODULAR_COLORS.components}">
+      <category name="${escapedName}" colour="${KODULAR_COLORS.components}">
+    `
+    
+    // Gerar blocos de evento com mutation completa
+    events.forEach(event => {
+      const eventName = event.name
+      toolboxXml += `
         <block type="component_event">
-          <field name="COMPONENT">${name}</field>
-          <field name="EVENT">Click</field>
+          <mutation component_type="${escapedType}" is_generic="false" instance_name="${escapedName}" event_name="${eventName}"></mutation>
         </block>
-        <block type="component_event">
-          <field name="COMPONENT">${name}</field>
-          <field name="EVENT">LongClick</field>
-        </block>
+      `
+    })
+    
+    // Gerar blocos de propriedades SET
+    properties.filter(p => p.type === "property_set").forEach(prop => {
+      toolboxXml += `
         <block type="component_set">
-          <field name="COMPONENT">${name}</field>
-          <field name="PROPERTY">Text</field>
+          <mutation component_type="${escapedType}" is_generic="false" instance_name="${escapedName}" property_name="${prop.name}"></mutation>
         </block>
+      `
+    })
+    
+    // Gerar blocos de propriedades GET
+    properties.filter(p => p.type === "property_get").forEach(prop => {
+      toolboxXml += `
         <block type="component_get">
-          <field name="COMPONENT">${name}</field>
-          <field name="PROPERTY">Text</field>
+          <mutation component_type="${escapedType}" is_generic="false" instance_name="${escapedName}" property_name="${prop.name}"></mutation>
         </block>
+      `
+    })
+    
+    // Gerar blocos de metodos
+    catalog.methods.forEach(method => {
+      toolboxXml += `
         <block type="component_method">
-          <field name="COMPONENT">${name}</field>
-          <field name="METHOD">ToString</field>
+          <mutation component_type="${escapedType}" is_generic="false" instance_name="${escapedName}" method_name="${method.name}"></mutation>
         </block>
+      `
+    })
+    
+    toolboxXml += `
       </category>
     `
   })

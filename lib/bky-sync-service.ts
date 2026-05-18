@@ -519,8 +519,12 @@ export function convertFlowToBky(flowDoc: FlowDocument): string {
   
   const topNodes = rootNodes.length > 0 ? rootNodes : (eventNodes.length > 0 ? eventNodes : nodes.slice(0, 1))
 
+  // Set para rastrear nós já processados (evita duplicação)
+  const processedNodes = new Set<string>()
+
   topNodes.forEach(node => {
-    const block = convertNodeToBlock(node, nodes, edges)
+    if (processedNodes.has(node.id)) return
+    const block = convertNodeToBlock(node, nodes, edges, processedNodes)
     if (block) {
       doc.blocks.push(block)
     }
@@ -529,7 +533,10 @@ export function convertFlowToBky(flowDoc: FlowDocument): string {
   return serializeToBkyXml(doc)
 }
 
-function convertNodeToBlock(node: FlowNode, allNodes: FlowNode[], edges: FlowEdge[]): BkyBlock | null {
+function convertNodeToBlock(node: FlowNode, allNodes: FlowNode[], edges: FlowEdge[], processedNodes: Set<string>): BkyBlock | null {
+  if (processedNodes.has(node.id)) return null
+  processedNodes.add(node.id)
+
   const block: BkyBlock = {
     id: node.id,
     type: node.metadata?.bkyType || 'text_print',
@@ -565,8 +572,8 @@ function convertNodeToBlock(node: FlowNode, allNodes: FlowNode[], edges: FlowEdg
     if (childEdges.length > 0) {
       const firstChildId = childEdges[0].target
       const childNode = allNodes.find(n => n.id === firstChildId)
-      if (childNode) {
-        const childBlock = convertNodeToBlock(childNode, allNodes, edges)
+      if (childNode && !processedNodes.has(childNode.id)) {
+        const childBlock = convertNodeToBlock(childNode, allNodes, edges, processedNodes)
         if (childBlock) {
           delete childBlock.x
           delete childBlock.y
@@ -591,7 +598,7 @@ function convertNodeToBlock(node: FlowNode, allNodes: FlowNode[], edges: FlowEdg
     block.fields.COMPONENT_SELECTOR = compName
 
     // Adicionar next se houver
-    addNextBlock(block, node, allNodes, edges)
+    addNextBlock(block, node, allNodes, edges, processedNodes)
   }
   // Set property
   else if (setPropFunc || node.metadata?.propertyName) {
@@ -618,7 +625,7 @@ function convertNodeToBlock(node: FlowNode, allNodes: FlowNode[], edges: FlowEdg
       statements: {}
     }
 
-    addNextBlock(block, node, allNodes, edges)
+    addNextBlock(block, node, allNodes, edges, processedNodes)
   }
   // Abrir tela
   else if (node.label.startsWith('Abrir Tela') || node.metadata?.targetScreen) {
@@ -633,7 +640,7 @@ function convertNodeToBlock(node: FlowNode, allNodes: FlowNode[], edges: FlowEdg
       statements: {}
     }
 
-    addNextBlock(block, node, allNodes, edges)
+    addNextBlock(block, node, allNodes, edges, processedNodes)
   }
   // Procedimento
   else if (node.label.startsWith('Procedimento:')) {
@@ -645,8 +652,8 @@ function convertNodeToBlock(node: FlowNode, allNodes: FlowNode[], edges: FlowEdg
     if (childEdges.length > 0) {
       const firstChildId = childEdges[0].target
       const childNode = allNodes.find(n => n.id === firstChildId)
-      if (childNode) {
-        const childBlock = convertNodeToBlock(childNode, allNodes, edges)
+      if (childNode && !processedNodes.has(childNode.id)) {
+        const childBlock = convertNodeToBlock(childNode, allNodes, edges, processedNodes)
         if (childBlock) {
           delete childBlock.x
           delete childBlock.y
@@ -683,7 +690,7 @@ function convertNodeToBlock(node: FlowNode, allNodes: FlowNode[], edges: FlowEdg
       statements: {}
     }
 
-    addNextBlock(block, node, allNodes, edges)
+    addNextBlock(block, node, allNodes, edges, processedNodes)
   }
   // Decisão (if)
   else if (node.type === 'decision') {
@@ -705,8 +712,8 @@ function convertNodeToBlock(node: FlowNode, allNodes: FlowNode[], edges: FlowEdg
 
     if (trueEdge) {
       const trueNode = allNodes.find(n => n.id === trueEdge.target)
-      if (trueNode) {
-        const trueBlock = convertNodeToBlock(trueNode, allNodes, edges)
+      if (trueNode && !processedNodes.has(trueNode.id)) {
+        const trueBlock = convertNodeToBlock(trueNode, allNodes, edges, processedNodes)
         if (trueBlock) {
           delete trueBlock.x
           delete trueBlock.y
@@ -718,8 +725,8 @@ function convertNodeToBlock(node: FlowNode, allNodes: FlowNode[], edges: FlowEdg
     if (falseEdge) {
       block.mutation = { else: '1' }
       const falseNode = allNodes.find(n => n.id === falseEdge.target)
-      if (falseNode) {
-        const falseBlock = convertNodeToBlock(falseNode, allNodes, edges)
+      if (falseNode && !processedNodes.has(falseNode.id)) {
+        const falseBlock = convertNodeToBlock(falseNode, allNodes, edges, processedNodes)
         if (falseBlock) {
           delete falseBlock.x
           delete falseBlock.y
@@ -739,18 +746,18 @@ function convertNodeToBlock(node: FlowNode, allNodes: FlowNode[], edges: FlowEdg
       statements: {}
     }
 
-    addNextBlock(block, node, allNodes, edges)
+    addNextBlock(block, node, allNodes, edges, processedNodes)
   }
 
   return block
 }
 
-function addNextBlock(block: BkyBlock, node: FlowNode, allNodes: FlowNode[], edges: FlowEdge[]) {
+function addNextBlock(block: BkyBlock, node: FlowNode, allNodes: FlowNode[], edges: FlowEdge[], processedNodes: Set<string>) {
   const nextEdge = edges.find(e => e.source === node.id && !e.label)
   if (nextEdge) {
     const nextNode = allNodes.find(n => n.id === nextEdge.target)
-    if (nextNode) {
-      const nextBlock = convertNodeToBlock(nextNode, allNodes, edges)
+    if (nextNode && !processedNodes.has(nextNode.id)) {
+      const nextBlock = convertNodeToBlock(nextNode, allNodes, edges, processedNodes)
       if (nextBlock) {
         delete nextBlock.x
         delete nextBlock.y

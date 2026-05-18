@@ -670,6 +670,7 @@ export function FlowchartEditor() {
     const nodeLabel = e.dataTransfer.getData("nodeLabel")
     const compType = e.dataTransfer.getData("compType")
     const bkyType = e.dataTransfer.getData("bkyType")
+    const targetScreen = e.dataTransfer.getData("targetScreen")
 
     if (nodeType && nodeLabel) {
       const GRID_SIZE = 20
@@ -691,6 +692,7 @@ export function FlowchartEditor() {
           componentName: nodeType === "component" ? nodeLabel : undefined,
           componentType: compType || undefined,
           bkyType: bkyType || undefined,
+          targetScreen: targetScreen || undefined,
           functions: []
         }
       }
@@ -1139,6 +1141,18 @@ export function FlowchartEditor() {
   // Obter o no selecionado
   const selectedNodeData = nodes.find(n => n.id === selectedNode)
   const selectedComponentType = selectedNodeData?.metadata?.componentType || 'default'
+  
+  // Extrair componentes do projeto para uso no modal
+  const projectComponents = (() => {
+    const comps: { name: string; type: string }[] = []
+    const flatten = (comp: any) => {
+      if (!comp) return
+      if (comp.$Name && comp.$Type) comps.push({ name: comp.$Name, type: comp.$Type })
+      if (comp.$Components) comp.$Components.forEach(flatten)
+    }
+    if (currentProject?.Properties) flatten(currentProject.Properties)
+    return comps
+  })()
 
   return (
     <div className="flex-1 flex flex-col bg-[#0a0a0a] overflow-hidden select-none relative animate-in fade-in duration-500">
@@ -1827,14 +1841,17 @@ export function FlowchartEditor() {
               </div>
 
               {/* Target Screen (for navigation nodes) */}
-              {selectedNodeData.label === "Abrir Tela" && (
+              {(selectedNodeData.label.startsWith("Abrir Tela") || 
+                selectedNodeData.metadata?.bkyType === "controls_openAnotherScreen" ||
+                selectedNodeData.metadata?.targetScreen) && (
                 <div className="space-y-2 animate-in fade-in duration-300">
                   <Label className="text-[9px] uppercase font-bold text-muted-foreground">Destino (Tela)</Label>
                   <Select 
                     value={selectedNodeData.metadata?.targetScreen || ""}
                     onValueChange={(val) => {
                       setNodes(nodes.map(n => n.id === selectedNode ? { 
-                        ...n, 
+                        ...n,
+                        label: `Abrir Tela: ${val}`,
                         metadata: { ...n.metadata, targetScreen: val } 
                       } : n))
                     }}
@@ -1856,6 +1873,77 @@ export function FlowchartEditor() {
                   </div>
                 </div>
               )}
+
+              {/* Component Selector - para blocos de evento/metodo/propriedade */}
+              {selectedNodeData.metadata?.componentType && (
+                <div className="space-y-2 animate-in fade-in duration-300">
+                  <Label className="text-[9px] uppercase font-bold text-muted-foreground">Componente Alvo</Label>
+                  <Select 
+                    value={selectedNodeData.metadata?.componentName || ""}
+                    onValueChange={(val) => {
+                      const comp = projectComponents.find(c => c.name === val)
+                      setNodes(nodes.map(n => n.id === selectedNode ? { 
+                        ...n, 
+                        label: n.label.replace(n.metadata?.componentName || '', val),
+                        metadata: { 
+                          ...n.metadata, 
+                          componentName: val,
+                          componentType: comp?.type?.split('.').pop() || n.metadata?.componentType
+                        } 
+                      } : n))
+                    }}
+                  >
+                    <SelectTrigger className="h-9 text-xs bg-white/5 border-white/10">
+                      <SelectValue placeholder="Selecionar componente..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-black/90 border-white/10 backdrop-blur-xl">
+                      {projectComponents.map(comp => (
+                        <SelectItem key={comp.name} value={comp.name} className="text-xs">
+                          {comp.name} <span className="text-muted-foreground">({comp.type.split('.').pop()})</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Event Name Selector - para blocos de evento */}
+              {selectedNodeData.type === 'event' || selectedNodeData.metadata?.functions?.some(f => f.type === 'event') ? (
+                <div className="space-y-2 animate-in fade-in duration-300">
+                  <Label className="text-[9px] uppercase font-bold text-muted-foreground">Nome do Evento</Label>
+                  <Select 
+                    value={selectedNodeData.metadata?.eventName || selectedNodeData.metadata?.functions?.find(f => f.type === 'event')?.name || "Click"}
+                    onValueChange={(val) => {
+                      setNodes(nodes.map(n => {
+                        if (n.id !== selectedNode) return n
+                        const compName = n.metadata?.componentName || 'Componente'
+                        return { 
+                          ...n, 
+                          label: `Quando ${compName}.${val}`,
+                          metadata: { 
+                            ...n.metadata, 
+                            eventName: val,
+                            functions: (n.metadata?.functions || []).map(f => 
+                              f.type === 'event' ? { ...f, name: val, label: `Quando ${val}` } : f
+                            )
+                          } 
+                        }
+                      }))
+                    }}
+                  >
+                    <SelectTrigger className="h-9 text-xs bg-white/5 border-white/10">
+                      <SelectValue placeholder="Selecionar evento..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-black/90 border-white/10 backdrop-blur-xl">
+                      {getEventsForComponent(selectedComponentType).map(event => (
+                        <SelectItem key={event.name} value={event.name} className="text-xs">
+                          {event.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : null}
             </div>
           </div>
 

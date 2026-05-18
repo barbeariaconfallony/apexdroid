@@ -7,7 +7,7 @@ import {
   Box, Code2, GitBranch, Database, Type, Hash, List, BookOpen,
   Palette, ChevronRight, ChevronDown, Search, Zap, Settings, Play,
   ArrowRight, LayoutGrid, AlignLeft, Repeat, Globe, Bell, Wifi,
-  Layers
+  Layers, Smartphone
 } from "lucide-react"
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
@@ -192,9 +192,10 @@ const STATIC_CATEGORIES: FlowCategory[] = [
 
 // ─── Componente ───────────────────────────────────────────────────────────────
 export function FlowchartSidebar() {
-  const { currentProject } = useIDEStore()
+  const { currentProject, screenFiles } = useIDEStore()
   const [search, setSearch] = useState("")
   const [expanded, setExpanded] = useState<Record<string, boolean>>({
+    screens: true,
     components: true,
     control: true,
     logic: false,
@@ -238,17 +239,29 @@ export function FlowchartSidebar() {
     return screenComponents.filter(c => c.name.toLowerCase().includes(query))
   }, [screenComponents, query])
 
+  // Lista de telas do projeto
+  const projectScreens = useMemo(() => {
+    return screenFiles.map(sf => sf.name)
+  }, [screenFiles])
+
+  const filteredScreens = useMemo(() => {
+    if (!query) return projectScreens
+    return projectScreens.filter(s => s.toLowerCase().includes(query))
+  }, [projectScreens, query])
+
   const handleDragStart = (
     e: React.DragEvent,
     nodeType: string,
     nodeLabel: string,
     compType?: string,
-    bkyType?: string
+    bkyType?: string,
+    targetScreen?: string
   ) => {
     e.dataTransfer.setData("nodeType", nodeType)
     e.dataTransfer.setData("nodeLabel", nodeLabel)
     if (compType) e.dataTransfer.setData("compType", compType)
     if (bkyType) e.dataTransfer.setData("bkyType", bkyType)
+    if (targetScreen) e.dataTransfer.setData("targetScreen", targetScreen)
     e.dataTransfer.effectAllowed = "copy"
   }
 
@@ -275,6 +288,53 @@ export function FlowchartSidebar() {
 
       <ScrollArea className="flex-1 min-h-0">
         <div className="p-2 space-y-1">
+
+          {/* ── Telas do Projeto ── */}
+          {(!query || filteredScreens.length > 0) && (
+            <div>
+              <button
+                onClick={() => toggleSection("screens")}
+                className="flex items-center w-full gap-1.5 px-1.5 py-1 text-[11px] font-semibold text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {expanded.screens
+                  ? <ChevronDown className="w-3 h-3 shrink-0" />
+                  : <ChevronRight className="w-3 h-3 shrink-0" />}
+                <Smartphone className="w-3 h-3 shrink-0 text-amber-400" />
+                Telas do Projeto
+                <span className="ml-auto text-[9px] bg-secondary rounded px-1">
+                  {filteredScreens.length}
+                </span>
+              </button>
+
+              {expanded.screens && (
+                <div className="mt-1 space-y-0.5 pl-3">
+                  {filteredScreens.map(screenName => (
+                    <div
+                      key={screenName}
+                      draggable
+                      onDragStart={e => handleDragStart(
+                        e, 
+                        "action", 
+                        `Abrir Tela: ${screenName}`, 
+                        undefined, 
+                        "controls_openAnotherScreen",
+                        screenName
+                      )}
+                      className={`flex items-center gap-1.5 px-2 py-1.5 text-[11px] ${COLORS.event} border rounded-md cursor-grab active:cursor-grabbing hover:brightness-125 transition-all select-none`}
+                    >
+                      <Smartphone className="w-3 h-3 shrink-0" />
+                      <span className="truncate">Abrir {screenName}</span>
+                    </div>
+                  ))}
+                  {filteredScreens.length === 0 && (
+                    <p className="text-[10px] text-muted-foreground italic px-2 py-1">
+                      Nenhuma tela
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* ── Componentes da Tela ── */}
           {(!query || filteredComponents.length > 0) && (
