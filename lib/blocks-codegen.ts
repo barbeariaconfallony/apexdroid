@@ -583,33 +583,95 @@ export function registerCodeGenerators() {
 
   // ===== COMPONENTES =====
 
+  // Funcao auxiliar para extrair nome do componente da mutation ou campo
+  function getComponentName(block: any): string {
+    // Tentar obter das propriedades internas do bloco (setadas por domToMutation)
+    if (block.instanceName_) return block.instanceName_
+    // Tentar obter da mutation primeiro
+    const mutation = block.mutationToDom?.()
+    if (mutation) {
+      const instanceName = mutation.getAttribute('instance_name')
+      if (instanceName) return instanceName
+    }
+    // Fallback para campo COMPONENT_SELECTOR ou COMPONENT
+    return block.getFieldValue('COMPONENT_SELECTOR') || 
+           block.getFieldValue('COMPONENT') || 
+           block.getFieldValue('instance_name') ||
+           'Component1'
+  }
+  
+  // Funcao auxiliar para extrair nome do evento da mutation ou campo
+  function getEventName(block: any): string {
+    // Tentar obter das propriedades internas do bloco (setadas por domToMutation)
+    if (block.eventName_) return block.eventName_
+    const mutation = block.mutationToDom?.()
+    if (mutation) {
+      const eventName = mutation.getAttribute('event_name')
+      if (eventName) return eventName
+    }
+    return block.getFieldValue('EVENT') || 
+           block.getFieldValue('event_name') ||
+           block.getFieldValue('EVENT_LABEL') ||
+           'Click'
+  }
+  
+  // Funcao auxiliar para extrair nome da propriedade da mutation ou campo
+  function getPropertyName(block: any): string {
+    // Tentar obter das propriedades internas do bloco (setadas por domToMutation)
+    if (block.propertyName_) return block.propertyName_
+    const mutation = block.mutationToDom?.()
+    if (mutation) {
+      const propName = mutation.getAttribute('property_name')
+      if (propName) return propName
+    }
+    return block.getFieldValue('PROPERTY') || 
+           block.getFieldValue('property_name') ||
+           block.getFieldValue('PROPERTY_LABEL') ||
+           'Text'
+  }
+  
+  // Funcao auxiliar para extrair nome do metodo da mutation ou campo
+  function getMethodName(block: any): string {
+    // Tentar obter das propriedades internas do bloco (setadas por domToMutation)
+    if (block.methodName_) return block.methodName_
+    const mutation = block.mutationToDom?.()
+    if (mutation) {
+      const methodName = mutation.getAttribute('method_name')
+      if (methodName) return methodName
+    }
+    return block.getFieldValue('METHOD') || 
+           block.getFieldValue('method_name') ||
+           block.getFieldValue('METHOD_LABEL') ||
+           'DoSomething'
+  }
+
   // Evento de componente (quando Button1.Click fazer)
   javascriptGenerator.forBlock['component_event'] = function(block: any) {
-    const component = block.getFieldValue('COMPONENT_SELECTOR') || 'Component1'
-    const event = block.getFieldValue('EVENT') || 'Click'
+    const component = getComponentName(block)
+    const event = getEventName(block)
     const statements = javascriptGenerator.statementToCode(block, 'DO')
     return `__runtime.on('${component}', '${event}', function() {\n${statements}});\n`
   }
 
   // Obter propriedade de componente
   javascriptGenerator.forBlock['component_get'] = function(block: any) {
-    const component = block.getFieldValue('COMPONENT_SELECTOR') || 'Component1'
-    const property = block.getFieldValue('PROPERTY') || 'Text'
+    const component = getComponentName(block)
+    const property = getPropertyName(block)
     return [`__runtime.get('${component}', '${property}')`, Order.FUNCTION_CALL]
   }
 
   // Definir propriedade de componente
   javascriptGenerator.forBlock['component_set'] = function(block: any) {
-    const component = block.getFieldValue('COMPONENT_SELECTOR') || 'Component1'
-    const property = block.getFieldValue('PROPERTY') || 'Text'
+    const component = getComponentName(block)
+    const property = getPropertyName(block)
     const value = javascriptGenerator.valueToCode(block, 'VALUE', Order.NONE) || '""'
     return `__runtime.set('${component}', '${property}', ${value});\n`
   }
 
   // Chamar metodo de componente
   javascriptGenerator.forBlock['component_method'] = function(block: any) {
-    const component = block.getFieldValue('COMPONENT_SELECTOR') || 'Component1'
-    const method = block.getFieldValue('METHOD') || 'DoSomething'
+    const component = getComponentName(block)
+    const method = getMethodName(block)
     // Coletar argumentos se houver
     const args: string[] = []
     for (let i = 0; i < 10; i++) {
@@ -622,8 +684,8 @@ export function registerCodeGenerators() {
 
   // Chamar metodo com retorno
   javascriptGenerator.forBlock['component_method_with_return'] = function(block: any) {
-    const component = block.getFieldValue('COMPONENT_SELECTOR') || 'Component1'
-    const method = block.getFieldValue('METHOD') || 'DoSomething'
+    const component = getComponentName(block)
+    const method = getMethodName(block)
     const args: string[] = []
     for (let i = 0; i < 10; i++) {
       const arg = javascriptGenerator.valueToCode(block, 'ARG' + i, Order.NONE)

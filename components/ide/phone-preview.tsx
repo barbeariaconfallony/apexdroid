@@ -603,7 +603,7 @@ export function PhonePreview() {
     currentProject, appMode, setAppMode, updateComponent, removeComponent, moveComponent,
     selectedComponent, setSelectedComponent, setShowProperties,
     selectedRepo, currentScreenName, setActiveTab,
-    projectAssets, ghToken, isThinking, switchScreen
+    projectAssets, ghToken, isThinking, switchScreen, screenFiles
   } = useIDEStore()
 
   // Device state
@@ -630,6 +630,17 @@ export function PhonePreview() {
   // Funcao para inicializar e executar o codigo dos blocos
   const initializeBlocksRuntime = useCallback(() => {
     try {
+      // Inicializar historico de telas
+      if (typeof window !== 'undefined') {
+        if (!(window as any).__apexScreenHistory) {
+          (window as any).__apexScreenHistory = []
+        }
+        const history = (window as any).__apexScreenHistory
+        if (history[history.length - 1] !== currentScreenName) {
+          history.push(currentScreenName)
+        }
+      }
+      
       // Obter codigo gerado dos blocos
       const generatedCode = typeof window !== 'undefined' 
         ? (window as any).__apexGeneratedCode?.[currentScreenName || ''] 
@@ -657,6 +668,19 @@ export function PhonePreview() {
       // Criar runtime
       const eventHandlers: Record<string, Record<string, Function[]>> = {}
       const globals: Record<string, any> = {}
+      
+      // Funcao para verificar se a tela existe
+      const screenExists = (name: string) => {
+        return screenFiles.some(sf => sf.name === name || sf.name.toLowerCase() === name.toLowerCase())
+      }
+      
+      // Encontrar o nome correto da tela (case insensitive)
+      const findScreenName = (name: string): string | null => {
+        const found = screenFiles.find(sf => 
+          sf.name === name || sf.name.toLowerCase() === name.toLowerCase()
+        )
+        return found?.name || null
+      }
 
       const runtime = {
         on: (component: string, event: string, handler: Function) => {
@@ -674,8 +698,9 @@ export function PhonePreview() {
           }
         },
         call: (component: string, method: string, args: any[]) => {
+          // Notifier methods
           if (method === 'ShowAlert') {
-            toast(args[0] || 'Alerta')
+            toast(args[0] || 'Alerta', { duration: 3000 })
           } else if (method === 'ShowMessageDialog') {
             setActiveDialog({ 
               type: 'message', 
@@ -689,30 +714,133 @@ export function PhonePreview() {
               message: args[0] || '',
               title: args[1] || 'Escolha',
               button1Text: args[2] || 'Sim',
-              button2Text: args[3] || 'Não',
+              button2Text: args[3] || 'Nao',
               onConfirm: () => {
                 const rt = getBlocksRuntime()
                 if (rt) rt.triggerEvent(component, "AfterChoosing", args[2] || 'Sim')
               },
               onCancel: () => {
                 const rt = getBlocksRuntime()
-                if (rt) rt.triggerEvent(component, "AfterChoosing", args[3] || 'Não')
+                if (rt) rt.triggerEvent(component, "AfterChoosing", args[3] || 'Nao')
               }
             })
+          } else if (method === 'ShowProgressDialog') {
+            toast.loading(args[0] || 'Carregando...', { id: 'progress-dialog' })
+          } else if (method === 'DismissProgressDialog') {
+            toast.dismiss('progress-dialog')
+          } else if (method === 'LogInfo' || method === 'LogError' || method === 'LogWarning') {
+            console.log(`[${method}] ${args[0]}`)
+            toast.info(`Log: ${args[0]}`)
           } else {
             console.log(`[Runtime] ${component}.${method}(${args.join(', ')})`)
           }
         },
         openScreen: (name: string) => {
-          console.log(`[Runtime] Abrindo tela: ${name}`)
-          switchScreen(name)
+          console.log(`[Runtime] Solicitacao para abrir tela: ${name}`)
+          const cleanName = name.replace(/^["']|["']$/g, '') // Remove aspas
+          const realScreenName = findScreenName(cleanName)
+          
+          if (realScreenName) {
+            console.log(`[Runtime] Abrindo tela: ${realScreenName}`)
+            toast.info(`Abrindo tela: ${realScreenName}`)
+            
+            // Trocar para a tela no IDE
+            switchScreen(realScreenName)
+            
+            // Ativar a aba Telas para o usuario ver
+            setActiveTab("telas")
+            
+            // Disparar evento Screen.Initialize da nova tela apos um pequeno delay
+            setTimeout(() => {
+              const rt = getBlocksRuntime()
+              if (rt) {
+                rt.triggerEvent(realScreenName, "Initialize")
+              }
+            }, 100)
+          } else {
+            console.warn(`[Runtime] Tela nao encontrada: ${cleanName}`)
+            toast.error(`Tela "${cleanName}" nao encontrada`)
+          }
         },
-        closeScreen: () => toast.info('Fechando tela'),
-        getStartValue: () => null,
+        openScreenWithValue: (name: string, value: any) => {
+          const cleanName = name.replace(/^["']|["']$/g, '')
+          const realScreenName = findScreenName(cleanName)
+          
+          if (realScreenName) {
+            // Armazenar valor de inicio para a proxima tela
+            if (typeof window !== 'undefined') {
+              (window as any).__apexStartValue = value
+            }
+            runtime.openScreen(realScreenName)
+          } else {
+            toast.error(`Tela "${cleanName}" nao encontrada`)
+          }
+        },
+        closeScreen: () => {
+          toast.info('Fechando tela atual')
+          // Voltar para a tela anterior se houver historico
+          if (typeof window !== 'undefined' && (window as any).__apexScreenHistory?.length > 1) {
+            const history = (window as any).__apexScreenHistory
+            history.pop() // Remove tela atual
+            const previousScreen = history[history.length - 1]
+            if (previousScreen) {
+              switchScreen(previousScreen)
+              setActiveTab("telas")
+            }
+          }
+        },
+        closeScreenWithValue: (value: any) => {
+          if (typeof window !== 'undefined') {
+            (window as any).__apexCloseValue = value
+          }
+          runtime.closeScreen()
+        },
+        closeApp: () => {
+          toast.info('Aplicativo encerrado (simulacao)')
+          setAppMode("edit")
+        },
+        getStartValue: () => {
+          if (typeof window !== 'undefined') {
+            return (window as any).__apexStartValue ?? null
+          }
+          return null
+        },
+        getPlainStartText: () => {
+          const startValue = runtime.getStartValue()
+          return typeof startValue === 'string' ? startValue : String(startValue ?? '')
+        },
+        closeScreenWithPlainText: (text: string) => {
+          runtime.closeScreenWithValue(text)
+        },
+        setRandomSeed: (seed: number) => {
+          console.log(`[Runtime] Random seed set to: ${seed}`)
+        },
         setAny: (comp: any, prop: string, val: any) => runtime.set(typeof comp === 'string' ? comp : comp?.$Name, prop, val),
         getAny: (comp: any, prop: string) => runtime.get(typeof comp === 'string' ? comp : comp?.$Name, prop),
         callAny: (comp: any, method: string, args: any[]) => runtime.call(typeof comp === 'string' ? comp : comp?.$Name, method, args),
-        splitColor: (c: string) => [0,0,0]
+        splitColor: (c: string) => [0,0,0],
+        // Vibration
+        vibrate: (milliseconds: number) => {
+          if (navigator.vibrate) {
+            navigator.vibrate(milliseconds)
+          }
+          toast.info(`Vibracao: ${milliseconds}ms`)
+        },
+        // Sound
+        playSound: (source: string) => {
+          console.log(`[Runtime] Reproduzindo som: ${source}`)
+          toast.info(`Som: ${source}`)
+        },
+        // Text-to-Speech
+        speak: (text: string) => {
+          if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(text)
+            utterance.lang = 'pt-BR'
+            window.speechSynthesis.speak(utterance)
+          } else {
+            toast.info(`TTS: ${text}`)
+          }
+        }
       }
 
       // Expor runtime globalmente
@@ -771,7 +899,7 @@ export function PhonePreview() {
       console.error('[v0] Erro ao inicializar runtime:', e)
       setRuntimeInitialized(true)
     }
-  }, [currentScreenName, currentProject, updateComponent])
+  }, [currentScreenName, currentProject, updateComponent, screenFiles, switchScreen, setActiveTab, setAppMode])
 
   // Handler para disparar eventos de componentes
   const handleTriggerEvent = useCallback((componentName: string, eventName: string) => {
@@ -792,6 +920,10 @@ export function PhonePreview() {
           (window as any).__apexTimers.forEach((id: any) => clearInterval(id))
           delete (window as any).__apexTimers
         }
+        // Limpar historico de telas
+        delete (window as any).__apexScreenHistory
+        delete (window as any).__apexStartValue
+        delete (window as any).__apexCloseValue
         delete (window as any).__apexBlocksRuntime
       }
     }
