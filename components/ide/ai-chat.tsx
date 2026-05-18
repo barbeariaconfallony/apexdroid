@@ -24,51 +24,230 @@ function serializeComponents(comp: any, depth = 0): string {
 function executeActions(
   actionsJson: string,
   store: ReturnType<typeof useIDEStore.getState>
-): number {
+): { count: number; errors: string[] } {
   let parsed: any[]
+  const errors: string[] = []
+  
   try {
     // Limpa possiveis caracteres problematicos antes de parsear
     const cleaned = actionsJson.trim()
     parsed = JSON.parse(cleaned)
   } catch (e) {
     console.error('[APEX AI] Erro ao parsear actions JSON:', e, actionsJson)
-    return 0
+    return { count: 0, errors: [`Erro de parse JSON: ${e}`] }
   }
-  if (!Array.isArray(parsed)) return 0
+  if (!Array.isArray(parsed)) return { count: 0, errors: ['Actions nao e um array'] }
 
   let count = 0
   for (const action of parsed) {
     try {
       console.log('[APEX AI] Executando acao:', action)
 
-      if (action.action === "clear_screen") {
-        // Limpa todos os componentes da tela atual
-        const proj = useIDEStore.getState().currentProject
-        if (proj && proj.Properties.$Components) {
-          proj.Properties.$Components = []
-          useIDEStore.setState({ 
-            currentProject: JSON.parse(JSON.stringify(proj)),
-            selectedComponent: null 
-          })
+      switch (action.action) {
+        case "clear_screen": {
+          // Limpa todos os componentes da tela atual
+          const proj = useIDEStore.getState().currentProject
+          if (proj && proj.Properties.$Components) {
+            proj.Properties.$Components = []
+            useIDEStore.setState({ 
+              currentProject: JSON.parse(JSON.stringify(proj)),
+              selectedComponent: null 
+            })
+            count++
+          }
+          break
         }
-        count++
-      } else if (action.action === "add_component" && action.parentName && action.type) {
-        // Adiciona o componente com propriedades iniciais diretamente
-        const newName = store.addComponent(action.parentName, action.type, action.properties || {})
-        console.log('[APEX AI] Componente adicionado:', newName)
-        count++
-      } else if (action.action === "update_component" && action.name && action.properties) {
-        store.updateComponent(action.name, action.properties)
-        count++
-      } else if (action.action === "remove_component" && action.name) {
-        store.removeComponent(action.name)
-        count++
+        
+        case "create_screen": {
+          // Cria uma nova tela
+          if (action.name) {
+            store.createScreen(action.name)
+            count++
+          } else {
+            errors.push('create_screen: nome da tela nao especificado')
+          }
+          break
+        }
+        
+        case "switch_screen": {
+          // Muda para outra tela
+          if (action.name) {
+            store.switchScreen(action.name)
+            count++
+          } else {
+            errors.push('switch_screen: nome da tela nao especificado')
+          }
+          break
+        }
+        
+        case "set_screen_design": {
+          // Define toda a estrutura visual de uma tela
+          const design = action.properties?.design
+          const screenName = action.screenName || action.properties?.design?.$Name
+          
+          if (design && screenName) {
+            // Encontra o arquivo da tela
+            const screenFiles = useIDEStore.getState().screenFiles
+            const screenFile = screenFiles.find(sf => sf.name === screenName)
+            
+            if (screenFile) {
+              // Atualiza o conteudo SCM da tela
+              const newContent = JSON.stringify(design, null, 2)
+              store.updateScreenFileContent(screenFile.name, newContent)
+              
+              // Se for a tela atual, atualiza o projeto
+              if (useIDEStore.getState().currentScreenName === screenName) {
+                useIDEStore.setState({
+                  currentProject: { ...useIDEStore.getState().currentProject!, Properties: design }
+                })
+              }
+              count++
+            } else {
+              // Cria a tela se nao existir
+              store.createScreen(screenName)
+              setTimeout(() => {
+                store.updateScreenFileContent(screenName, JSON.stringify(design, null, 2))
+                if (useIDEStore.getState().currentScreenName === screenName) {
+                  useIDEStore.setState({
+                    currentProject: { ...useIDEStore.getState().currentProject!, Properties: design }
+                  })
+                }
+              }, 100)
+              count++
+            }
+          } else {
+            errors.push('set_screen_design: design ou screenName nao especificado')
+          }
+          break
+        }
+        
+        case "set_screen_logic": {
+          // Define a logica de blocos (BKY) de uma tela
+          const bkyContent = action.properties?.bkyContent
+          const screenName = action.screenName
+          
+          if (bkyContent && screenName) {
+            const screenFiles = useIDEStore.getState().screenFiles
+            const screenFile = screenFiles.find(sf => sf.name === screenName)
+            
+            if (screenFile) {
+              store.updateScreenBky(screenFile.name, bkyContent)
+              count++
+            } else {
+              errors.push(`set_screen_logic: tela "${screenName}" nao encontrada`)
+            }
+          } else {
+            errors.push('set_screen_logic: bkyContent ou screenName nao especificado')
+          }
+          break
+        }
+        
+        case "add_component": {
+          if (action.parentName && action.type) {
+            const newName = store.addComponent(action.parentName, action.type, action.properties || {})
+            console.log('[APEX AI] Componente adicionado:', newName)
+            count++
+          } else {
+            errors.push('add_component: parentName ou type nao especificado')
+          }
+          break
+        }
+        
+        case "update_component": {
+          if (action.name && action.properties) {
+            store.updateComponent(action.name, action.properties)
+            count++
+          } else {
+            errors.push('update_component: name ou properties nao especificado')
+          }
+          break
+        }
+        
+        case "remove_component": {
+          if (action.name) {
+            store.removeComponent(action.name)
+            count++
+          } else {
+            errors.push('remove_component: name nao especificado')
+          }
+          break
+        }
+        
+        case "select_component": {
+          if (action.name) {
+            // Busca o componente pelo nome e seleciona
+            const findComponent = (comp: any, name: string): any => {
+              if (comp.$Name === name) return comp
+              if (comp.$Components) {
+                for (const child of comp.$Components) {
+                  const found = findComponent(child, name)
+                  if (found) return found
+                }
+              }
+              return null
+            }
+            const proj = useIDEStore.getState().currentProject
+            if (proj) {
+              const comp = findComponent(proj.Properties, action.name)
+              if (comp) {
+                store.setSelectedComponent(comp)
+                count++
+              } else {
+                errors.push(`select_component: componente "${action.name}" nao encontrado`)
+              }
+            }
+          }
+          break
+        }
+        
+        case "update_partial": {
+          // Atualiza apenas um trecho especifico
+          if (action.target && action.path && action.value !== undefined) {
+            const proj = useIDEStore.getState().currentProject
+            if (proj) {
+              // Encontra o componente
+              const findAndUpdate = (comp: any, target: string, path: string, value: any): boolean => {
+                if (comp.$Name === target) {
+                  // Navega pelo path (ex: "properties.Text")
+                  const parts = path.split('.')
+                  let obj = comp
+                  for (let i = 0; i < parts.length - 1; i++) {
+                    if (!obj[parts[i]]) obj[parts[i]] = {}
+                    obj = obj[parts[i]]
+                  }
+                  obj[parts[parts.length - 1]] = value
+                  return true
+                }
+                if (comp.$Components) {
+                  for (const child of comp.$Components) {
+                    if (findAndUpdate(child, target, path, value)) return true
+                  }
+                }
+                return false
+              }
+              
+              if (findAndUpdate(proj.Properties, action.target, action.path, action.value)) {
+                useIDEStore.setState({ 
+                  currentProject: JSON.parse(JSON.stringify(proj)) 
+                })
+                count++
+              } else {
+                errors.push(`update_partial: componente "${action.target}" nao encontrado`)
+              }
+            }
+          }
+          break
+        }
+        
+        default:
+          errors.push(`Acao desconhecida: ${action.action}`)
       }
     } catch (e) {
       console.error('[APEX AI] Erro ao executar acao:', action, e)
+      errors.push(`Erro ao executar ${action.action}: ${e}`)
     }
   }
-  return count
+  return { count, errors }
 }
 
 export function AIChat() {
@@ -79,8 +258,17 @@ export function AIChat() {
   const messagesRef = useRef<Map<string, string>>(new Map())
 
   const store = useIDEStore()
-  const { chatMessages, addChatMessage, currentProject, aiSettings, selectedComponent } = store
+  const { 
+    chatMessages, addChatMessage, currentProject, aiSettings, selectedComponent,
+    screenFiles, currentScreenName
+  } = store
   const { toast } = useToast()
+
+  // Obter BKY atual da tela
+  const getCurrentBky = () => {
+    const currentScreen = screenFiles.find(sf => sf.name === currentScreenName)
+    return currentScreen?.bkyContent || ''
+  }
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -129,7 +317,9 @@ export function AIChat() {
             content: m.content
           })),
           context: projectContext,
-          settings: aiSettings
+          settings: aiSettings,
+          screenFiles: screenFiles.map(sf => ({ name: sf.name })),
+          currentBky: getCurrentBky()
         })
       })
 
@@ -165,13 +355,23 @@ export function AIChat() {
       console.log('[APEX AI] Actions encontradas:', !!actionsMatch)
       if (actionsMatch && currentProject) {
         const currentStore = useIDEStore.getState()
-        const count = executeActions(actionsMatch[1], currentStore)
+        const { count, errors } = executeActions(actionsMatch[1], currentStore)
         if (count > 0) {
           setLastActionCount(count)
-          toast({
-            title: `${count} alteracao${count > 1 ? "s" : ""} aplicada${count > 1 ? "s" : ""}`,
-            description: "O projeto foi modificado pela IA."
-          })
+          
+          // Mensagem de sucesso com ou sem erros
+          if (errors.length > 0) {
+            toast({
+              title: `${count} alteracao${count > 1 ? "s" : ""} aplicada${count > 1 ? "s" : ""} (com avisos)`,
+              description: errors.slice(0, 2).join('; '),
+              variant: "default"
+            })
+          } else {
+            toast({
+              title: `${count} alteracao${count > 1 ? "s" : ""} aplicada${count > 1 ? "s" : ""}`,
+              description: "O projeto foi modificado pela IA."
+            })
+          }
           
           // Efeito visual de confirmação (flash no preview)
           const previewEl = document.getElementById('phone-screen-content')
@@ -179,6 +379,12 @@ export function AIChat() {
             previewEl.classList.add('animate-flash')
             setTimeout(() => previewEl.classList.remove('animate-flash'), 1000)
           }
+        } else if (errors.length > 0) {
+          toast({
+            title: "Erros ao aplicar alteracoes",
+            description: errors.slice(0, 2).join('; '),
+            variant: "destructive"
+          })
         }
       }
 

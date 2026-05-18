@@ -7,7 +7,7 @@ import { getAIModel } from '@/lib/ai-service'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { messages, context, settings } = body
+    const { messages, context, settings, screenFiles, currentBky } = body
     
     const provider = settings?.provider || 'groq'
     const apiKey = settings?.apiKey || ''
@@ -27,14 +27,40 @@ export async function POST(request: NextRequest) {
       skillContent = fs.readFileSync(skillPath, 'utf8')
     } catch (e) {
       console.error('Falha ao carregar Skill.md', e)
-      skillContent = 'ERRO: Skill.md não encontrada.'
+      skillContent = 'ERRO: Skill.md nao encontrada.'
     }
 
-    const systemPrompt = `Você é o APEX DROID AI (Master UI/UX Designer), o assistente mais avançado de desenvolvimento para MIT App Inventor e Kodular. Sua missão não é apenas obedecer a comandos, mas ELEVAR a qualidade do aplicativo.
+    // Construir contexto completo do projeto
+    let fullContext = ''
+    
+    if (context) {
+      fullContext += `## ESTADO ATUAL DO PROJETO\n\n${context}\n\n`
+    } else {
+      fullContext += '## ESTADO ATUAL DO PROJETO\n\nNenhum projeto carregado ainda.\n\n'
+    }
+    
+    // Adicionar lista de telas disponiveis
+    if (screenFiles && Array.isArray(screenFiles) && screenFiles.length > 0) {
+      fullContext += `## TELAS DISPONIVEIS NO PROJETO\n\n`
+      screenFiles.forEach((sf: any) => {
+        fullContext += `- ${sf.name}\n`
+      })
+      fullContext += `\n`
+    }
+    
+    // Adicionar BKY atual se disponivel
+    if (currentBky) {
+      fullContext += `## LOGICA ATUAL DA TELA (BKY XML)\n\n\`\`\`xml\n${currentBky}\n\`\`\`\n\n`
+    }
+    
+    fullContext += `(A arvore de componentes mostra todos os elementos aninhados na tela. Leia com atencao para saber quem e filho de quem e usar o "name" correto no update ou remove, e o "parentName" correto no add).\n`
 
-${context ? `ESTADO ATUAL DO PROJETO:\n${context}\n(A árvore acima mostra todos os elementos aninhados na tela. Leia com atenção para saber quem é filho de quem e usar o "name" correto no update ou remove, e o "parentName" correto no add).` : 'Nenhum projeto carregado ainda.\n'}
+    const systemPrompt = `Voce e o APEX DROID AI, o assistente mais avancado de desenvolvimento para MIT App Inventor e Kodular. Sua missao e EXECUTAR exatamente o que o usuario pedir, sem adicionar elementos ou estilos extras nao solicitados.
+
+${fullContext}
 
 ${skillContent}`
+
     const aiModel = getAIModel({ provider, apiKey, model, baseUrl })
 
     const result = await streamText({
@@ -45,7 +71,7 @@ ${skillContent}`
         content: msg.content
       })),
       temperature: 0.7,
-      maxTokens: 8192,
+      maxTokens: 16384,
     })
 
     return result.toTextStreamResponse()

@@ -153,6 +153,9 @@ interface IDEState {
   renameScreen: (oldName: string, newName: string) => void
   switchScreen: (name: string) => void
   getScreenNames: () => string[]
+  createScreen: (name: string) => void
+  updateScreenFileContent: (screenName: string, content: string) => void
+  updateScreenBky: (screenName: string, bkyContent: string) => void
 
   // Component operations
   updateComponent: (name: string, props: Record<string, unknown>, skipSnapshot?: boolean) => void
@@ -528,6 +531,117 @@ export const useIDEStore = create<IDEState>()(
       getScreenNames: () => {
         const { screens } = get()
         return Object.keys(screens)
+      },
+      
+      // Cria uma nova tela e muda para ela
+      createScreen: (name) => {
+        const { screens, screenFiles, setScreenFiles, saveSnapshot } = get()
+        const validName = name.replace(/[^a-zA-Z0-9]/g, "")
+        if (screens[validName]) {
+          // Se ja existe, apenas muda para ela
+          get().switchScreen(validName)
+          return
+        }
+        
+        // Criar nova tela
+        const newScreen: Screen = {
+          name: validName,
+          data: {
+            Properties: {
+              $Type: "Form",
+              $Name: validName,
+              Title: validName,
+              BackgroundColor: "&HFFFFFFFF",
+              $Components: []
+            }
+          },
+          bkyContent: null,
+          flowchartContent: null
+        }
+        
+        // Criar arquivo de tela
+        const newScreenFile: ScreenFile = {
+          name: validName,
+          scmContent: JSON.stringify(newScreen.data.Properties, null, 2),
+          bkyContent: null,
+          path: `src/${validName}/${validName}.scm`
+        }
+        
+        set({
+          screens: { ...screens, [validName]: newScreen },
+          currentScreenName: validName,
+          currentProject: newScreen.data,
+          currentBkyContent: null,
+          selectedComponent: null
+        })
+        
+        setScreenFiles([...screenFiles, newScreenFile])
+        saveSnapshot()
+      },
+      
+      // Atualiza o conteudo SCM de uma tela
+      updateScreenFileContent: (screenName, content) => {
+        const { screenFiles, setScreenFiles, screens, currentScreenName } = get()
+        
+        // Atualizar screenFiles
+        const updatedFiles = screenFiles.map(sf => 
+          sf.name === screenName ? { ...sf, scmContent: content } : sf
+        )
+        setScreenFiles(updatedFiles)
+        
+        // Atualizar screens
+        try {
+          const parsed = JSON.parse(content)
+          const updatedScreens = {
+            ...screens,
+            [screenName]: {
+              ...screens[screenName],
+              data: { Properties: parsed }
+            }
+          }
+          
+          // Se for a tela atual, atualizar currentProject tambem
+          if (currentScreenName === screenName) {
+            set({ 
+              screens: updatedScreens,
+              currentProject: { Properties: parsed }
+            })
+          } else {
+            set({ screens: updatedScreens })
+          }
+        } catch (e) {
+          console.error('[IDE Store] Erro ao parsear content SCM:', e)
+        }
+      },
+      
+      // Atualiza o BKY de uma tela
+      updateScreenBky: (screenName, bkyContent) => {
+        const { screenFiles, setScreenFiles, screens, currentScreenName } = get()
+        
+        // Atualizar screenFiles
+        const updatedFiles = screenFiles.map(sf => 
+          sf.name === screenName ? { ...sf, bkyContent } : sf
+        )
+        setScreenFiles(updatedFiles)
+        
+        // Atualizar screens
+        const updatedScreens = {
+          ...screens,
+          [screenName]: {
+            ...screens[screenName],
+            bkyContent
+          }
+        }
+        
+        // Se for a tela atual, atualizar currentBkyContent tambem
+        if (currentScreenName === screenName) {
+          set({ 
+            screens: updatedScreens,
+            currentBkyContent: bkyContent
+          })
+        } else {
+          set({ screens: updatedScreens })
+        }
       },
 
       // Component operations
